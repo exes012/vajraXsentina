@@ -1,6 +1,7 @@
 'use client'
-const API_BASE = '/api';
-const BACKEND_FALLBACK = 'http://127.0.0.1:8000/api';
+const RAW_API_URL = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_URL) ? process.env.NEXT_PUBLIC_API_URL : 'https://vajraxsentina.onrender.com';
+const API_BASE = RAW_API_URL.replace(/\/+$/, '') + '/api';
+const BACKEND_FALLBACK = 'https://vajraxsentina.onrender.com/api';
 
 export const apiClient = {
   getToken() {
@@ -44,13 +45,15 @@ export const apiClient = {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
 
     const urlsToTry = [
       `${API_BASE}${endpoint}`,
       `${BACKEND_FALLBACK}${endpoint}`,
+      `/api${endpoint}`,
+      `http://127.0.0.1:8000/api${endpoint}`,
       `http://localhost:8000/api${endpoint}`
-    ];
+    ].filter((v, idx, arr) => arr.indexOf(v) === idx);
 
     let lastError = null;
 
@@ -66,15 +69,16 @@ export const apiClient = {
         if (res.status === 401 && !isRetry && endpoint !== '/auth/login' && endpoint !== '/auth/register') {
           console.warn('Authentication token expired or invalid, auto-refreshing admin session...');
           try {
-            const authRes = await fetch(`${url.includes(':8000') ? BACKEND_FALLBACK : API_BASE}/auth/login`, {
+            const authRes = await fetch(`${API_BASE}/auth/login`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ username: 'admin', password: 'admin123' })
+              body: JSON.stringify({ email: 'admin@indigo.com', username: 'admin', password: 'admin123' })
             });
             if (authRes.ok) {
               const authData = await authRes.json();
-              if (authData.access_token) {
-                this.setToken(authData.access_token);
+              const newToken = authData.access_token || authData.token;
+              if (newToken) {
+                this.setToken(newToken);
                 return this.request(endpoint, options, true);
               }
             }
