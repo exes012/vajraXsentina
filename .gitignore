@@ -47,3 +47,6 @@ ehthumbs.db
 *.swp
 *.swo
 *.log
+workspaces/
+**/workspaces/
+

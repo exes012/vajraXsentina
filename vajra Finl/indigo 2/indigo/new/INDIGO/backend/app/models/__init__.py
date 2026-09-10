@@ -9,55 +9,55 @@ def generate_uuid():
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = {'extend_existing': True}
 
-    id = Column(String(36), primary_key=True, default=generate_uuid)
-    username = Column(String(64), unique=True, index=True, nullable=False)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    username = Column(String(128), nullable=True)
     email = Column(String(128), unique=True, index=True, nullable=False)
+    name = Column(String(128), nullable=True)
     hashed_password = Column(String(256), nullable=False)
-    role = Column(String(32), default="analyst")
+    role = Column(String(32), default="admin")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-
-    projects = relationship("Project", back_populates="owner", cascade="all, delete-orphan")
-    audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")
 
 
 class Project(Base):
     __tablename__ = "projects"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     name = Column(String(128), nullable=False)
     description = Column(Text, nullable=True)
-    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    user_id = Column(String(64), nullable=True, index=True)
     repository_url = Column(String(512), nullable=True)
     target_url = Column(String(512), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
-    owner = relationship("User", back_populates="projects")
     assessments = relationship("Assessment", back_populates="project", cascade="all, delete-orphan")
     assets = relationship("Asset", back_populates="project", cascade="all, delete-orphan")
 
 
 class Asset(Base):
     __tablename__ = "assets"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     project_id = Column(String(36), ForeignKey("projects.id"), nullable=False, index=True)
     name = Column(String(256), nullable=False)
-    asset_type = Column(String(64), default="WEB_APPLICATION")  # WEB_APPLICATION, API_GATEWAY, GITHUB_REPO, CLOUD_WORKLOAD
+    asset_type = Column(String(64), default="WEB_APPLICATION")
     url = Column(String(512), nullable=False, index=True)
     hostname = Column(String(256), nullable=False, index=True)
     protocol = Column(String(16), default="https")
-    status = Column(String(32), default="REACHABLE")  # REACHABLE, UNREACHABLE, ONLINE, OFFLINE
+    status = Column(String(32), default="REACHABLE")
     
     is_verified = Column(Boolean, default=False, index=True)
-    verification_method = Column(String(32), default="MANUAL")  # MANUAL, DNS_TXT, HTTP_META, ANALYST_AUTHORIZATION
+    verification_method = Column(String(32), default="MANUAL")
     verification_token = Column(String(64), nullable=True)
     
-    technology = Column(JSON, default=list)  # ["React", "Node.js", "Nginx"]
-    discovery_metadata = Column(JSON, default=dict)  # status_code, title, server, headers, redirects
-    waf_detection = Column(JSON, default=dict)  # {"detected": bool, "provider": str, "confidence": str, "evidence": list}
+    technology = Column(JSON, default=list)
+    discovery_metadata = Column(JSON, default=dict)
+    waf_detection = Column(JSON, default=dict)
     last_coverage_score = Column(Float, default=0.0)
     
     last_assessment_id = Column(String(36), nullable=True)
@@ -72,20 +72,21 @@ class Asset(Base):
 
 class Assessment(Base):
     __tablename__ = "assessments"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     project_id = Column(String(36), ForeignKey("projects.id"), nullable=False)
     asset_id = Column(String(36), ForeignKey("assets.id"), nullable=True, index=True)
-    assessment_type = Column(String(32), default="combined")  # repo, source, dast, combined
+    assessment_type = Column(String(32), default="combined")
     status = Column(String(32), default="QUEUED", index=True)
     
-    repository_info = Column(JSON, default=dict)  # {"url": "...", "branch": "main", "type": "github/upload"}
-    target_info = Column(JSON, default=dict)      # {"url": "...", "scan_mode": "standard", "headers": {}, "auth": {}}
-    modules = Column(JSON, default=dict)          # {"sast": True, "sca": True, "secrets": True, "dast": True, "nuclei": True, "ssl": True, "wapiti": True, "discovery": True, "headers": True}
+    repository_info = Column(JSON, default=dict)
+    target_info = Column(JSON, default=dict)
+    modules = Column(JSON, default=dict)
     
     overall_risk_score = Column(Float, default=0.0)
     dast_coverage_score = Column(Float, default=0.0)
-    coverage_status = Column(String(32), default="NOT_APPLICABLE")  # FULL COVERAGE, LIMITED COVERAGE, FAILED, NOT_APPLICABLE
+    coverage_status = Column(String(32), default="NOT_APPLICABLE")
     critical_count = Column(Integer, default=0)
     high_count = Column(Integer, default=0)
     medium_count = Column(Integer, default=0)
@@ -93,12 +94,12 @@ class Assessment(Base):
     info_count = Column(Integer, default=0)
     total_findings = Column(Integer, default=0)
 
-    connectivity_diagnostics = Column(JSON, default=dict)  # 12 pre-scan checks
-    coverage_telemetry = Column(JSON, default=dict)        # runtime request stats, status distribution, crawl/scan metrics
-    regressions = Column(JSON, default=dict)      # {"new": [...], "resolved": [...], "persistent": [...], "score_delta": 0.0}
+    connectivity_diagnostics = Column(JSON, default=dict)
+    coverage_telemetry = Column(JSON, default=dict)
+    regressions = Column(JSON, default=dict)
     error_message = Column(Text, nullable=True)
-    failure_reason = Column(JSON, default=dict)   # Structured failure diagnosis, category, remediation playbook
-    logs = Column(JSON, default=list)             # [{"timestamp": "...", "stage": "...", "message": "..."}]
+    failure_reason = Column(JSON, default=dict)
+    logs = Column(JSON, default=list)
     
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
@@ -113,11 +114,12 @@ class Assessment(Base):
 
 class ScanJob(Base):
     __tablename__ = "scan_jobs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     assessment_id = Column(String(36), ForeignKey("assessments.id"), nullable=False)
-    module_name = Column(String(32), nullable=False)  # sast, sca, secrets, dast, nuclei, ssl, wapiti, headers, discovery
-    status = Column(String(32), default="PENDING")    # PENDING, RUNNING, COMPLETED, FAILED, SKIPPED
+    module_name = Column(String(32), nullable=False)
+    status = Column(String(32), default="PENDING")
     duration_ms = Column(Integer, default=0)
     error_message = Column(Text, nullable=True)
     failure_reason = Column(JSON, default=dict)
@@ -130,30 +132,31 @@ class ScanJob(Base):
 
 class Finding(Base):
     __tablename__ = "findings"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     assessment_id = Column(String(36), ForeignKey("assessments.id"), nullable=False, index=True)
     project_id = Column(String(36), ForeignKey("projects.id"), nullable=False)
     asset_id = Column(String(36), ForeignKey("assets.id"), nullable=True, index=True)
     
-    source = Column(String(32), nullable=False, index=True)   # SAST, SCA, DAST, SECRETS, SSL, WEB
-    scanner = Column(String(64), nullable=False, index=True)  # ZAP, NUCLEI, WAPITI, TESTSSL, HEADER_ANALYZER, SEMGREP, OSV, GITLEAKS
-    detected_by = Column(JSON, default=list)                  # ["ZAP", "NUCLEI", "HEADER_ANALYZER"]
+    source = Column(String(32), nullable=False, index=True)
+    scanner = Column(String(64), nullable=False, index=True)
+    detected_by = Column(JSON, default=list)
     title = Column(String(256), nullable=False)
     description = Column(Text, nullable=False)
-    severity = Column(String(16), nullable=False, index=True) # CRITICAL, HIGH, MEDIUM, LOW, INFO
-    confidence = Column(String(16), default="MEDIUM")         # HIGH, MEDIUM, LOW
+    severity = Column(String(16), nullable=False, index=True)
+    confidence = Column(String(16), default="MEDIUM")
     category = Column(String(64), default="General Security")
     
-    cwe = Column(JSON, default=list)                          # ["CWE-89"]
-    cves = Column(JSON, default=list)                         # ["CVE-2023-1234"]
-    owasp = Column(JSON, default=list)                        # ["A03:2021-Injection"]
+    cwe = Column(JSON, default=list)
+    cves = Column(JSON, default=list)
+    owasp = Column(JSON, default=list)
     
     file = Column(String(512), nullable=True)
     line = Column(Integer, nullable=True)
-    code_snippet = Column(Text, nullable=True)                # Masked snippet
+    code_snippet = Column(Text, nullable=True)
     endpoint = Column(String(512), nullable=True)
-    method = Column(String(16), nullable=True)                # GET, POST, PUT, DELETE
+    method = Column(String(16), nullable=True)
     parameter = Column(String(128), nullable=True)
     evidence = Column(Text, nullable=True)
     remediation = Column(Text, nullable=True)
@@ -162,10 +165,10 @@ class Finding(Base):
     fingerprint = Column(String(64), index=True)
     risk_score = Column(Float, default=0.0)
     threat_scenario = Column(Text, nullable=True)
-    potential_impact = Column(JSON, default=dict)             # {"confidentiality": "...", "integrity": "...", "availability": "...", "business_impact": "..."}
-    blast_radius = Column(String(128), nullable=True)         # e.g. "Database Takeover & Sensitive Data Exfiltration"
-    risk_factors = Column(JSON, default=dict)                 # {"base_severity_score": ..., "exploitability_factor": ..., ...}
-    status = Column(String(32), default="open")               # open, resolved, false_positive, ignored
+    potential_impact = Column(JSON, default=dict)
+    blast_radius = Column(String(128), nullable=True)
+    risk_factors = Column(JSON, default=dict)
+    status = Column(String(32), default="open")
     raw_evidence = Column(JSON, default=dict)
     
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -175,12 +178,13 @@ class Finding(Base):
 
 class CorrelatedRisk(Base):
     __tablename__ = "correlated_risks"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     assessment_id = Column(String(36), ForeignKey("assessments.id"), nullable=False, index=True)
     title = Column(String(256), nullable=False)
     description = Column(Text, nullable=False)
-    risk_level = Column(String(16), nullable=False)  # CRITICAL, HIGH, MEDIUM
+    risk_level = Column(String(16), nullable=False)
     confidence = Column(String(16), default="VERY HIGH")
     
     sast_finding_ids = Column(JSON, default=list)
@@ -197,7 +201,8 @@ class CorrelatedRisk(Base):
 
 
 class Report(Base):
-    __tablename__ = "reports"
+    __tablename__ = "sentina_reports"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     assessment_id = Column(String(36), ForeignKey("assessments.id"), nullable=False, unique=True)
@@ -219,19 +224,13 @@ class Report(Base):
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    user_id = Column(String(64), nullable=True)
     action = Column(String(64), nullable=False)
     resource_type = Column(String(64), nullable=False)
     resource_id = Column(String(64), nullable=True)
     details = Column(JSON, default=dict)
     ip_address = Column(String(64), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-
-    user = relationship("User", back_populates="audit_logs")
-
-
-# Apply schema updates across database tables
-from app.core.database import run_db_migrations
-run_db_migrations()

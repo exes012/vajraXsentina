@@ -28,16 +28,22 @@ async def create_and_start_assessment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    project = db.query(Project).filter(Project.id == payload.project_id, Project.user_id == current_user.id).first()
+    user_id_str = str(getattr(current_user, 'id', '1'))
+    project = None
+    if payload.project_id and payload.project_id != "default-scope":
+        project = db.query(Project).filter(Project.id == payload.project_id).first()
+
     if not project:
-        project = db.query(Project).filter(Project.user_id == current_user.id).first()
+        project = db.query(Project).filter(Project.user_id == user_id_str).first()
         if not project:
             target_name = (payload.repository.url if (payload.repository and payload.repository.url) else (payload.target.url if (payload.target and payload.target.url) else "Global Production Scope"))
             clean_name = target_name.rstrip("/").split("/")[-1] if "/" in target_name else target_name
             project = Project(
                 name=f"Scope: {clean_name or 'Production Fleet'}",
                 description="Automated security assessment scope",
-                user_id=current_user.id
+                user_id=user_id_str,
+                repository_url=payload.repository.url if payload.repository else None,
+                target_url=payload.target.url if payload.target else None
             )
             db.add(project)
             db.commit()
@@ -172,13 +178,7 @@ def list_assessments(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    user_role = str(getattr(current_user, 'role', 'admin')).lower()
-    is_admin = (user_role in ["admin", "soc analyst", "analyst", "user", "viewer", "engineer"] or current_user.username == "admin" or not current_user.id)
-    if is_admin or True:
-        query = db.query(Assessment)
-    else:
-        query = db.query(Assessment).join(Project).filter(Project.user_id == current_user.id)
-
+    query = db.query(Assessment)
     if project_id:
         query = query.filter(Assessment.project_id == project_id)
     if asset_id:
@@ -204,9 +204,7 @@ def delete_assessment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    assessment = db.query(Assessment).join(Project).filter(Assessment.id == assessment_id, Project.user_id == current_user.id).first()
-    if not assessment:
-        assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
     if not assessment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not found")
 
@@ -247,13 +245,7 @@ def cancel_assessment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    is_admin = (current_user.role == "admin" or current_user.username == "admin" or not current_user.id)
-    if is_admin:
-        assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
-    else:
-        assessment = db.query(Assessment).join(Project).filter(Assessment.id == assessment_id, Project.user_id == current_user.id).first()
-        if not assessment:
-            assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
     if not assessment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not found")
 
@@ -277,13 +269,7 @@ def get_assessment_correlated_risks(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    is_admin = (current_user.role == "admin" or current_user.username == "admin" or not current_user.id)
-    if is_admin:
-        assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
-    else:
-        assessment = db.query(Assessment).join(Project).filter(Assessment.id == assessment_id, Project.user_id == current_user.id).first()
-        if not assessment:
-            assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
     if not assessment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not found")
 

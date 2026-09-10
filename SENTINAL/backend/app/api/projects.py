@@ -14,12 +14,7 @@ def list_projects(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    user_role = str(getattr(current_user, 'role', 'admin')).lower()
-    is_admin = (user_role in ["admin", "soc analyst", "analyst", "user", "viewer", "engineer"] or current_user.username == "admin" or not current_user.id)
-    if is_admin or True:
-        projects = db.query(Project).order_by(Project.created_at.desc()).all()
-    else:
-        projects = db.query(Project).filter(Project.user_id == current_user.id).order_by(Project.created_at.desc()).all()
+    projects = db.query(Project).order_by(Project.created_at.desc()).all()
     return [ProjectResponse.model_validate(p) for p in projects]
 
 @router.post("", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
@@ -28,12 +23,13 @@ def create_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    user_id_str = str(getattr(current_user, 'id', '1'))
     project = Project(
         name=payload.name,
         description=payload.description,
         repository_url=payload.repository_url,
         target_url=payload.target_url,
-        user_id=current_user.id
+        user_id=user_id_str
     )
     db.add(project)
     db.commit()
@@ -41,7 +37,7 @@ def create_project(
 
     # Log audit
     audit = AuditLog(
-        user_id=current_user.id,
+        user_id=user_id_str,
         action="CREATE_PROJECT",
         resource_type="Project",
         resource_id=project.id,
@@ -58,13 +54,7 @@ def get_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    is_admin = (current_user.role == "admin" or current_user.username == "admin" or not current_user.id)
-    if is_admin:
-        project = db.query(Project).filter(Project.id == project_id).first()
-    else:
-        project = db.query(Project).filter(Project.id == project_id, Project.user_id == current_user.id).first()
-        if not project:
-            project = db.query(Project).filter(Project.id == project_id).first()
+    project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
     return ProjectResponse.model_validate(project)
@@ -76,13 +66,7 @@ def update_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    is_admin = (current_user.role == "admin" or current_user.username == "admin" or not current_user.id)
-    if is_admin:
-        project = db.query(Project).filter(Project.id == project_id).first()
-    else:
-        project = db.query(Project).filter(Project.id == project_id, Project.user_id == current_user.id).first()
-        if not project:
-            project = db.query(Project).filter(Project.id == project_id).first()
+    project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
@@ -105,13 +89,7 @@ def delete_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    is_admin = (current_user.role == "admin" or current_user.username == "admin" or not current_user.id)
-    if is_admin:
-        project = db.query(Project).filter(Project.id == project_id).first()
-    else:
-        project = db.query(Project).filter(Project.id == project_id, Project.user_id == current_user.id).first()
-        if not project:
-            project = db.query(Project).filter(Project.id == project_id).first()
+    project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 

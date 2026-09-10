@@ -13,14 +13,14 @@ class UserLogin(BaseModel):
     password: str
 
 class UserResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, coerce_numbers_to_str=True)
 
-    id: str
+    id: Any
     username: str
     email: str
     role: str
     is_active: bool
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
 class Token(BaseModel):
     access_token: str
@@ -45,16 +45,16 @@ class ProjectUpdate(BaseModel):
     target_url: Optional[str] = None
 
 class ProjectResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, coerce_numbers_to_str=True)
 
     id: str
     name: str
     description: Optional[str] = None
-    user_id: str
+    user_id: Optional[Any] = None
     repository_url: Optional[str] = None
     target_url: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 # --- Asset Schemas ---
 class AssetCreate(BaseModel):
@@ -88,8 +88,8 @@ class AssetResponse(BaseModel):
     last_assessment_id: Optional[str] = None
     last_assessment_at: Optional[datetime] = None
     risk_score: float = 0.0
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 # --- Assessment Schemas ---
 class AssessmentModulesConfig(BaseModel):
@@ -140,11 +140,11 @@ class ScanJobResponse(BaseModel):
     module_name: str
     status: str
     duration_ms: int
-    error_message: Optional[str]
+    error_message: Optional[str] = None
     failure_reason: Optional[Dict[str, Any]] = None
-    raw_results_count: int
-    created_at: datetime
-    completed_at: Optional[datetime]
+    raw_results_count: int = 0
+    created_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
 class AssessmentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -154,27 +154,27 @@ class AssessmentResponse(BaseModel):
     asset_id: Optional[str] = None
     assessment_type: str
     status: str
-    repository_info: Dict[str, Any]
-    target_info: Dict[str, Any]
-    modules: Dict[str, bool]
-    overall_risk_score: float
-    dast_coverage_score: float = 0.0
-    coverage_status: str = "NOT_APPLICABLE"
-    critical_count: int
-    high_count: int
-    medium_count: int
-    low_count: int
-    info_count: int
-    total_findings: int
-    connectivity_diagnostics: Dict[str, Any] = Field(default_factory=dict)
-    coverage_telemetry: Dict[str, Any] = Field(default_factory=dict)
-    regressions: Dict[str, Any] = Field(default_factory=dict)
-    error_message: Optional[str]
+    repository_info: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    target_info: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    modules: Optional[Dict[str, bool]] = Field(default_factory=dict)
+    overall_risk_score: Optional[float] = 0.0
+    dast_coverage_score: Optional[float] = 0.0
+    coverage_status: Optional[str] = "NOT_APPLICABLE"
+    critical_count: Optional[int] = 0
+    high_count: Optional[int] = 0
+    medium_count: Optional[int] = 0
+    low_count: Optional[int] = 0
+    info_count: Optional[int] = 0
+    total_findings: Optional[int] = 0
+    connectivity_diagnostics: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    coverage_telemetry: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    regressions: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    error_message: Optional[str] = None
     failure_reason: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    logs: List[Dict[str, Any]]
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
-    created_at: datetime
+    logs: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
     scan_jobs: Optional[List[ScanJobResponse]] = None
 
 # --- Finding Schemas ---
@@ -193,9 +193,9 @@ class FindingResponse(BaseModel):
     severity: str
     confidence: str
     category: str
-    cwe: List[str]
-    cves: List[str]
-    owasp: List[str]
+    cwe: List[str] = Field(default_factory=list)
+    cves: List[str] = Field(default_factory=list)
+    owasp: List[str] = Field(default_factory=list)
     file: Optional[str] = None
     line: Optional[int] = None
     code_snippet: Optional[str] = None
@@ -206,13 +206,13 @@ class FindingResponse(BaseModel):
     remediation: Optional[str] = None
     references: List[str] = Field(default_factory=list)
     fingerprint: Optional[str] = None
-    risk_score: float
+    risk_score: float = 0.0
     threat_scenario: Optional[str] = None
     potential_impact: Dict[str, Any] = Field(default_factory=dict)
     blast_radius: Optional[str] = None
     risk_factors: Dict[str, Any] = Field(default_factory=dict)
-    status: str
-    created_at: datetime
+    status: str = "open"
+    created_at: Optional[datetime] = None
 
 class FindingUpdateStatus(BaseModel):
     status: str  # open, resolved, false_positive, ignored
@@ -227,14 +227,14 @@ class CorrelatedRiskResponse(BaseModel):
     description: str
     risk_level: str
     confidence: str
-    sast_finding_ids: List[str]
-    dast_finding_ids: List[str]
-    sca_finding_ids: List[str]
-    secret_finding_ids: List[str]
+    sast_finding_ids: List[str] = Field(default_factory=list)
+    dast_finding_ids: List[str] = Field(default_factory=list)
+    sca_finding_ids: List[str] = Field(default_factory=list)
+    secret_finding_ids: List[str] = Field(default_factory=list)
     explanation: str
     attack_scenario: str
     remediation: str
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
 # --- Report Schemas ---
 class ReportResponse(BaseModel):
@@ -243,15 +243,15 @@ class ReportResponse(BaseModel):
     id: str
     assessment_id: str
     project_id: str
-    executive_summary: Optional[str]
-    technical_summary: Optional[str]
-    ai_analysis: Dict[str, Any]
-    methodology: Optional[str]
-    distribution: Dict[str, Any]
-    file_path_html: Optional[str]
-    file_path_pdf: Optional[str]
-    file_path_json: Optional[str]
-    created_at: datetime
+    executive_summary: Optional[str] = None
+    technical_summary: Optional[str] = None
+    ai_analysis: Dict[str, Any] = Field(default_factory=dict)
+    methodology: Optional[str] = None
+    distribution: Dict[str, Any] = Field(default_factory=dict)
+    file_path_html: Optional[str] = None
+    file_path_pdf: Optional[str] = None
+    file_path_json: Optional[str] = None
+    created_at: Optional[datetime] = None
 
 # --- Regression & Comparison Schema ---
 class AssessmentComparisonResponse(BaseModel):
@@ -262,27 +262,27 @@ class AssessmentComparisonResponse(BaseModel):
     new_findings_count: int
     resolved_findings_count: int
     persistent_findings_count: int
-    new_findings: List[FindingResponse]
-    resolved_findings: List[FindingResponse]
-    persistent_findings: List[FindingResponse]
+    new_findings: List[FindingResponse] = Field(default_factory=list)
+    resolved_findings: List[FindingResponse] = Field(default_factory=list)
+    persistent_findings: List[FindingResponse] = Field(default_factory=list)
 
 # --- Dashboard Schemas ---
 class DashboardMetrics(BaseModel):
-    total_projects: int
-    total_assessments: int
-    overall_risk_score: float
-    severity_distribution: Dict[str, int]
-    findings_by_source: Dict[str, int]
-    findings_by_scanner: Dict[str, int]
-    vulnerable_dependencies_count: int
-    secrets_count: int
-    dast_issues_count: int
-    sast_issues_count: int
-    ssl_issues_count: int
+    total_projects: int = 0
+    total_assessments: int = 0
+    overall_risk_score: float = 0.0
+    severity_distribution: Dict[str, int] = Field(default_factory=dict)
+    findings_by_source: Dict[str, int] = Field(default_factory=dict)
+    findings_by_scanner: Dict[str, int] = Field(default_factory=dict)
+    vulnerable_dependencies_count: int = 0
+    secrets_count: int = 0
+    dast_issues_count: int = 0
+    sast_issues_count: int = 0
+    ssl_issues_count: int = 0
     assets_monitored_count: int = 0
     dast_coverage_summary: Dict[str, Any] = Field(default_factory=dict)
-    top_vulnerabilities: List[Dict[str, Any]]
-    most_affected_files: List[Dict[str, Any]]
-    most_affected_endpoints: List[Dict[str, Any]]
-    recent_assessments: List[AssessmentResponse]
-    recent_findings: List[FindingResponse]
+    top_vulnerabilities: List[Dict[str, Any]] = Field(default_factory=list)
+    most_affected_files: List[Dict[str, Any]] = Field(default_factory=list)
+    most_affected_endpoints: List[Dict[str, Any]] = Field(default_factory=list)
+    recent_assessments: List[AssessmentResponse] = Field(default_factory=list)
+    recent_findings: List[FindingResponse] = Field(default_factory=list)

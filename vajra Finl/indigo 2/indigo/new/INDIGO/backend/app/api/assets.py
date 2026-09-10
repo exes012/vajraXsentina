@@ -25,13 +25,7 @@ def list_assets(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    user_role = str(getattr(current_user, 'role', 'admin')).lower()
-    is_admin = (user_role in ["admin", "soc analyst", "analyst", "user", "viewer", "engineer"] or current_user.username == "admin" or not current_user.id)
-    if is_admin or True:
-        query = db.query(Asset)
-    else:
-        query = db.query(Asset).join(Project).filter(Project.user_id == current_user.id)
-
+    query = db.query(Asset)
     if project_id:
         query = query.filter(Asset.project_id == project_id)
     
@@ -44,15 +38,18 @@ def create_asset(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    project = db.query(Project).filter(Project.id == payload.project_id, Project.user_id == current_user.id).first()
+    user_id_str = str(getattr(current_user, 'id', '1'))
+    project = None
+    if payload.project_id and payload.project_id != "default-scope":
+        project = db.query(Project).filter(Project.id == payload.project_id).first()
+
     if not project:
-        # Fallback to user's first project or auto-create project
-        project = db.query(Project).filter(Project.user_id == current_user.id).first()
+        project = db.query(Project).filter(Project.user_id == user_id_str).first()
         if not project:
             project = Project(
                 name="Production Fleet",
                 description="Production Targets Scope",
-                user_id=current_user.id
+                user_id=user_id_str
             )
             db.add(project)
             db.commit()
@@ -91,7 +88,7 @@ def create_asset(
 
     # Record audit log
     audit = AuditLog(
-        user_id=current_user.id,
+        user_id=user_id_str,
         action="ASSET_CREATED",
         resource_type="ASSET",
         resource_id=asset.id,
@@ -108,13 +105,7 @@ def get_asset(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    is_admin = (current_user.role == "admin" or current_user.username == "admin" or not current_user.id)
-    if is_admin:
-        asset = db.query(Asset).filter(Asset.id == asset_id).first()
-    else:
-        asset = db.query(Asset).join(Project).filter(Asset.id == asset_id, Project.user_id == current_user.id).first()
-        if not asset:
-            asset = db.query(Asset).filter(Asset.id == asset_id).first()
+    asset = db.query(Asset).filter(Asset.id == asset_id).first()
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
     return AssetResponse.model_validate(asset)
@@ -126,13 +117,7 @@ def verify_asset(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    is_admin = (current_user.role == "admin" or current_user.username == "admin" or not current_user.id)
-    if is_admin:
-        asset = db.query(Asset).filter(Asset.id == asset_id).first()
-    else:
-        asset = db.query(Asset).join(Project).filter(Asset.id == asset_id, Project.user_id == current_user.id).first()
-        if not asset:
-            asset = db.query(Asset).filter(Asset.id == asset_id).first()
+    asset = db.query(Asset).filter(Asset.id == asset_id).first()
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
 
@@ -144,7 +129,7 @@ def verify_asset(
 
     # Record audit log
     audit = AuditLog(
-        user_id=current_user.id,
+        user_id=str(getattr(current_user, 'id', '1')),
         action="ASSET_VERIFIED",
         resource_type="ASSET",
         resource_id=asset.id,
@@ -161,17 +146,10 @@ def get_asset_assessments(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    is_admin = (current_user.role == "admin" or current_user.username == "admin" or not current_user.id)
-    if is_admin:
-        asset = db.query(Asset).filter(Asset.id == asset_id).first()
-    else:
-        asset = db.query(Asset).join(Project).filter(Asset.id == asset_id, Project.user_id == current_user.id).first()
-        if not asset:
-            asset = db.query(Asset).filter(Asset.id == asset_id).first()
+    asset = db.query(Asset).filter(Asset.id == asset_id).first()
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
 
-    # Match assessments linked directly by asset_id OR matching target URL
     assessments = db.query(Assessment).filter(
         (Assessment.asset_id == asset.id) | 
         (Assessment.project_id == asset.project_id)
@@ -191,13 +169,7 @@ def compare_asset_assessments(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    is_admin = (current_user.role == "admin" or current_user.username == "admin" or not current_user.id)
-    if is_admin:
-        asset = db.query(Asset).filter(Asset.id == asset_id).first()
-    else:
-        asset = db.query(Asset).join(Project).filter(Asset.id == asset_id, Project.user_id == current_user.id).first()
-        if not asset:
-            asset = db.query(Asset).filter(Asset.id == asset_id).first()
+    asset = db.query(Asset).filter(Asset.id == asset_id).first()
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
 
@@ -213,7 +185,6 @@ def compare_asset_assessments(
     base_fps = {f.fingerprint: f for f in base_findings if f.fingerprint}
     target_fps = {f.fingerprint: f for f in target_findings if f.fingerprint}
 
-    # Categorize findings
     new_findings = [f for fp, f in target_fps.items() if fp not in base_fps]
     resolved_findings = [f for fp, f in base_fps.items() if fp not in target_fps]
     persistent_findings = [f for fp, f in target_fps.items() if fp in base_fps]
@@ -239,13 +210,7 @@ def delete_asset(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    is_admin = (current_user.role == "admin" or current_user.username == "admin" or not current_user.id)
-    if is_admin:
-        asset = db.query(Asset).filter(Asset.id == asset_id).first()
-    else:
-        asset = db.query(Asset).join(Project).filter(Asset.id == asset_id, Project.user_id == current_user.id).first()
-        if not asset:
-            asset = db.query(Asset).filter(Asset.id == asset_id).first()
+    asset = db.query(Asset).filter(Asset.id == asset_id).first()
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
 

@@ -1,20 +1,35 @@
-const API_BASE = '/api';
+const RAW_API_URL = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_URL) ? process.env.NEXT_PUBLIC_API_URL : 'https://vajraxsentina.onrender.com';
+const API_BASE = RAW_API_URL.replace(/\/+$/, '').replace(/\/api$/, '') + '/api';
+const BACKEND_FALLBACK = 'https://vajraxsentina.onrender.com/api';
 
 export const apiClient = {
   getToken() {
-    return localStorage.getItem('sentinal_token') || '';
+    if (typeof window === 'undefined') return '';
+    const sentinaToken = localStorage.getItem('sentinal_token');
+    if (sentinaToken) return sentinaToken;
+
+    try {
+      const authStorage = localStorage.getItem('auth-storage');
+      if (authStorage) {
+        const parsed = JSON.parse(authStorage);
+        if (parsed?.state?.token) return parsed.state.token;
+      }
+    } catch (e) {}
+
+    return '';
   },
 
   setToken(token) {
+    if (typeof window === 'undefined') return;
     localStorage.setItem('sentinal_token', token);
   },
 
   removeToken() {
+    if (typeof window === 'undefined') return;
     localStorage.removeItem('sentinal_token');
   },
 
   async request(endpoint, options = {}, isRetry = false) {
-    const url = `${API_BASE}${endpoint}`;
     let token = this.getToken();
 
     const headers = {
@@ -24,49 +39,70 @@ export const apiClient = {
     };
 
     if (options.body instanceof FormData) {
-      delete headers['Content-Type']; // Let browser set boundary
+      delete headers['Content-Type'];
     }
 
-    try {
-      const res = await fetch(url, {
-        ...options,
-        headers
-      });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
 
-      if (res.status === 401 && !isRetry && endpoint !== '/auth/login' && endpoint !== '/auth/register') {
-        console.warn('Authentication token expired or invalid, auto-refreshing admin session...');
-        try {
-          const authRes = await fetch(`${API_BASE}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: 'admin', password: 'admin123' })
-          });
-          if (authRes.ok) {
-            const authData = await authRes.json();
-            if (authData.access_token) {
-              this.setToken(authData.access_token);
-              return this.request(endpoint, options, true);
+    const urlsToTry = [
+      `${API_BASE}${endpoint}`,
+      `${BACKEND_FALLBACK}${endpoint}`,
+      `/api${endpoint}`,
+      `http://127.0.0.1:8000/api${endpoint}`,
+      `http://localhost:8000/api${endpoint}`
+    ].filter((v, idx, arr) => arr.indexOf(v) === idx);
+
+    let lastError = null;
+
+    for (const url of urlsToTry) {
+      try {
+        const res = await fetch(url, {
+          ...options,
+          headers,
+          signal: options.signal || controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (res.status === 401 && !isRetry && endpoint !== '/auth/login' && endpoint !== '/auth/register') {
+          console.warn('Authentication token expired or invalid, auto-refreshing admin session...');
+          try {
+            const authRes = await fetch(`${API_BASE}/auth/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: 'admin@indigo.com', username: 'admin', password: 'admin123' })
+            });
+            if (authRes.ok) {
+              const authData = await authRes.json();
+              const newToken = authData.access_token || authData.token;
+              if (newToken) {
+                this.setToken(newToken);
+                return this.request(endpoint, options, true);
+              }
             }
+          } catch (authErr) {
+            console.warn('Auto-login notice:', authErr);
           }
-        } catch (authErr) {
-          console.warn('Auto-login notice:', authErr);
         }
-      }
 
-      if (res.status === 204) {
-        return null;
-      }
+        if (res.status === 204) {
+          return null;
+        }
 
-      const data = await res.json();
-      if (!res.ok) {
+        if (res.ok) {
+          return await res.json();
+        }
+
+        const data = await res.json().catch(() => ({ detail: `Request failed with status ${res.status}` }));
         throw new Error(data.detail || `Request failed with status ${res.status}`);
+      } catch (err) {
+        lastError = err;
       }
-
-      return data;
-    } catch (err) {
-      console.error(`API Error on [${options.method || 'GET'} ${endpoint}]:`, err);
-      throw err;
     }
+
+    clearTimeout(timeoutId);
+    console.warn(`API fallback exhausted on [${options.method || 'GET'} ${endpoint}]:`, lastError?.message || lastError);
+    throw lastError;
   },
 
   // Auth
@@ -144,12 +180,49 @@ export const apiClient = {
     });
   },
 
-  // Repositories
+  // Repositories & GitHub Integration
   validateGitHub(url, branch = 'main', token = '') {
     return this.request('/repositories/github/validate', {
       method: 'POST',
       body: JSON.stringify({ url, branch, token: token || null })
     });
+  },
+
+  fetchRepoTree(url, branch = 'main', token = '') {
+    return this.request('/repositories/github/tree', {
+      method: 'POST',
+      body: JSON.stringify({ url, branch, token: token || null })
+    });
+  },
+
+  scanGitHubRepo(url, branch = 'main', token = '', companyName = null, syncToModel = true) {
+    return this.request('/repositories/github/scan', {
+      method: 'POST',
+      body: JSON.stringify({
+        url,
+        branch,
+        token: token || null,
+        company_name: companyName,
+        sync_to_model: syncToModel
+      })
+    });
+  },
+
+  syncRepoToModel(repoUrl, scanSummary, findings, dependencies = [], companyName = null) {
+    return this.request('/repositories/github/sync-to-model', {
+      method: 'POST',
+      body: JSON.stringify({
+        repo_url: repoUrl,
+        scan_summary: scanSummary,
+        findings,
+        dependencies,
+        company_name: companyName
+      })
+    });
+  },
+
+  getScannedRepositories() {
+    return this.request('/repositories/list');
   },
 
   uploadSourceZip(file) {
@@ -158,6 +231,35 @@ export const apiClient = {
     return this.request('/repositories/upload', {
       method: 'POST',
       body: formData
+    });
+  },
+
+  // AI Threat Intelligence & Model Ingestion
+  getAIModelFeed() {
+    return this.request('/ai/model-feed');
+  },
+
+  generateAIThreatModel(repoUrl, branch = 'main', token = '', companyName = null) {
+    return this.request('/ai/repo-threat-model', {
+      method: 'POST',
+      body: JSON.stringify({
+        repo_url: repoUrl,
+        branch,
+        token: token || null,
+        company_name: companyName
+      })
+    });
+  },
+
+  runUnifiedAIAnalysis(target, targetType = 'repo', token = '', customContext = null) {
+    return this.request('/ai/unified-analysis', {
+      method: 'POST',
+      body: JSON.stringify({
+        target,
+        target_type: targetType,
+        token: token || null,
+        custom_context: customContext
+      })
     });
   },
 
@@ -199,8 +301,9 @@ export const apiClient = {
 
   // Findings
   getFindings(params = {}) {
+    const defaultParams = { limit: 500, ...params };
     const query = new URLSearchParams();
-    Object.entries(params).forEach(([key, val]) => {
+    Object.entries(defaultParams).forEach(([key, val]) => {
       if (val !== undefined && val !== null && val !== '') {
         query.append(key, val);
       }
