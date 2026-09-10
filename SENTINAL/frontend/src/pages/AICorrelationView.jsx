@@ -32,8 +32,11 @@ export function AICorrelationView() {
       const all = risks || [];
       setCorrelatedRisks(all);
       if (all.length > 0) setSelectedRisk(all[0]);
+      else setSelectedRisk(null);
     }
     loadCorrelation();
+    const unsubscribe = dashboardService.subscribe(loadCorrelation);
+    return () => unsubscribe();
   }, []);
 
   const correlationScore = calculateCorrelationScore(correlatedRisks);

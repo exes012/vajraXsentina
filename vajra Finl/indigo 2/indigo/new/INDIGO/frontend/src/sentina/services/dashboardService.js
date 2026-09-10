@@ -51,11 +51,11 @@ function formatFinding(f) {
 
 class DashboardService {
   constructor() {
-    this.findings = [...mockFindings];
+    this.findings = [];
     this.assessments = [...mockAssessments];
     this.projects = [...mockProjects];
     this.assets = [...mockAssets];
-    this.correlatedRisks = [...mockCorrelatedRisks];
+    this.correlatedRisks = [];
     this.reports = [...mockReports];
     this.notifications = [...mockNotifications];
     this.activeAssessmentId = null;
@@ -68,6 +68,11 @@ class DashboardService {
 
   setActiveAssessmentId(id) {
     this.activeAssessmentId = id;
+    if (id && !String(id).startsWith('temp-') && !String(id).startsWith('scan-temp-')) {
+      this.getFindings({ assessment_id: id }).then(f => {
+        this.notify();
+      }).catch(() => {});
+    }
     this.notify();
   }
 
@@ -82,12 +87,13 @@ class DashboardService {
     });
   }
 
-  async getDashboardSummary() {
+  async getDashboardSummary(assessmentId = null) {
+    const targetId = assessmentId || this.getActiveAssessmentId();
     try {
       const [data, allFindings, correlatedRisks] = await Promise.all([
         apiClient.getDashboard().catch(() => null),
-        this.getFindings().catch(() => []),
-        this.getCorrelatedRisks().catch(() => [])
+        this.getFindings(targetId ? { assessment_id: targetId } : {}).catch(() => []),
+        this.getCorrelatedRisks(targetId).catch(() => [])
       ]);
 
       const findingsList = Array.isArray(allFindings) ? allFindings : [];
@@ -96,7 +102,7 @@ class DashboardService {
       const integratedScore = calculateIntegratedOverallScore(findingsList, corrList, modScores);
       const posture = getScorePosture(integratedScore);
 
-      const sevDist = data?.severity_distribution || {
+      const sevDist = {
         CRITICAL: findingsList.filter(f => f.severity === 'CRITICAL').length || 0,
         HIGH: findingsList.filter(f => f.severity === 'HIGH').length || 0,
         MEDIUM: findingsList.filter(f => f.severity === 'MEDIUM').length || 0,
@@ -104,12 +110,18 @@ class DashboardService {
         INFO: findingsList.filter(f => f.severity === 'INFO').length || 0
       };
 
-      const totalVulns = findingsList.length > 0 ? findingsList.length : Object.values(sevDist).reduce((a, b) => a + b, 0);
+      const totalVulns = findingsList.length;
       const totalScans = data?.total_assessments ?? this.assessments.length ?? 0;
-      const monitoredCount = data?.assets_monitored_count || data?.total_projects || (totalScans > 0 ? 1 : 0);
+      const monitoredCount = data?.assets_monitored_count || (this.assessments.length > 0 ? this.assessments.length : 1);
       const projectCount = data?.total_projects || 1;
+      
+      const activeAsm = targetId 
+        ? (this.assessments.find(a => String(a.id) === String(targetId)) || null) 
+        : (this.assessments.length > 0 ? this.assessments[0] : null);
 
       return {
+        activeTarget: activeAsm?.target || activeAsm?.targetInfo?.url || 'Active Security Scope',
+        activeAssessment: activeAsm,
         totalScans: {
           value: totalScans,
           label: "TOTAL SCANS",
@@ -125,7 +137,7 @@ class DashboardService {
           trend: "0%",
           trendDirection: "neutral",
           isGoodTrend: true,
-          period: "active findings",
+          period: activeAsm ? `for ${activeAsm.target || 'target'}` : "active findings",
           sparkline: [0, 0, 0, totalVulns]
         },
         assetsMonitored: {
@@ -145,12 +157,12 @@ class DashboardService {
           sparkline: [0, 0, 0, projectCount]
         },
         securityScore: {
-          score: integratedScore,
+          score: activeAsm?.overallScore !== undefined ? activeAsm.overallScore : integratedScore,
           maxScore: 100,
           posture: posture.label,
           postureColor: posture.color,
           delta: "+0.0%",
-          deltaPeriod: findingsList.length > 0 ? "live multi-engine synthesis" : "ready for assessment",
+          deltaPeriod: findingsList.length > 0 ? "live scan analysis" : "clean target baseline",
           isPositive: integratedScore >= 75,
           rings: [
             { name: "SAST", score: modScores.sast.score, weight: 20, color: "#00f2fe", description: "Static Application Security Testing" },
@@ -160,15 +172,18 @@ class DashboardService {
             { name: "Threat Intel", score: modScores.threat_intel.score, weight: 20, color: "#fbbf24", description: "Threat Intelligence and Surface" }
           ]
         },
-        severityBreakdown: {
-          critical: sevDist.CRITICAL || 0,
-          high: sevDist.HIGH || 0,
-          medium: sevDist.MEDIUM || 0,
-          low: sevDist.LOW || 0,
-          info: sevDist.INFO || 0
-        },
-        dastCoverage: data?.dast_coverage_summary || {
-          coverage_percentage: 0,
+        severityBreakdown: sevDist,
+        dastCoverage: activeAsm?.coverageTelemetry?.urls_scanned ? {
+          coverage_percentage: activeAsm.dastCoverageScore || 0,
+          requests_attempted: activeAsm.coverageTelemetry.requests_attempted || 0,
+          requests_successful: activeAsm.coverageTelemetry.requests_successful || 0,
+          requests_blocked: activeAsm.coverageTelemetry.requests_blocked || 0,
+          rate_limited: activeAsm.coverageTelemetry.count_429 || 0,
+          urls_discovered: activeAsm.coverageTelemetry.crawlable_urls || 0,
+          urls_scanned: activeAsm.coverageTelemetry.urls_scanned || 0,
+          waf_status: activeAsm.connectivityDiagnostics?.checks?.['9_waf_indicators']?.detected ? 'WAF DETECTED' : 'NONE DETECTED'
+        } : (data?.dast_coverage_summary || {
+          coverage_percentage: activeAsm?.dastCoverageScore || 0,
           requests_attempted: 0,
           requests_successful: 0,
           requests_blocked: 0,
@@ -176,7 +191,7 @@ class DashboardService {
           urls_discovered: 0,
           urls_scanned: 0,
           waf_status: "NONE DETECTED"
-        },
+        }),
         analysisModules: [
           {
             id: "sast",
@@ -186,7 +201,7 @@ class DashboardService {
             sub: "Semgrep + Native AST Sinks",
             description: "Deep AST rule evaluation & syntax-level flaw detection",
             status: modScores.sast.status,
-            progress: modScores.sast.findings > 0 ? 100 : 0,
+            progress: modScores.sast.findings > 0 ? 100 : (activeAsm?.modules?.sast ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
             score: modScores.sast.score,
             engineScore: modScores.sast.score,
             badgeColor: modScores.sast.posture.color,
@@ -203,7 +218,7 @@ class DashboardService {
             sub: "ZAP + Runtime Fuzzing",
             description: "Runtime blackbox fuzzing & live endpoint validation",
             status: modScores.dast.status,
-            progress: modScores.dast.findings > 0 ? 100 : 0,
+            progress: modScores.dast.findings > 0 ? 100 : (activeAsm?.modules?.dast ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
             score: modScores.dast.score,
             engineScore: modScores.dast.score,
             badgeColor: modScores.dast.posture.color,
@@ -220,7 +235,7 @@ class DashboardService {
             sub: "OSV + Dependency CVEs",
             description: "Third-party open-source dependency CVE audit",
             status: modScores.sca.status,
-            progress: modScores.sca.findings > 0 ? 100 : 0,
+            progress: modScores.sca.findings > 0 ? 100 : (activeAsm?.modules?.sca ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
             score: modScores.sca.score,
             engineScore: modScores.sca.score,
             badgeColor: modScores.sca.posture.color,
@@ -237,7 +252,7 @@ class DashboardService {
             sub: "Gitleaks + Token Entropy",
             description: "High-entropy API key & hardcoded credentials detection",
             status: modScores.secrets.status,
-            progress: modScores.secrets.findings > 0 ? 100 : 0,
+            progress: modScores.secrets.findings > 0 ? 100 : (activeAsm?.modules?.secrets ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
             score: modScores.secrets.score,
             engineScore: modScores.secrets.score,
             badgeColor: modScores.secrets.posture.color,
@@ -254,7 +269,7 @@ class DashboardService {
             sub: "TLS Handshake + Web Probes",
             description: "Public key infrastructure & cipher suite compliance",
             status: modScores.threat_intel.status,
-            progress: modScores.threat_intel.findings > 0 ? 100 : 0,
+            progress: modScores.threat_intel.findings > 0 ? 100 : ((activeAsm?.modules?.nuclei || activeAsm?.modules?.ssl) ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
             score: modScores.threat_intel.score,
             engineScore: modScores.threat_intel.score,
             badgeColor: modScores.threat_intel.posture.color,
@@ -354,10 +369,14 @@ class DashboardService {
 
   getInitialFindings(params = {}) {
     const currentList = this.findings || [];
-    if (params && params.assessment_id) {
-      return currentList
-        .filter(f => String(f.assessment_id) === String(params.assessment_id) || String(f.assessmentId) === String(params.assessment_id))
-        .map(formatFinding);
+    const targetAssessmentId = params.assessment_id || this.activeAssessmentId;
+    if (targetAssessmentId) {
+      const filtered = currentList.filter(f => String(f.assessment_id) === String(targetAssessmentId) || String(f.assessmentId) === String(targetAssessmentId));
+      if (params.source) {
+        const src = params.source.toUpperCase();
+        return filtered.filter(f => (f.source || '').toUpperCase() === src || (f.scanner || '').toUpperCase() === src).map(formatFinding);
+      }
+      return filtered.map(formatFinding);
     }
     if (params && params.source) {
       const src = params.source.toUpperCase();
@@ -369,25 +388,43 @@ class DashboardService {
   }
 
   async getFindings(params = {}) {
+    const queryParams = { ...params };
+    // If no assessment_id is provided and not explicitly requesting all, default to active assessment
+    if (!queryParams.assessment_id && !queryParams.all && this.activeAssessmentId) {
+      queryParams.assessment_id = this.activeAssessmentId;
+    }
+
     try {
-      const serverFindings = await apiClient.getFindings(params);
+      const serverFindings = await apiClient.getFindings(queryParams);
       if (serverFindings && Array.isArray(serverFindings)) {
-        if (!params || Object.keys(params).length === 0) {
-          this.findings = serverFindings;
+        const formatted = serverFindings.map(formatFinding);
+        if (queryParams.assessment_id) {
+          // Update cache for this specific assessment
+          this.findings = [
+            ...this.findings.filter(f => String(f.assessment_id) !== String(queryParams.assessment_id) && String(f.assessmentId) !== String(queryParams.assessment_id)),
+            ...formatted
+          ];
+        } else if (Object.keys(queryParams).length === 0 || queryParams.all) {
+          this.findings = formatted;
         }
-        return serverFindings.map(formatFinding);
+        return formatted;
       }
     } catch (e) {
       console.warn("Could not fetch findings from backend, using cache:", e);
     }
+
     const currentList = this.findings || [];
-    if (params && params.assessment_id) {
-      return currentList
-        .filter(f => String(f.assessment_id) === String(params.assessment_id) || String(f.assessmentId) === String(params.assessment_id))
-        .map(formatFinding);
+    const filterId = queryParams.assessment_id || this.activeAssessmentId;
+    if (filterId) {
+      const filtered = currentList.filter(f => String(f.assessment_id) === String(filterId) || String(f.assessmentId) === String(filterId));
+      if (queryParams.source) {
+        const src = queryParams.source.toUpperCase();
+        return filtered.filter(f => (f.source || '').toUpperCase() === src || (f.scanner || '').toUpperCase() === src).map(formatFinding);
+      }
+      return filtered.map(formatFinding);
     }
-    if (params && params.source) {
-      const src = params.source.toUpperCase();
+    if (queryParams.source) {
+      const src = queryParams.source.toUpperCase();
       return currentList
         .filter(f => (f.source || '').toUpperCase() === src || (f.scanner || '').toUpperCase() === src)
         .map(formatFinding);
@@ -427,6 +464,9 @@ class DashboardService {
         const formattedServer = serverAssessments.map(a => this._formatAssessment(a));
         const pendingOptimistic = (this.assessments || []).filter(a => String(a.id).startsWith('temp-') || String(a.id).startsWith('scan-temp-'));
         this.assessments = [...pendingOptimistic, ...formattedServer.filter(s => !pendingOptimistic.some(p => p.id === s.id))];
+        if (!this.activeAssessmentId && this.assessments.length > 0) {
+          this.activeAssessmentId = this.assessments[0].id;
+        }
         return this.assessments;
       }
     } catch (e) {
@@ -768,6 +808,7 @@ class DashboardService {
     };
 
     // Reflect instantly in the UI state
+    this.findings = [];
     this.assessments = [optimistic, ...this.assessments.filter(a => a.id !== tempId)];
     this.activeAssessmentId = tempId;
     this.notify();
@@ -821,7 +862,11 @@ class DashboardService {
     const interval = setInterval(async () => {
       pollCount++;
       try {
-        const asm = await apiClient.getAssessment(assessmentId);
+        const [asm, fnds] = await Promise.all([
+          apiClient.getAssessment(assessmentId).catch(() => null),
+          apiClient.getFindings({ assessment_id: assessmentId, limit: 500 }).catch(() => [])
+        ]);
+
         if (asm) {
           const formatted = this._formatAssessment(asm);
           const idx = this.assessments.findIndex(a => String(a.id) === String(assessmentId));
@@ -830,9 +875,18 @@ class DashboardService {
           } else {
             this.assessments.unshift(formatted);
           }
+
+          if (String(this.activeAssessmentId) === String(assessmentId)) {
+            this.findings = (fnds || []).map(formatFinding);
+          }
           this.notify();
+
           if (asm.status === 'COMPLETED' || asm.status === 'FAILED' || asm.status === 'CANCELLED' || pollCount > 180) {
             clearInterval(interval);
+            if (String(this.activeAssessmentId) === String(assessmentId)) {
+              const finalFindings = await apiClient.getFindings({ assessment_id: assessmentId, limit: 500 }).catch(() => []);
+              this.findings = (finalFindings || []).map(formatFinding);
+            }
             this.notify();
           }
         }
