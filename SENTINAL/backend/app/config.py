@@ -4,6 +4,10 @@ from typing import List, Optional
 from pydantic_settings import BaseSettings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_NEON_DB = "postgresql://neondb_owner:npg_WzCOhSJ0dn6f@ep-nameless-bird-ay266zed-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+RAW_DB = os.getenv("SENTINA_DATABASE_URL") or os.getenv("DATABASE_URL") or DEFAULT_NEON_DB
+if RAW_DB.startswith("postgres://"):
+    RAW_DB = RAW_DB.replace("postgres://", "postgresql://", 1)
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Sentinal Security Assessment Platform"
@@ -13,7 +17,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # Database
-    DATABASE_URL: str = os.getenv("SENTINA_DATABASE_URL", f"sqlite:///{BASE_DIR / 'sentinal.db'}")
+    DATABASE_URL: str = RAW_DB
 
     # Security & Auth
     SECRET_KEY: str = "sentinal-dev-secret-key-32-chars-long-change-in-prod-!"

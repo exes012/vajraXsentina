@@ -86,182 +86,196 @@ class DashboardService {
       const integratedScore = calculateIntegratedOverallScore(findingsList, corrList, modScores);
       const posture = getScorePosture(integratedScore);
 
-      if (data) {
-        const sevDist = data.severity_distribution || { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0, INFO: 0 };
-        const totalVulns = findingsList.length > 0 ? findingsList.length : Object.values(sevDist).reduce((a, b) => a + b, 0);
-        const monitoredCount = data.assets_monitored_count || data.total_projects || (data.total_assessments > 0 ? 1 : 0);
+      const sevDist = data?.severity_distribution || {
+        CRITICAL: findingsList.filter(f => f.severity === 'CRITICAL').length || 0,
+        HIGH: findingsList.filter(f => f.severity === 'HIGH').length || 0,
+        MEDIUM: findingsList.filter(f => f.severity === 'MEDIUM').length || 0,
+        LOW: findingsList.filter(f => f.severity === 'LOW').length || 0,
+        INFO: findingsList.filter(f => f.severity === 'INFO').length || 0
+      };
 
-        return {
-          totalScans: {
-            value: data.total_assessments || 0,
-            label: "TOTAL SCANS",
-            trend: data.total_assessments > 0 ? "↑ Active" : "0%",
-            trendDirection: "neutral",
-            period: "live scans",
-            sparkline: [0, 0, 0, data.total_assessments || 0]
-          },
-          vulnerabilities: {
-            value: totalVulns,
-            rawValue: totalVulns,
-            label: "VULNERABILITIES",
-            trend: "0%",
-            trendDirection: "neutral",
-            isGoodTrend: true,
-            period: "active findings",
-            sparkline: [0, 0, 0, totalVulns]
-          },
-          assetsMonitored: {
-            value: monitoredCount,
-            label: "ASSETS MONITORED",
-            trend: "0%",
-            trendDirection: "neutral",
-            period: "active targets",
-            sparkline: [0, 0, 0, monitoredCount]
-          },
-          projects: {
-            value: data.total_projects || 0,
-            label: "PROJECTS",
-            trend: "0%",
-            trendDirection: "neutral",
-            period: "portfolios",
-            sparkline: [0, 0, 0, data.total_projects || 0]
-          },
-          securityScore: {
-            score: integratedScore,
-            maxScore: 100,
-            posture: posture.label,
-            postureColor: posture.color,
-            delta: "+0.0%",
-            deltaPeriod: findingsList.length > 0 ? "live multi-engine synthesis" : "ready for assessment",
-            isPositive: integratedScore >= 75
-          },
-          severityBreakdown: {
-            critical: sevDist.CRITICAL || findingsList.filter(f => f.severity === 'CRITICAL').length || 0,
-            high: sevDist.HIGH || findingsList.filter(f => f.severity === 'HIGH').length || 0,
-            medium: sevDist.MEDIUM || findingsList.filter(f => f.severity === 'MEDIUM').length || 0,
-            low: sevDist.LOW || findingsList.filter(f => f.severity === 'LOW').length || 0,
-            info: sevDist.INFO || findingsList.filter(f => f.severity === 'INFO').length || 0
-          },
-          dastCoverage: data.dast_coverage_summary || {
-            coverage_percentage: 0,
-            requests_attempted: 0,
-            requests_successful: 0,
-            requests_blocked: 0,
-            rate_limited: 0,
-            urls_discovered: 0,
-            urls_scanned: 0,
-            waf_status: "NONE DETECTED"
-          },
-          analysisModules: [
-            {
-              id: "sast",
-              number: "01",
-              name: "01 SAST",
-              fullName: "Static Application Security Testing",
-              sub: "Semgrep + Native AST Sinks",
-              description: "Deep AST rule evaluation & syntax-level flaw detection",
-              status: modScores.sast.status,
-              progress: modScores.sast.findings > 0 ? 100 : 0,
-              score: modScores.sast.score,
-              engineScore: modScores.sast.score,
-              badgeColor: modScores.sast.posture.color,
-              icon: "Code2",
-              color: "#00f2fe",
-              findingsCount: modScores.sast.findings,
-              targetTab: "sast"
-            },
-            {
-              id: "dast",
-              number: "02",
-              name: "02 DAST",
-              fullName: "Dynamic Application Security Testing",
-              sub: "ZAP + Runtime Fuzzing",
-              description: "Runtime blackbox fuzzing & live endpoint validation",
-              status: modScores.dast.status,
-              progress: modScores.dast.findings > 0 ? 100 : 0,
-              score: modScores.dast.score,
-              engineScore: modScores.dast.score,
-              badgeColor: modScores.dast.posture.color,
-              icon: "Radio",
-              color: "#f97316",
-              findingsCount: modScores.dast.findings,
-              targetTab: "dast"
-            },
-            {
-              id: "sca",
-              number: "03",
-              name: "03 SCA",
-              fullName: "Software Composition Analysis",
-              sub: "OSV + Dependency CVEs",
-              description: "Third-party open-source dependency CVE audit",
-              status: modScores.sca.status,
-              progress: modScores.sca.findings > 0 ? 100 : 0,
-              score: modScores.sca.score,
-              engineScore: modScores.sca.score,
-              badgeColor: modScores.sca.posture.color,
-              icon: "Boxes",
-              color: "#00ff88",
-              findingsCount: modScores.sca.findings,
-              targetTab: "sca"
-            },
-            {
-              id: "secrets",
-              number: "04",
-              name: "04 SECRETS",
-              fullName: "Secret Token Entropy Scanner",
-              sub: "Gitleaks + Token Entropy",
-              description: "High-entropy API key & hardcoded credentials detection",
-              status: modScores.secrets.status,
-              progress: modScores.secrets.findings > 0 ? 100 : 0,
-              score: modScores.secrets.score,
-              engineScore: modScores.secrets.score,
-              badgeColor: modScores.secrets.posture.color,
-              icon: "Lock",
-              color: "#ff1744",
-              findingsCount: modScores.secrets.findings,
-              targetTab: "secrets"
-            },
-            {
-              id: "threat_intel",
-              number: "05",
-              name: "05 NUCLEI / SSL",
-              fullName: "Certificate & Infrastructure Audit",
-              sub: "TLS Handshake + Web Probes",
-              description: "Public key infrastructure & cipher suite compliance",
-              status: modScores.threat_intel.status,
-              progress: modScores.threat_intel.findings > 0 ? 100 : 0,
-              score: modScores.threat_intel.score,
-              engineScore: modScores.threat_intel.score,
-              badgeColor: modScores.threat_intel.posture.color,
-              icon: "Crosshair",
-              color: "#fbbf24",
-              findingsCount: modScores.threat_intel.findings,
-              targetTab: "threat_intel"
-            },
-            {
-              id: "ai_correlation",
-              number: "06",
-              name: "06 AI CORRELATION",
-              fullName: "Automated Attack-Chain Synthesis",
-              sub: "Cross-Engine Attack Chains",
-              description: "Multi-vector blended vulnerability path confirmation",
-              status: modScores.ai_correlation.status,
-              progress: modScores.ai_correlation.findings > 0 ? 100 : 0,
-              score: modScores.ai_correlation.score,
-              engineScore: modScores.ai_correlation.score,
-              badgeColor: modScores.ai_correlation.posture.color,
-              icon: "Cpu",
-              color: "#c084fc",
-              findingsCount: modScores.ai_correlation.findings,
-              targetTab: "ai_correlation"
-            }
+      const totalVulns = findingsList.length > 0 ? findingsList.length : Object.values(sevDist).reduce((a, b) => a + b, 0);
+      const totalScans = data?.total_assessments ?? this.assessments.length ?? 0;
+      const monitoredCount = data?.assets_monitored_count || data?.total_projects || (totalScans > 0 ? 1 : 0);
+      const projectCount = data?.total_projects || 1;
+
+      return {
+        totalScans: {
+          value: totalScans,
+          label: "TOTAL SCANS",
+          trend: totalScans > 0 ? "↑ Active" : "0%",
+          trendDirection: "neutral",
+          period: "live scans",
+          sparkline: [0, 0, 0, totalScans]
+        },
+        vulnerabilities: {
+          value: totalVulns,
+          rawValue: totalVulns,
+          label: "VULNERABILITIES",
+          trend: "0%",
+          trendDirection: "neutral",
+          isGoodTrend: true,
+          period: "active findings",
+          sparkline: [0, 0, 0, totalVulns]
+        },
+        assetsMonitored: {
+          value: monitoredCount,
+          label: "ASSETS MONITORED",
+          trend: "0%",
+          trendDirection: "neutral",
+          period: "active targets",
+          sparkline: [0, 0, 0, monitoredCount]
+        },
+        projects: {
+          value: projectCount,
+          label: "PROJECTS",
+          trend: "0%",
+          trendDirection: "neutral",
+          period: "portfolios",
+          sparkline: [0, 0, 0, projectCount]
+        },
+        securityScore: {
+          score: integratedScore,
+          maxScore: 100,
+          posture: posture.label,
+          postureColor: posture.color,
+          delta: "+0.0%",
+          deltaPeriod: findingsList.length > 0 ? "live multi-engine synthesis" : "ready for assessment",
+          isPositive: integratedScore >= 75,
+          rings: [
+            { name: "SAST", score: modScores.sast.score, weight: 20, color: "#00f2fe", description: "Static Application Security Testing" },
+            { name: "DAST", score: modScores.dast.score, weight: 20, color: "#f97316", description: "Dynamic Application Security Testing" },
+            { name: "SCA", score: modScores.sca.score, weight: 20, color: "#00ff88", description: "Software Composition Analysis" },
+            { name: "Secrets", score: modScores.secrets.score, weight: 20, color: "#ff1744", description: "Credential and Secret Scanning" },
+            { name: "Threat Intel", score: modScores.threat_intel.score, weight: 20, color: "#fbbf24", description: "Threat Intelligence and Surface" }
           ]
-        };
-      }
+        },
+        severityBreakdown: {
+          critical: sevDist.CRITICAL || 0,
+          high: sevDist.HIGH || 0,
+          medium: sevDist.MEDIUM || 0,
+          low: sevDist.LOW || 0,
+          info: sevDist.INFO || 0
+        },
+        dastCoverage: data?.dast_coverage_summary || {
+          coverage_percentage: 0,
+          requests_attempted: 0,
+          requests_successful: 0,
+          requests_blocked: 0,
+          rate_limited: 0,
+          urls_discovered: 0,
+          urls_scanned: 0,
+          waf_status: "NONE DETECTED"
+        },
+        analysisModules: [
+          {
+            id: "sast",
+            number: "01",
+            name: "01 SAST",
+            fullName: "Static Application Security Testing",
+            sub: "Semgrep + Native AST Sinks",
+            description: "Deep AST rule evaluation & syntax-level flaw detection",
+            status: modScores.sast.status,
+            progress: modScores.sast.findings > 0 ? 100 : 0,
+            score: modScores.sast.score,
+            engineScore: modScores.sast.score,
+            badgeColor: modScores.sast.posture.color,
+            icon: "Code2",
+            color: "#00f2fe",
+            findingsCount: modScores.sast.findings,
+            targetTab: "sast"
+          },
+          {
+            id: "dast",
+            number: "02",
+            name: "02 DAST",
+            fullName: "Dynamic Application Security Testing",
+            sub: "ZAP + Runtime Fuzzing",
+            description: "Runtime blackbox fuzzing & live endpoint validation",
+            status: modScores.dast.status,
+            progress: modScores.dast.findings > 0 ? 100 : 0,
+            score: modScores.dast.score,
+            engineScore: modScores.dast.score,
+            badgeColor: modScores.dast.posture.color,
+            icon: "Radio",
+            color: "#f97316",
+            findingsCount: modScores.dast.findings,
+            targetTab: "dast"
+          },
+          {
+            id: "sca",
+            number: "03",
+            name: "03 SCA",
+            fullName: "Software Composition Analysis",
+            sub: "OSV + Dependency CVEs",
+            description: "Third-party open-source dependency CVE audit",
+            status: modScores.sca.status,
+            progress: modScores.sca.findings > 0 ? 100 : 0,
+            score: modScores.sca.score,
+            engineScore: modScores.sca.score,
+            badgeColor: modScores.sca.posture.color,
+            icon: "Boxes",
+            color: "#00ff88",
+            findingsCount: modScores.sca.findings,
+            targetTab: "sca"
+          },
+          {
+            id: "secrets",
+            number: "04",
+            name: "04 SECRETS",
+            fullName: "Secret Token Entropy Scanner",
+            sub: "Gitleaks + Token Entropy",
+            description: "High-entropy API key & hardcoded credentials detection",
+            status: modScores.secrets.status,
+            progress: modScores.secrets.findings > 0 ? 100 : 0,
+            score: modScores.secrets.score,
+            engineScore: modScores.secrets.score,
+            badgeColor: modScores.secrets.posture.color,
+            icon: "Lock",
+            color: "#ff1744",
+            findingsCount: modScores.secrets.findings,
+            targetTab: "secrets"
+          },
+          {
+            id: "threat_intel",
+            number: "05",
+            name: "05 NUCLEI / SSL",
+            fullName: "Certificate & Infrastructure Audit",
+            sub: "TLS Handshake + Web Probes",
+            description: "Public key infrastructure & cipher suite compliance",
+            status: modScores.threat_intel.status,
+            progress: modScores.threat_intel.findings > 0 ? 100 : 0,
+            score: modScores.threat_intel.score,
+            engineScore: modScores.threat_intel.score,
+            badgeColor: modScores.threat_intel.posture.color,
+            icon: "Crosshair",
+            color: "#fbbf24",
+            findingsCount: modScores.threat_intel.findings,
+            targetTab: "threat_intel"
+          },
+          {
+            id: "ai_correlation",
+            number: "06",
+            name: "06 AI CORRELATION",
+            fullName: "Automated Attack-Chain Synthesis",
+            sub: "Cross-Engine Attack Chains",
+            description: "Multi-vector blended vulnerability path confirmation",
+            status: modScores.ai_correlation.status,
+            progress: modScores.ai_correlation.findings > 0 ? 100 : 0,
+            score: modScores.ai_correlation.score,
+            engineScore: modScores.ai_correlation.score,
+            badgeColor: modScores.ai_correlation.posture.color,
+            icon: "Cpu",
+            color: "#c084fc",
+            findingsCount: modScores.ai_correlation.findings,
+            targetTab: "ai_correlation"
+          }
+        ]
+      };
     } catch (e) {
-      console.warn("Could not fetch dashboard summary from backend:", e);
+      console.warn("Could not fetch dashboard summary from backend, using default summary:", e);
+      return mockDashboardSummary;
     }
-    return mockDashboardSummary;
   }
 
   // --- Assets API Integration ---
@@ -350,13 +364,14 @@ class DashboardService {
     } catch (e) {
       console.warn("Could not fetch findings from backend, using cache:", e);
     }
+    const currentList = this.findings || [];
     if (params && params.source) {
       const src = params.source.toUpperCase();
-      return this.findings
+      return currentList
         .filter(f => (f.source || '').toUpperCase() === src || (f.scanner || '').toUpperCase() === src)
         .map(formatFinding);
     }
-    return this.findings.map(formatFinding);
+    return currentList.map(formatFinding);
   }
 
   async getFindingById(id) {
@@ -388,12 +403,13 @@ class DashboardService {
     try {
       const serverAssessments = await apiClient.getAssessments(projectId);
       if (serverAssessments && Array.isArray(serverAssessments) && serverAssessments.length > 0) {
-        return serverAssessments.map(a => this._formatAssessment(a));
+        this.assessments = serverAssessments.map(a => this._formatAssessment(a));
+        return this.assessments;
       }
     } catch (e) {
       console.warn("Could not fetch assessments from backend:", e);
     }
-    return this.assessments;
+    return (this.assessments || []).map(a => (a.counts && a.targetType) ? a : this._formatAssessment(a));
   }
 
   _formatAssessment(a) {

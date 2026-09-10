@@ -3,19 +3,15 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.pool import NullPool
 from app.config import settings
 
-# For SQLite, enable check_same_thread=False, busy_timeout, and NullPool to release file locks
+# For SQLite vs PostgreSQL engine creation
 is_sqlite = settings.DATABASE_URL.startswith("sqlite")
-connect_args = {"check_same_thread": False, "timeout": 30} if is_sqlite else {}
-pool_kwargs = {"poolclass": NullPool} if is_sqlite else {}
-
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args=connect_args,
-    echo=False,
-    **pool_kwargs
-)
-
 if is_sqlite:
+    engine = create_engine(
+        settings.DATABASE_URL,
+        connect_args={"check_same_thread": False, "timeout": 30},
+        poolclass=NullPool,
+        echo=False
+    )
     @event.listens_for(engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
         try:
@@ -26,6 +22,14 @@ if is_sqlite:
             cursor.close()
         except Exception:
             pass
+else:
+    engine = create_engine(
+        settings.DATABASE_URL,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10,
+        echo=False
+    )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
