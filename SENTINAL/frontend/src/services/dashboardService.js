@@ -432,7 +432,22 @@ class DashboardService {
   }
 
   _formatAssessment(a) {
-    const targetUrl = a.target_info?.url || a.repository_info?.url || (a.repository_info?.zip_path && (a.repository_info?.filename || 'Uploaded Source Archive')) || a.target_url || a.repository_url || a.target || a.name || 'Active Target Scope';
+    const liveUrl = a.target_info?.url || a.target_url || a.targetInfo?.url || (a.assessment_type === 'dast' ? a.target : null);
+    const repoUrl = a.repository_info?.url || a.repository_url || a.repoInfo?.url || (a.repository_info?.zip_path && (a.repository_info?.filename || 'Uploaded Source Archive')) || (a.assessment_type === 'repo' || a.assessment_type === 'source' ? a.target : null);
+
+    let displayTarget = 'Active Target Scope';
+    if (liveUrl && repoUrl) {
+      displayTarget = `${liveUrl} + ${repoUrl}`;
+    } else if (liveUrl) {
+      displayTarget = liveUrl;
+    } else if (repoUrl) {
+      displayTarget = repoUrl;
+    } else if (a.target) {
+      displayTarget = a.target;
+    } else if (a.name) {
+      displayTarget = a.name;
+    }
+
     const targetType = a.assessment_type === 'repo' ? 'Git Repository (SAST/SCA)' : (a.assessment_type === 'source' ? 'Source Code Archive (SAST/SCA)' : (a.assessment_type === 'dast' ? 'Web Application (DAST)' : 'Combined (Unified SAST+DAST)'));
     
     // Accurate dynamic Security Score (0-100, 100=Safest)
@@ -471,9 +486,11 @@ class DashboardService {
 
     return {
       id: a.id,
-      target: targetUrl,
+      target: displayTarget,
+      liveUrl: liveUrl,
+      repoUrl: repoUrl,
       targetType: targetType,
-      assessmentType: a.assessment_type,
+      assessmentType: a.assessment_type || (liveUrl && repoUrl ? 'combined' : (liveUrl ? 'dast' : 'repo')),
       startedAt: a.started_at ? new Date(a.started_at).toLocaleString() : (a.created_at ? new Date(a.created_at).toLocaleString() : 'Just now'),
       completedAt: a.completed_at ? new Date(a.completed_at).toLocaleString() : null,
       status: a.status || 'PENDING',
@@ -503,8 +520,8 @@ class DashboardService {
       })),
       scanJobs: a.scan_jobs || [],
       modules: a.modules || {},
-      targetInfo: a.target_info || {},
-      repoInfo: a.repository_info || {}
+      targetInfo: a.target_info || (liveUrl ? { url: liveUrl } : {}),
+      repoInfo: a.repository_info || (repoUrl ? { url: repoUrl } : {})
     };
   }
 

@@ -16,7 +16,9 @@ import {
   Radio,
   Boxes,
   KeyRound,
+  Globe,
   Globe2,
+  FolderGit2,
   Cpu,
   StopCircle,
   Filter,
@@ -675,20 +677,54 @@ export function Assessments({ onSelectFinding }) {
               }}
             >
               <div>
-                <div style={{ fontSize: '10px', fontWeight: 900, color: '#ff1744', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '10px' }}>
-                  TARGET PROFILE
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 900, color: '#ff1744', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                    TARGET PROFILE & SCOPE
+                  </div>
+                  <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: '#00f2fe', background: 'rgba(0, 242, 254, 0.1)', border: '1px solid rgba(0, 242, 254, 0.3)', padding: '1px 6px', borderRadius: '3px' }}>
+                    {selectedAssessment.assessmentType === 'combined' ? 'COMBINED SAST+DAST' : (selectedAssessment.assessmentType === 'dast' ? 'WEB DAST' : 'SOURCE SAST/SCA')}
+                  </span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ padding: '6px 8px', borderRadius: '4px', background: '#040005', border: '1.2px solid #28081c' }}>
-                    <div style={{ fontSize: '9px', color: '#71717a' }}>Target Scope</div>
-                    <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#f8fafc', marginTop: '1px', wordBreak: 'break-all' }}>
-                      {selectedAssessment.target || 'Combined Scope'}
+                  {/* Live Web Application Target (for DAST and Combined) */}
+                  {(selectedAssessment.liveUrl || selectedAssessment.targetInfo?.url || selectedAssessment.assessmentType === 'dast' || selectedAssessment.assessmentType === 'combined') && (
+                    <div style={{ padding: '7px 9px', borderRadius: '5px', background: '#040005', border: '1.2px solid #28081c' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '9px', color: '#f97316', fontWeight: 800 }}>
+                        <Globe size={11} color="#f97316" /> WEB APPLICATION TARGET (DAST)
+                      </div>
+                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc', marginTop: '2px', wordBreak: 'break-all', fontFamily: 'var(--font-mono)' }}>
+                        {selectedAssessment.liveUrl || selectedAssessment.targetInfo?.url || selectedAssessment.target}
+                      </div>
+                      {selectedAssessment.targetInfo?.scan_mode && (
+                        <div style={{ fontSize: '9px', color: '#a1a1aa', marginTop: '3px', display: 'flex', gap: '8px' }}>
+                          <span>Mode: <strong style={{ color: '#00f2fe' }}>{selectedAssessment.targetInfo.scan_mode.toUpperCase()}</strong></span>
+                          <span>Auth: <strong style={{ color: '#00ff88' }}>{selectedAssessment.targetInfo.auth_type?.toUpperCase() || 'NONE'}</strong></span>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
 
+                  {/* Source Code Repository Target (for SAST/SCA and Combined) */}
+                  {(selectedAssessment.repoUrl || selectedAssessment.repoInfo?.url || selectedAssessment.repoInfo?.zip_path || selectedAssessment.assessmentType === 'repo' || selectedAssessment.assessmentType === 'source' || selectedAssessment.assessmentType === 'combined') && (
+                    <div style={{ padding: '7px 9px', borderRadius: '5px', background: '#040005', border: '1.2px solid #28081c' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '9px', color: '#00f2fe', fontWeight: 800 }}>
+                        <FolderGit2 size={11} color="#00f2fe" /> SOURCE CODE TARGET (SAST / SCA)
+                      </div>
+                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc', marginTop: '2px', wordBreak: 'break-all', fontFamily: 'var(--font-mono)' }}>
+                        {selectedAssessment.repoUrl || selectedAssessment.repoInfo?.url || selectedAssessment.repoInfo?.filename || (selectedAssessment.repoInfo?.zip_path ? 'Uploaded Source Archive (.zip)' : (selectedAssessment.assessmentType !== 'dast' ? selectedAssessment.target : 'Repository Target'))}
+                      </div>
+                      {selectedAssessment.repoInfo?.branch && (
+                        <div style={{ fontSize: '9px', color: '#a1a1aa', marginTop: '3px' }}>
+                          Branch: <strong style={{ color: '#38bdf8' }}>{selectedAssessment.repoInfo.branch}</strong>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Target Scope Summary */}
                   <div style={{ padding: '6px 8px', borderRadius: '4px', background: '#040005', border: '1.2px solid #28081c' }}>
-                    <div style={{ fontSize: '9px', color: '#71717a' }}>Target Type</div>
+                    <div style={{ fontSize: '9px', color: '#71717a' }}>Assessment Classification</div>
                     <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#00f2fe', marginTop: '1px' }}>
                       {selectedAssessment.targetType || 'Combined App + Repo'}
                     </div>
@@ -696,7 +732,7 @@ export function Assessments({ onSelectFinding }) {
 
                   <div style={{ padding: '6px 8px', borderRadius: '4px', background: '#040005', border: '1.2px solid #28081c' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '9px', color: '#71717a' }}>Security Score</span>
+                      <span style={{ fontSize: '9px', color: '#71717a' }}>Security Posture Score</span>
                       {selectedAssessment.overallScore !== undefined && !isRunning && (
                         <span style={{ fontSize: '8.5px', fontFamily: 'var(--font-mono)', fontWeight: 800, color: getScorePosture(selectedAssessment.overallScore).color }}>
                           {getScorePosture(selectedAssessment.overallScore).label}
@@ -729,7 +765,7 @@ export function Assessments({ onSelectFinding }) {
                   )}
 
                   <div style={{ padding: '6px 8px', borderRadius: '4px', background: '#040005', border: '1.2px solid #28081c' }}>
-                    <div style={{ fontSize: '9px', color: '#71717a' }}>Detected Flaws</div>
+                    <div style={{ fontSize: '9px', color: '#71717a' }}>Verified Target Flaws</div>
                     <div style={{ fontSize: '14px', fontWeight: 900, fontFamily: 'var(--font-mono)', color: scanFindings.length > 0 ? '#ff1744' : '#00ff88', marginTop: '1px' }}>
                       {scanFindings.length} Findings
                     </div>
