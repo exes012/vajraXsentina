@@ -58,7 +58,17 @@ class DashboardService {
     this.correlatedRisks = [...mockCorrelatedRisks];
     this.reports = [...mockReports];
     this.notifications = [...mockNotifications];
+    this.activeAssessmentId = null;
     this.listeners = new Set();
+  }
+
+  getActiveAssessmentId() {
+    return this.activeAssessmentId;
+  }
+
+  setActiveAssessmentId(id) {
+    this.activeAssessmentId = id;
+    this.notify();
   }
 
   subscribe(listener) {
@@ -343,19 +353,25 @@ class DashboardService {
   }
 
   getInitialFindings(params = {}) {
+    const currentList = this.findings || [];
+    if (params && params.assessment_id) {
+      return currentList
+        .filter(f => String(f.assessment_id) === String(params.assessment_id) || String(f.assessmentId) === String(params.assessment_id))
+        .map(formatFinding);
+    }
     if (params && params.source) {
       const src = params.source.toUpperCase();
-      return this.findings
+      return currentList
         .filter(f => (f.source || '').toUpperCase() === src || (f.scanner || '').toUpperCase() === src)
         .map(formatFinding);
     }
-    return this.findings.map(formatFinding);
+    return currentList.map(formatFinding);
   }
 
   async getFindings(params = {}) {
     try {
       const serverFindings = await apiClient.getFindings(params);
-      if (serverFindings && Array.isArray(serverFindings) && serverFindings.length > 0) {
+      if (serverFindings && Array.isArray(serverFindings)) {
         if (!params || Object.keys(params).length === 0) {
           this.findings = serverFindings;
         }
@@ -365,6 +381,11 @@ class DashboardService {
       console.warn("Could not fetch findings from backend, using cache:", e);
     }
     const currentList = this.findings || [];
+    if (params && params.assessment_id) {
+      return currentList
+        .filter(f => String(f.assessment_id) === String(params.assessment_id) || String(f.assessmentId) === String(params.assessment_id))
+        .map(formatFinding);
+    }
     if (params && params.source) {
       const src = params.source.toUpperCase();
       return currentList
@@ -402,8 +423,10 @@ class DashboardService {
   async getAssessments(projectId = null) {
     try {
       const serverAssessments = await apiClient.getAssessments(projectId);
-      if (serverAssessments && Array.isArray(serverAssessments) && serverAssessments.length > 0) {
-        this.assessments = serverAssessments.map(a => this._formatAssessment(a));
+      if (serverAssessments && Array.isArray(serverAssessments)) {
+        const formattedServer = serverAssessments.map(a => this._formatAssessment(a));
+        const pendingOptimistic = (this.assessments || []).filter(a => String(a.id).startsWith('temp-') || String(a.id).startsWith('scan-temp-'));
+        this.assessments = [...pendingOptimistic, ...formattedServer.filter(s => !pendingOptimistic.some(p => p.id === s.id))];
         return this.assessments;
       }
     } catch (e) {
@@ -624,7 +647,6 @@ class DashboardService {
       repoInfo = config.zipPath
         ? { provider: 'upload', zip_path: config.zipPath, filename: config.uploadedFileName || 'source_archive.zip' }
         : (config.repoUrl ? { provider: 'github', url: config.repoUrl, branch: config.branch || 'main', token: config.repoToken || config.token || null } : null);
-      assessmentType = 'dast';
       targetInfo = {
         url: config.liveUrl || config.target,
         scan_mode: config.scanMode || 'standard',
@@ -657,15 +679,76 @@ class DashboardService {
       }
     };
 
+    const targetStr = config.liveUrl || config.repoUrl || (config.uploadedFileName ? `Archive: ${config.uploadedFileName}` : (config.target || 'Active Target Scope'));
+    const tempId = `scan-temp-${Date.now()}`;
+    const optimistic = {
+      id: tempId,
+      target: targetStr,
+      targetType: assessmentType === 'repo' ? 'Git Repository (SAST/SCA)' : (assessmentType === 'source' ? 'Source Code Archive (SAST/SCA)' : (assessmentType === 'dast' ? 'Web Application (DAST)' : 'Combined (Unified SAST+DAST)')),
+      assessmentType: assessmentType,
+      startedAt: new Date().toLocaleString(),
+      completedAt: null,
+      status: 'QUEUED',
+      overallScore: 100,
+      securityScore: 100,
+      riskScore: 0,
+      progress: 5,
+      counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, total: 0 },
+      dastCoverageScore: 0,
+      coverageStatus: 'IN_PROGRESS',
+      connectivityDiagnostics: {},
+      coverageTelemetry: {},
+      regressions: {},
+      errorMessage: null,
+      failureReason: null,
+      logs: [
+        { time: new Date().toLocaleTimeString(), stage: 'INITIALIZATION', text: `Scanner pipeline queued for target: ${targetStr}` }
+      ],
+      scanJobs: [],
+      modules: {
+        discovery: config.scanners?.discovery ?? true,
+        dast: config.scanners?.dast ?? true,
+        nuclei: config.scanners?.nuclei ?? true,
+        wapiti: config.scanners?.wapiti ?? true,
+        headers: config.scanners?.headers ?? true,
+        ssl: config.scanners?.ssl ?? true,
+        sast: config.scanners?.sast ?? true,
+        sca: config.scanners?.sca ?? true,
+        secrets: config.scanners?.secrets ?? true
+      },
+      targetInfo: targetInfo || {},
+      repoInfo: repoInfo || {}
+    };
+
+    // Reflect instantly in the UI state
+    this.assessments = [optimistic, ...this.assessments.filter(a => a.id !== tempId)];
+    this.activeAssessmentId = tempId;
+    this.notify();
+
     try {
       const serverAssessment = await apiClient.startAssessment(payload);
       const formatted = this._formatAssessment(serverAssessment);
 
+      // Replace temporary placeholder with real server assessment
+      const tempIdx = this.assessments.findIndex(a => a.id === tempId);
+      if (tempIdx !== -1) {
+        this.assessments[tempIdx] = formatted;
+      } else {
+        this.assessments = [formatted, ...this.assessments.filter(a => a.id !== formatted.id)];
+      }
+      this.activeAssessmentId = formatted.id;
       this.pollAssessmentProgress(serverAssessment.id);
       this.notify();
       return formatted;
     } catch (err) {
       console.error('Failed to trigger backend assessment:', err);
+      const tempIdx = this.assessments.findIndex(a => a.id === tempId);
+      if (tempIdx !== -1) {
+        this.assessments[tempIdx].status = 'FAILED';
+        this.assessments[tempIdx].errorMessage = err.message || 'Failed to start scan';
+        this.assessments[tempIdx].failureReason = { summary: err.message || 'Failed to start scan', raw_error: String(err) };
+      }
+      this.notify();
       throw err;
     }
   }
@@ -678,15 +761,26 @@ class DashboardService {
       console.warn("Could not delete assessment on backend:", e);
     }
     this.assessments = this.assessments.filter(a => a.id !== id);
+    if (this.activeAssessmentId === id) {
+      this.activeAssessmentId = this.assessments.length > 0 ? this.assessments[0].id : null;
+    }
     this.notify();
     return this.assessments;
   }
 
   pollAssessmentProgress(assessmentId) {
+    if (!assessmentId) return;
     const interval = setInterval(async () => {
       try {
         const asm = await apiClient.getAssessment(assessmentId);
         if (asm) {
+          const formatted = this._formatAssessment(asm);
+          const idx = this.assessments.findIndex(a => String(a.id) === String(assessmentId));
+          if (idx !== -1) {
+            this.assessments[idx] = formatted;
+          } else {
+            this.assessments.unshift(formatted);
+          }
           this.notify();
           if (asm.status === 'COMPLETED' || asm.status === 'FAILED' || asm.status === 'CANCELLED') {
             clearInterval(interval);
@@ -696,7 +790,7 @@ class DashboardService {
       } catch (e) {
         clearInterval(interval);
       }
-    }, 3000);
+    }, 2000);
   }
 }
 

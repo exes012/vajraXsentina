@@ -44,9 +44,13 @@ export function App() {
     }
   };
 
-  const handleStartAssessment = (config) => {
-    dashboardService.triggerNewScan(config);
+  const handleStartAssessment = async (config) => {
     setCurrentTab('assessments');
+    try {
+      await dashboardService.triggerNewScan(config);
+    } catch (e) {
+      console.error('Failed to trigger scan from navigation:', e);
+    }
   };
 
   const renderContent = () => {

@@ -56,8 +56,13 @@ export function Assessments({ onSelectFinding }) {
         setAssessments(data || []);
         if (data && data.length > 0) {
           setSelectedAssessment(prev => {
+            const activeId = dashboardService.getActiveAssessmentId();
+            if (activeId) {
+              const matched = data.find(a => String(a.id) === String(activeId));
+              if (matched) return matched;
+            }
             if (!prev) return data[0];
-            const updated = data.find(a => a.id === prev.id);
+            const updated = data.find(a => String(a.id) === String(prev.id));
             return updated || data[0];
           });
 
@@ -99,7 +104,7 @@ export function Assessments({ onSelectFinding }) {
     let isMounted = true;
 
     async function loadScanFindings() {
-      if (!selectedAssessment?.id) {
+      if (!selectedAssessment?.id || String(selectedAssessment.id).startsWith('temp-') || String(selectedAssessment.id).startsWith('scan-temp-')) {
         setScanFindings([]);
         return;
       }
@@ -120,14 +125,19 @@ export function Assessments({ onSelectFinding }) {
     }
 
     loadScanFindings();
-  }, [selectedAssessment?.id, selectedAssessment?.status]);
+  }, [selectedAssessment?.id, selectedAssessment?.status, selectedAssessment?.counts?.total]);
 
   const handleStartNewScan = async (config) => {
-    const newAsm = await dashboardService.triggerNewScan(config);
-    if (newAsm) {
-      setSelectedAssessment(newAsm);
-      const data = await dashboardService.getAssessments();
-      setAssessments(data || []);
+    try {
+      const newAsm = await dashboardService.triggerNewScan(config);
+      if (newAsm) {
+        dashboardService.setActiveAssessmentId(newAsm.id);
+        setSelectedAssessment(newAsm);
+        const data = await dashboardService.getAssessments();
+        setAssessments(data || []);
+      }
+    } catch (err) {
+      console.error('Failed to trigger scan:', err);
     }
   };
 
@@ -1078,7 +1088,10 @@ export function Assessments({ onSelectFinding }) {
                   <tr
                     key={asm.id}
                     className="interactive-row"
-                    onClick={() => setSelectedAssessment(asm)}
+                    onClick={() => {
+                      setSelectedAssessment(asm);
+                      dashboardService.setActiveAssessmentId(asm.id);
+                    }}
                     style={{
                       background: selectedAssessment?.id === asm.id ? 'rgba(255, 23, 68, 0.08)' : undefined,
                       borderLeft: selectedAssessment?.id === asm.id ? '3px solid #ff1744' : undefined
@@ -1167,6 +1180,7 @@ export function Assessments({ onSelectFinding }) {
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedAssessment(asm);
+                            dashboardService.setActiveAssessmentId(asm.id);
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
                           className="btn btn-secondary btn-xs"
