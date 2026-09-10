@@ -47,12 +47,15 @@ export const apiClient = {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000);
 
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const urlsToTry = [
       `${API_BASE}${endpoint}`,
       `${BACKEND_FALLBACK}${endpoint}`,
       `/api${endpoint}`,
-      `http://127.0.0.1:8000/api${endpoint}`,
-      `http://localhost:8000/api${endpoint}`
+      ...(isLocalhost ? [
+        `http://127.0.0.1:8000/api${endpoint}`,
+        `http://localhost:8000/api${endpoint}`
+      ] : [])
     ].filter((v, idx, arr) => arr.indexOf(v) === idx);
 
     let lastError = null;
