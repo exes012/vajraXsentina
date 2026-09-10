@@ -348,12 +348,12 @@ export function NewAssessmentModal({ isOpen, onClose, onStartAssessment }) {
     };
 
     try {
-      if (onStartAssessment) {
-        await onStartAssessment(config);
-      }
       onClose();
+      if (onStartAssessment) {
+        onStartAssessment(config);
+      }
     } catch (err) {
-      setUploadError(err.message || 'Failed to start assessment.');
+      console.error('Failed to dispatch start assessment:', err);
     } finally {
       setIsSubmitting(false);
     }

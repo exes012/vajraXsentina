@@ -99,6 +99,15 @@ export function Assessments({ onSelectFinding }) {
     };
   }, []);
 
+  const terminalEndRef = useRef(null);
+
+  // Auto-scroll terminal to bottom when new logs arrive
+  useEffect(() => {
+    if (terminalEndRef.current) {
+      terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [selectedAssessment?.logs?.length]);
+
   // Fetch scan-specific findings whenever selectedAssessment changes
   useEffect(() => {
     let isMounted = true;
@@ -128,6 +137,11 @@ export function Assessments({ onSelectFinding }) {
   }, [selectedAssessment?.id, selectedAssessment?.status, selectedAssessment?.counts?.total]);
 
   const handleStartNewScan = async (config) => {
+    // 1. Instantly reset findings for the hit target URL / repo
+    setScanFindings([]);
+    // 2. Scroll to top so user sees the active cockpit, banner and live terminal stream
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     try {
       const newAsm = await dashboardService.triggerNewScan(config);
       if (newAsm) {
@@ -589,27 +603,61 @@ export function Assessments({ onSelectFinding }) {
                 )}
               </div>
 
-              {/* Live Terminal Log Stream */}
+              {/* Live Terminal Log Stream (Enlarged & Prominent) */}
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 800, color: '#71717a', textTransform: 'uppercase', marginBottom: '6px' }}>
-                  <Terminal size={12} color="#00f2fe" /> Scanner Execution Stream
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 900, color: '#00f2fe', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                    <Terminal size={14} color="#00f2fe" /> Scanner Telemetry & Execution Stream
+                  </div>
+                  <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#71717a' }}>
+                    {activeLogs.length} events logged
+                  </span>
                 </div>
 
-                <div className="terminal-window" style={{ maxHeight: '140px', overflowY: 'auto', background: '#020003', border: '1.5px solid #28081c' }}>
+                <div
+                  className="terminal-window"
+                  style={{
+                    minHeight: '220px',
+                    maxHeight: '340px',
+                    overflowY: 'auto',
+                    background: '#020003',
+                    border: '1.8px solid #360a25',
+                    borderRadius: '8px',
+                    padding: '12px 14px',
+                    boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.85)'
+                  }}
+                >
                   {activeLogs.length === 0 ? (
-                    <div className="terminal-line" style={{ color: '#71717a' }}>
+                    <div className="terminal-line" style={{ color: '#71717a', fontStyle: 'italic', fontSize: '12px' }}>
                       Ready for scanner telemetry stream...
                     </div>
                   ) : (
-                    activeLogs.map((log, idx) => (
-                      <div key={idx} className="terminal-line" style={{ fontSize: '11px' }}>
-                        <span className="terminal-time" style={{ color: '#ff2a4d' }}>[{log.time}]</span>
-                        <span style={{ color: log.stage === 'FAILED' ? '#ff1744' : (log.stage === 'COMPLETED' ? '#00ff88' : '#cbd5e1') }}>
-                          {log.text}
-                        </span>
-                      </div>
-                    ))
+                    activeLogs.map((log, idx) => {
+                      const stg = (log.stage || '').toUpperCase();
+                      let stgColor = '#00f2fe';
+                      if (stg.includes('FAIL') || stg.includes('ERR')) stgColor = '#ff1744';
+                      else if (stg.includes('COMPLET') || stg.includes('SUCCESS')) stgColor = '#00ff88';
+                      else if (stg.includes('ZAP') || stg.includes('DAST')) stgColor = '#f97316';
+                      else if (stg.includes('SAST') || stg.includes('SCA')) stgColor = '#38bdf8';
+                      else if (stg.includes('CORRELAT') || stg.includes('AI')) stgColor = '#c084fc';
+                      else if (stg.includes('SECRET')) stgColor = '#fbbf24';
+
+                      return (
+                        <div key={idx} className="terminal-line" style={{ fontSize: '12px', lineHeight: '1.7', display: 'flex', gap: '8px', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                          <span className="terminal-time" style={{ color: '#ff2a4d', fontFamily: 'var(--font-mono)', fontSize: '11px', flexShrink: 0 }}>
+                            [{log.time}]
+                          </span>
+                          <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 800, color: stgColor, background: 'rgba(255,255,255,0.04)', padding: '1px 5px', borderRadius: '3px', flexShrink: 0 }}>
+                            [{stg}]
+                          </span>
+                          <span style={{ color: log.stage === 'FAILED' ? '#ff1744' : (log.stage === 'COMPLETED' ? '#00ff88' : '#e2e8f0'), wordBreak: 'break-word', flex: 1 }}>
+                            {log.text}
+                          </span>
+                        </div>
+                      );
+                    })
                   )}
+                  <div ref={terminalEndRef} />
                 </div>
               </div>
             </div>

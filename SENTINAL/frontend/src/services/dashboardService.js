@@ -432,7 +432,7 @@ class DashboardService {
   }
 
   _formatAssessment(a) {
-    const targetUrl = a.target_info?.url || a.repository_info?.url || (a.repository_info?.zip_path && 'Uploaded Source Archive') || 'Unified Target';
+    const targetUrl = a.target_info?.url || a.repository_info?.url || (a.repository_info?.zip_path && (a.repository_info?.filename || 'Uploaded Source Archive')) || a.target_url || a.repository_url || a.target || a.name || 'Active Target Scope';
     const targetType = a.assessment_type === 'repo' ? 'Git Repository (SAST/SCA)' : (a.assessment_type === 'source' ? 'Source Code Archive (SAST/SCA)' : (a.assessment_type === 'dast' ? 'Web Application (DAST)' : 'Combined (Unified SAST+DAST)'));
     
     // Accurate dynamic Security Score (0-100, 100=Safest)
@@ -445,14 +445,39 @@ class DashboardService {
       ? Math.max(10, Math.min(100, 100 - penalty))
       : (typeof a.overall_risk_score === 'number' && a.overall_risk_score > 0 ? Math.max(0, Math.min(100, Math.round(100 - a.overall_risk_score))) : 100);
 
+    // Accurate progress computation
+    let progress = 100;
+    const isDone = a.status === 'COMPLETED' || a.status === 'SUCCESS';
+    const isFailed = a.status === 'FAILED' || a.status === 'CANCELLED';
+    if (!isDone && !isFailed) {
+      if (typeof a.progress === 'number' && a.progress > 0) {
+        progress = Math.min(99, a.progress);
+      } else {
+        const rawLogs = a.logs || [];
+        const logTexts = rawLogs.map(l => (typeof l === 'string' ? l : `${l.stage || ''} ${l.message || l.text || ''}`).toUpperCase());
+        if (logTexts.some(t => t.includes('AI') || t.includes('CORRELAT') || t.includes('NORMALIZ') || t.includes('REPORT'))) {
+          progress = 88;
+        } else if (logTexts.some(t => t.includes('SCAN') || t.includes('ZAP') || t.includes('SAST') || t.includes('NUCLEI') || t.includes('WAPITI') || t.includes('NIKTO'))) {
+          progress = 65;
+        } else if (logTexts.some(t => t.includes('DISCOVER') || t.includes('SPIDER') || t.includes('CLON') || t.includes('SOURCE') || t.includes('VALIDAT'))) {
+          progress = 35;
+        } else if (logTexts.some(t => t.includes('INITIAL') || t.includes('QUEUED'))) {
+          progress = 15;
+        } else {
+          progress = (a.status === 'RUNNING' || a.status === 'IN_PROGRESS') ? 45 : 10;
+        }
+      }
+    }
+
     return {
       id: a.id,
       target: targetUrl,
       targetType: targetType,
       assessmentType: a.assessment_type,
-      startedAt: a.started_at ? new Date(a.started_at).toLocaleString() : new Date(a.created_at).toLocaleString(),
+      startedAt: a.started_at ? new Date(a.started_at).toLocaleString() : (a.created_at ? new Date(a.created_at).toLocaleString() : 'Just now'),
       completedAt: a.completed_at ? new Date(a.completed_at).toLocaleString() : null,
       status: a.status || 'PENDING',
+      progress: progress,
       overallScore: calculatedSecScore,
       securityScore: calculatedSecScore,
       riskScore: typeof a.overall_risk_score === 'number' ? a.overall_risk_score : (100 - calculatedSecScore),
@@ -471,7 +496,11 @@ class DashboardService {
       regressions: a.regressions || {},
       errorMessage: a.error_message || a.failure_reason?.summary || (a.status === 'FAILED' ? 'Scan execution encountered an error.' : null),
       failureReason: a.failure_reason || (a.error_message ? { summary: a.error_message, raw_error: a.error_message } : null),
-      logs: a.logs || [],
+      logs: (a.logs || []).map(l => ({
+        time: l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : (l.time || new Date().toLocaleTimeString()),
+        stage: l.stage || 'EXECUTION',
+        text: l.message || l.text || (typeof l === 'string' ? l : JSON.stringify(l))
+      })),
       scanJobs: a.scan_jobs || [],
       modules: a.modules || {},
       targetInfo: a.target_info || {},
@@ -684,11 +713,11 @@ class DashboardService {
       assessmentType: assessmentType,
       startedAt: new Date().toLocaleString(),
       completedAt: null,
-      status: 'QUEUED',
+      status: 'RUNNING',
       overallScore: 100,
       securityScore: 100,
       riskScore: 0,
-      progress: 5,
+      progress: 12,
       counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, total: 0 },
       dastCoverageScore: 0,
       coverageStatus: 'IN_PROGRESS',
@@ -698,7 +727,8 @@ class DashboardService {
       errorMessage: null,
       failureReason: null,
       logs: [
-        { time: new Date().toLocaleTimeString(), stage: 'INITIALIZATION', text: `Scanner pipeline queued for target: ${targetStr}` }
+        { time: new Date().toLocaleTimeString(), stage: 'INITIALIZATION', text: `Scanner execution pipeline initiated for target: ${targetStr}` },
+        { time: new Date().toLocaleTimeString(), stage: 'TARGET VALIDATION', text: `Validating target scope and scheduling multi-engine modules for ${targetStr}...` }
       ],
       scanJobs: [],
       modules: {
@@ -712,8 +742,8 @@ class DashboardService {
         sca: config.scanners?.sca ?? true,
         secrets: config.scanners?.secrets ?? true
       },
-      targetInfo: targetInfo || {},
-      repoInfo: repoInfo || {}
+      targetInfo: targetInfo || { url: config.liveUrl },
+      repoInfo: repoInfo || { url: config.repoUrl }
     };
 
     // Reflect instantly in the UI state
@@ -766,7 +796,9 @@ class DashboardService {
 
   pollAssessmentProgress(assessmentId) {
     if (!assessmentId) return;
+    let pollCount = 0;
     const interval = setInterval(async () => {
+      pollCount++;
       try {
         const asm = await apiClient.getAssessment(assessmentId);
         if (asm) {
@@ -778,13 +810,13 @@ class DashboardService {
             this.assessments.unshift(formatted);
           }
           this.notify();
-          if (asm.status === 'COMPLETED' || asm.status === 'FAILED' || asm.status === 'CANCELLED') {
+          if (asm.status === 'COMPLETED' || asm.status === 'FAILED' || asm.status === 'CANCELLED' || pollCount > 180) {
             clearInterval(interval);
             this.notify();
           }
         }
       } catch (e) {
-        clearInterval(interval);
+        if (pollCount > 180) clearInterval(interval);
       }
     }, 2000);
   }
