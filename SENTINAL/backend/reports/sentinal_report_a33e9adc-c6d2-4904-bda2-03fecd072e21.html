@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinal Security Assessment Report - FinTech Payments API</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #121826;
+            --bg-elevated: #1a2234;
+            --border-color: #243048;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --crit-color: #ff3366;
+            --high-color: #ff9900;
+            --med-color: #ffcc00;
+            --low-color: #00ccff;
+            --info-color: #8899a6;
+            --success-color: #10b981;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 24px;
+            margin-bottom: 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 28px; font-weight: 800; letter-spacing: 2px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .badge-tag { background: #1e293b; color: var(--accent-cyan); padding: 4px 12px; border-radius: 9999px; font-size: 13px; border: 1px solid rgba(0, 242, 254, 0.3); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 36px; }
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        .card-title { font-size: 12px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 1px; }
+        .card-value { font-size: 28px; font-weight: 700; }
+        .score-val { color: var(--accent-cyan); }
+        .crit-val { color: var(--crit-color); }
+        .high-val { color: var(--high-color); }
+        .med-val { color: var(--med-color); }
+        .section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; border-left: 4px solid var(--accent-cyan); padding-left: 12px; }
+        .prose { color: #cbd5e1; margin-bottom: 36px; font-size: 14.5px; }
+        .prose p { margin-bottom: 12px; }
+        .corr-card { background: #191428; border: 1px solid #7c3aed; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .corr-title { font-size: 17px; font-weight: 700; color: #c084fc; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+        .finding-table { width: 100%; border-collapse: collapse; margin-top: 16px; margin-bottom: 36px; background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
+        .finding-table th { background: var(--bg-elevated); padding: 12px 16px; text-align: left; font-size: 12px; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); }
+        .finding-table td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        .sev-badge { display: inline-block; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .sev-CRITICAL { background: rgba(255, 51, 102, 0.2); color: var(--crit-color); border: 1px solid var(--crit-color); }
+        .sev-HIGH { background: rgba(255, 153, 0, 0.2); color: var(--high-color); border: 1px solid var(--high-color); }
+        .sev-MEDIUM { background: rgba(255, 204, 0, 0.2); color: var(--med-color); border: 1px solid var(--med-color); }
+        .sev-LOW { background: rgba(0, 204, 255, 0.2); color: var(--low-color); border: 1px solid var(--low-color); }
+        .sev-INFO { background: rgba(136, 153, 166, 0.2); color: var(--info-color); border: 1px solid var(--info-color); }
+        .engine-pill { display: inline-block; background: #0f172a; border: 1px solid #334155; color: #38bdf8; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-right: 4px; }
+        code { background: #0f172a; color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+        pre { background: #090d16; border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; overflow-x: auto; color: #a5f3fc; font-family: monospace; font-size: 12.5px; margin-top: 8px; }
+        footer { border-top: 1px solid var(--border-color); padding-top: 24px; text-align: center; color: var(--text-secondary); font-size: 12px; margin-top: 60px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <div class="logo">SENTINAL</div>
+                <p style="color: var(--text-secondary); font-size: 13.5px; margin-top: 4px;">Unified SAST + SCA + DAST Security Assessment Report</p>
+            </div>
+            <div style="text-align: right;">
+                <span class="badge-tag">COMBINED SCAN • SAFE</span>
+                <p style="color: var(--text-secondary); font-size: 12px; margin-top: 6px;">Generated: September 04, 2026 at 05:53 UTC</p>
+            </div>
+        </header>
+
+        <!-- Target Scope & Authorization Details -->
+        <div class="card" style="margin-bottom: 24px; background: #0b1120; border: 1px solid #1e293b;">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <span style="font-size: 11px; color: #64748b; text-transform: uppercase;">Assessment Target</span>
+                    <div style="font-size: 16px; font-weight: 700; color: #f8fafc; font-family: monospace;">https://ginandjuice.shop</div>
+                </div>
+                <div>
+                    <span style="font-size: 11px; color: #64748b; text-transform: uppercase;">Authorization Status</span>
+                    <div style="font-size: 14px; font-weight: 700; color: #fbbf24;">
+                        ● DEV_MODE
+                    </div>
+                </div>
+                <div>
+                    <span style="font-size: 11px; color: #64748b; text-transform: uppercase;">DAST Coverage Status</span>
+                    <div style="font-size: 14px; font-weight: 700; color: #10b981;">
+                        FULL COVERAGE (84.4%)
+                    </div>
+                </div>
+                <div>
+                    <span style="font-size: 11px; color: #64748b; text-transform: uppercase;">Scan Mode</span>
+                    <div style="font-size: 14px; font-weight: 700; color: #38bdf8;">SAFE</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Metrics -->
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Security Risk Score</div>
+                <div class="card-value score-val">86.5/100</div>
+            </div>
+            <div class="card">
+                <div class="card-title">DAST Coverage Score</div>
+                <div class="card-value" style="color: #38bdf8;">84.4%</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Critical Flaws</div>
+                <div class="card-value crit-val">1</div>
+            </div>
+            <div class="card">
+                <div class="card-title">High Flaws</div>
+                <div class="card-value high-val">1</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Total Findings</div>
+                <div class="card-value"></div>
+            </div>
+        </div>
+
+        <!-- Target Connectivity & Blocking Diagnostics -->
+        
+        <h2 class="section-title">1. Target Connectivity & Blocking Diagnostics</h2>
+        <div class="card" style="margin-bottom: 28px; background: #0b1120; border: 1px solid #1e293b;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <span class="card-title">Reachability</span>
+                    <div style="font-size: 16px; font-weight: 700; color: #10b981;">
+                        ✓ REACHABLE
+                    </div>
+                </div>
+                <div>
+                    <span class="card-title">TLS Handshake</span>
+                    <div style="font-size: 16px; font-weight: 700; color: #38bdf8;">
+                        ✓ TLSv1.2
+                    </div>
+                </div>
+                <div>
+                    <span class="card-title">Application Access</span>
+                    <div style="font-size: 16px; font-weight: 700; color: #10b981;">
+                        ✓ FULL
+                    </div>
+                </div>
+                <div>
+                    <span class="card-title">Finding Confidence</span>
+                    <div style="font-size: 16px; font-weight: 700; color: #10b981;">
+                        FULL
+                    </div>
+                </div>
+            </div>
+
+            <!-- WAF / Protection Banner -->
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid #334155; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                <div style="font-size: 13.5px; font-weight: 700; color: #f8fafc; margin-bottom: 6px;">
+                    Possible WAF / Bot Protection: 
+                    
+                    <span style="color: #10b981;">None Detected</span>
+                    
+                </div>
+                
+            </div>
+
+            <!-- HTTP Status Distribution -->
+            
+            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; font-weight: 700;">HTTP Response Distribution & Scanner Telemetry</div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+                <span class="badge-tag">2xx OK: 22</span>
+                <span class="badge-tag">3xx Redirect: 0</span>
+                <span class="badge-tag">401 Auth: 0</span>
+                <span class="badge-tag" style="border-color: #ef4444; color: #f87171;">403 Blocked: 0</span>
+                <span class="badge-tag" style="border-color: #f59e0b; color: #fbbf24;">429 Rate Limit: 0</span>
+                <span class="badge-tag">5xx Error: 0</span>
+            </div>
+            <div style="font-size: 12.5px; color: #cbd5e1;">
+                <strong>Requests:</strong> 36 attempted | 22 successful | 0 blocked | <strong>URLs:</strong> 7 discovered, 20 scanned
+            </div>
+            
+
+            <div style="background: rgba(56, 189, 248, 0.1); border-left: 3px solid #38bdf8; padding: 10px 14px; border-radius: 4px; margin-top: 14px; font-size: 12.5px; color: #e0f2fe;">
+                <strong>Diagnostic Recommendation:</strong> Target is directly accessible.
+            </div>
+        </div>
+        
+
+        <!-- Executive Summary -->
+        <h2 class="section-title">2. Executive Summary</h2>
+        <div class="card prose" style="margin-bottom: 36px;">
+            <p>**Security Assessment Executive Summary**<br>**Overall Posture:** CRITICAL POSTURE<br>The automated assessment of https://ginandjuice.shop identified immediate critical exposures requiring urgent remediation. A total of 14 findings were recorded, including 1 Critical and 1 High severity vulnerabilities.<br><br>**Key Risk Highlights:**<br>- Total Discovered Findings: 14 (Critical: 1, High: 1, Medium: 4, Low: 8)<br>- Correlated Exploit Chains: 0<br>- Primary Concern Areas: Vulnerable Dependency, Injection, Cloud Credentials, Session Management<br><br>Leadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.</p>
+        </div>
+
+        <!-- Correlated Risks -->
+        
+
+        <!-- Findings Inventory -->
+        <h2 class="section-title">3. Comprehensive Findings Inventory</h2>
+        <table class="finding-table">
+            <thead>
+                <tr>
+                    <th style="width: 105px;">Severity</th>
+                    <th style="width: 130px;">Detected By</th>
+                    <th>Vulnerability Details</th>
+                    <th>Evidence & Remediation</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Potential SQL Injection via Unsanitized Query Execution</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Constructing SQL queries using string formatting, interpolation, or dynamic query variables without parameterized bindings allows SQL injection attacks.</p>
+                        
+                        <div style="margin-top: 6px;"><code>src/auth.py:9</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-89</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern 'conn.execute(query)' at line 9</div>
+                        
+                        
+                        <pre><code>8:     conn = sqlite3.connect("db.sqlite")
+9:     return conn.execute(query).fetchall()
+10: 
+11: AWS_API_KEY = "AKIA1234567890ABCDEF"</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Use parameterized queries (e.g. `cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))`) or an ORM with parameter binding.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SCA</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">osv-scanner</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Vulnerable Dependency: lodash (4.17.15) - GHSA-29mw-wpgm-hmr9</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Vulnerability in lodash</p>
+                        
+                        <div style="margin-top: 6px;"><code>package.json:None</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-1395</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Package 'lodash' version '4.17.15' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'axios' version '0.21.1' detected in package.json. Upgrade to latest version.</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Upgrade lodash to a secure version. Upgrade to latest version.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SCA</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">osv-scanner</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Vulnerable Dependency: django (3.2.0) - GHSA-2gwj-7jmv-h26r</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Vulnerability in django</p>
+                        
+                        <div style="margin-top: 6px;"><code>requirements.txt:None</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-1395</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Package 'django' version '3.2.0' detected in requirements.txt. Upgrade to latest version.
+[osv-scanner]: Package 'pyyaml' version '5.3.1' detected in requirements.txt. Upgrade to latest version.</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Upgrade django to a secure version. Upgrade to latest version.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-CRITICAL">CRITICAL</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SECRETS</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">gitleaks</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Exposed Secret: AWS Access Key ID</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Hardcoded secret token or credential (GitHub Personal Access Token) found in source code repository.</p>
+                        
+                        <div style="margin-top: 6px;"><code>src/auth.py:11</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-798, CWE-312</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Detected pattern for AWS Access Key ID matching 'AKIA************CDEF'
+[gitleaks]: Detected pattern for GitHub Personal Access Token matching 'ghp_******************************ef12'</div>
+                        
+                        
+                        <pre><code>10: 
+11: AWS_API_KEY = "AKIA************CDEF"
+12: GITHUB_SECRET = "ghp_1234567890abcdef1234567890abcdef12"</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">DAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">ZAP</span>
+                            
+                            <span class="engine-pill">HEADER_ANALYZER</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">OWASP ZAP: Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Cookie 'AWSALB' was issued without the recommended security attributes: HttpOnly, Secure, SameSite.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: / </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=03ycLWlPj5OJ1CYxNRun5g69rRmwyAS7JPBzPcOWwHW+NywoeYWzKjuQRNG+BBqpBf8ajhAS3Gt9TmN3kR6om6blxamO7IWnUSEphzVsQjMQs5SL4qLgb17TlTIE; Expires=Fri, 11 Sep 2026 05:53:20 GMT; Path=/
+[ZAP]: Set-Cookie: AWSALBCORS=03ycLWlPj5OJ1CYxNRun5g69rRmwyAS7JPBzPcOWwHW+NywoeYWzKjuQRNG+BBqpBf8ajhAS3Gt9TmN3kR6om6blxamO7IWnUSEphzVsQjMQs5SL4qLgb17TlTIE; Expires=Fri, 11 Sep 2026 05:53:20 GMT; Path=/; SameSite=None; Secure
+[ZAP]: Set-Cookie: AWSALB=+WEDgA98WBRwpbcKLMd31EOpFXuW+dLSILw7JCrQpNM7xepaW9iw/zPJi9/3AwqUxMzQsWCQ+K4wGwoUoyRQdJHLA5IiQo6JaMNQXZ1ZGCLbiPp1H8l9mBIT51he; Expires=Fri, 11 Sep 2026 05:53:20 GMT; Path=/
+[ZAP]: Set-Cookie: AWSALBCORS=+WEDgA98WBRwpbcKLMd31EOpFXuW+dLSILw7JCrQpNM7xepaW9iw/zPJi9/3AwqUxMzQsWCQ+K4wGwoUoyRQdJHLA5IiQo6JaMNQXZ1ZGCLbiPp1H8l9mBIT51he; Expires=Fri, 11 Sep 2026 05:53:20 GMT; Path=/; SameSite=None; Secure
+[HEADER_ANALYZER]: Set-Cookie: AWSALB=Ec6jZXB1xgJYGCABRiyuN7Iox3cyhDuDzXRX4Men5sK2oPyxsfcIpUK4jr6uXVkv6oCEBaXDkmgu/w0Ve94Qhpu+mLE8sNHJLTz1QbtK5kxe2uCf5USXg57y7tAf; Expires=Fri, 11 Sep 2026 05:53:27 GMT; Path=/
+[HEADER_ANALYZER]: Set-Cookie: AWSALBCORS=Ec6jZXB1xgJYGCABRiyuN7Iox3cyhDuDzXRX4Men5sK2oPyxsfcIpUK4jr6uXVkv6oCEBaXDkmgu/w0Ve94Qhpu+mLE8sNHJLTz1QbtK5kxe2uCf5USXg57y7tAf; Expires=Fri, 11 Sep 2026 05:53:27 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Ensure your application adds HttpOnly, Secure, SameSite to the cookie attributes.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">DAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">ZAP</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">OWASP ZAP: Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Cookie 'AWSALB' lacks HttpOnly, Secure, SameSite protection flags.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /catalog </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=k95NWog9jlbq6YV2Z675p1uZHMbzim7+VIJIRXDewsE0zw6aw9hFHGSDjlgHJh2PbE0aP/Qpi57enRZ9l/iN+MC2gRJcuy73oH2H0QvCfXtqe/3ozJHWPiqN1a+m; Expires=Fri, 11 Sep 2026 05:53:20 GMT; Path=/
+[ZAP]: Set-Cookie: AWSALBCORS=k95NWog9jlbq6YV2Z675p1uZHMbzim7+VIJIRXDewsE0zw6aw9hFHGSDjlgHJh2PbE0aP/Qpi57enRZ9l/iN+MC2gRJcuy73oH2H0QvCfXtqe/3ozJHWPiqN1a+m; Expires=Fri, 11 Sep 2026 05:53:20 GMT; Path=/; SameSite=None; Secure
+[ZAP]: Set-Cookie: TrackingId=eyJ0eXBlIjoiY2xhc3MiLCJ2YWx1ZSI6ImlzVEJLbEMwZ0hZZ1JsQTAifQ==; Secure; HttpOnly</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to all Set-Cookie response headers.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">DAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">ZAP</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">OWASP ZAP: Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Cookie 'AWSALB' lacks HttpOnly, Secure, SameSite protection flags.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /blog </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=LMxh0aYA3m3F4LMeSNmjcdbyNhON4UOUlfNuC5KPjKG6Jn8ndgaITuxN6G1HPpbcP5M2fhSitVKKrbJkvo7y5VaIWfLQgZ7MNEfsq/KEh3u4F9uvKFLH20SwlZ0V; Expires=Fri, 11 Sep 2026 05:53:20 GMT; Path=/
+[ZAP]: Set-Cookie: AWSALBCORS=LMxh0aYA3m3F4LMeSNmjcdbyNhON4UOUlfNuC5KPjKG6Jn8ndgaITuxN6G1HPpbcP5M2fhSitVKKrbJkvo7y5VaIWfLQgZ7MNEfsq/KEh3u4F9uvKFLH20SwlZ0V; Expires=Fri, 11 Sep 2026 05:53:20 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to all Set-Cookie response headers.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">DAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">ZAP</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">OWASP ZAP: Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Cookie 'AWSALB' lacks HttpOnly, Secure, SameSite protection flags.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /about </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=Tl7ByBFTvNcqFRw0dMLlDqmG2Wqnl4w582sHZyFLIm8Rru7Yco8QNUUfiOlWU7vtLcPZ+J/6JZ8bOKbhGU/PPWmGzd6mIoD2CzuDaEmAwvvRpctDBwxOU+D/ZAW7; Expires=Fri, 11 Sep 2026 05:53:20 GMT; Path=/
+[ZAP]: Set-Cookie: AWSALBCORS=Tl7ByBFTvNcqFRw0dMLlDqmG2Wqnl4w582sHZyFLIm8Rru7Yco8QNUUfiOlWU7vtLcPZ+J/6JZ8bOKbhGU/PPWmGzd6mIoD2CzuDaEmAwvvRpctDBwxOU+D/ZAW7; Expires=Fri, 11 Sep 2026 05:53:20 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to all Set-Cookie response headers.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">DAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">ZAP</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">OWASP ZAP: Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Cookie 'AWSALB' lacks HttpOnly, Secure, SameSite protection flags.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /my-account </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=t6TWlKRl1pupuhBDpaqF83XO+p0heTSgu8VslndhpL3SM74aXg/yTMZj6X7GZ7h6RVaM8ZGkM89izm4l/xTFKWMCHm49O3+ZYmeHPCofxlRCdGeSCxAi7JyBQqe3; Expires=Fri, 11 Sep 2026 05:53:21 GMT; Path=/
+[ZAP]: Set-Cookie: AWSALBCORS=t6TWlKRl1pupuhBDpaqF83XO+p0heTSgu8VslndhpL3SM74aXg/yTMZj6X7GZ7h6RVaM8ZGkM89izm4l/xTFKWMCHm49O3+ZYmeHPCofxlRCdGeSCxAi7JyBQqe3; Expires=Fri, 11 Sep 2026 05:53:21 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to all Set-Cookie response headers.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">DAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">ZAP</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">OWASP ZAP: Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Cookie 'AWSALB' lacks HttpOnly, Secure, SameSite protection flags.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /login </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=eYcymwlHjpgymEo3kHlPOjKK5b2+RtBfTlHl1MUMswtcPn1sVBwemLviAczyb7VlyXFeQYkhTytY8OYxmRAc1BXAA7wOCvABKVU6S5jBcILOILcq/To6q4Uw9iDk; Expires=Fri, 11 Sep 2026 05:53:21 GMT; Path=/
+[ZAP]: Set-Cookie: AWSALBCORS=eYcymwlHjpgymEo3kHlPOjKK5b2+RtBfTlHl1MUMswtcPn1sVBwemLviAczyb7VlyXFeQYkhTytY8OYxmRAc1BXAA7wOCvABKVU6S5jBcILOILcq/To6q4Uw9iDk; Expires=Fri, 11 Sep 2026 05:53:21 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to all Set-Cookie response headers.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">WEB</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">HEADER_ANALYZER</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Missing HTTP Strict Transport Security (HSTS) Header</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">The HSTS header forces web browsers to communicate exclusively over encrypted HTTPS, mitigating SSL-stripping and man-in-the-middle attacks.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: / </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-319, CWE-523</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Header 'Strict-Transport-Security' was absent in response from https://ginandjuice.shop</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` header to all HTTPS responses.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">WEB</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">HEADER_ANALYZER</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Missing Content Security Policy (CSP) Header</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">A Content Security Policy restricts sources of executable scripts, stylesheets, and frames, preventing Cross-Site Scripting (XSS) and data injection attacks.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: / </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-1021, CWE-79</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Header 'Content-Security-Policy' was absent in response from https://ginandjuice.shop</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Implement a strong `Content-Security-Policy` header (e.g. `default-src 'self'; script-src 'self'; object-src 'none'`).</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">WEB</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">HEADER_ANALYZER</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Missing X-Content-Type-Options Header</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Setting `X-Content-Type-Options: nosniff` prevents browsers from MIME-sniffing a response away from the declared content-type, mitigating drive-by downloads.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: / </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-16</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Header 'X-Content-Type-Options' was absent in response from https://ginandjuice.shop
+[HEADER_ANALYZER]: Header 'Permissions-Policy' was absent in response from https://ginandjuice.shop</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Configure `Permissions-Policy: camera=(), microphone=(), geolocation=()` to disable unused browser APIs.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">WEB</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">HEADER_ANALYZER</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Missing Referrer-Policy Header</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">The Referrer-Policy header controls how much referrer information (sent via the Referer header) should be included with requests.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: / </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-200</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Header 'Referrer-Policy' was absent in response from https://ginandjuice.shop</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Configure `Referrer-Policy: strict-origin-when-cross-origin` or `no-referrer`.</div>
+                        
+                    </td>
+                </tr>
+                
+            </tbody>
+        </table>
+
+        <!-- Technical Remediation Playbook -->
+        <h2 class="section-title">4. Strategic Remediation Playbook</h2>
+        <div class="card prose">
+            <p>**Step-by-Step Remediation Actions:**<br>- **Cloud Credentials:** Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.<br>- **Injection:** Use parameterized queries (e.g. `cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))`) or an ORM with parameter binding.<br>- **Vulnerable Dependency:** Upgrade lodash to a secure version. Upgrade to latest version.<br>- **Cryptographic Failures:** Add `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` header to all HTTPS responses.</p>
+        </div>
+
+        <footer>
+            <p>Sentinal Security Assessment Platform • Confidential Audit Report • Generated September 04, 2026 at 05:53 UTC</p>
+        </footer>
+    </div>
+</body>
+</html>

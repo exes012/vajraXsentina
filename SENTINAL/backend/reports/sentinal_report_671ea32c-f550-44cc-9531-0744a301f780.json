@@ -1,0 +1,1926 @@
+{
+  "sentinal_version": "1.0.0",
+  "report_id": "671ea32c-f550-44cc-9531-0744a301f780",
+  "generated_at": "2026-09-08T09:16:00.334925+00:00",
+  "assessment": {
+    "id": "671ea32c-f550-44cc-9531-0744a301f780",
+    "project_name": "Scope: NodeGoat",
+    "assessment_type": "source",
+    "scan_mode": "STANDARD",
+    "repository": "https://github.com/juice-shop/juice-shop",
+    "target": "None",
+    "authorization_status": "DEV_MODE",
+    "overall_risk_score": 92.0,
+    "dast_coverage_score": 100.0,
+    "coverage_status": "NOT_APPLICABLE",
+    "finding_confidence": "FULL",
+    "critical_count": 9,
+    "high_count": 12,
+    "medium_count": 11,
+    "low_count": 0,
+    "info_count": 0,
+    "connectivity_diagnostics": {},
+    "coverage_telemetry": {
+      "requests_attempted": 0,
+      "requests_successful": 0,
+      "requests_blocked": 0,
+      "status_distribution": {},
+      "count_2xx": 0,
+      "count_3xx": 0,
+      "count_4xx": 0,
+      "count_5xx": 0,
+      "count_401": 0,
+      "count_403": 0,
+      "count_429": 0,
+      "scanner_errors": [],
+      "crawlable_urls": 0,
+      "urls_scanned": 0,
+      "zap_alerts": 0,
+      "nuclei_matches": 0,
+      "wapiti_findings": 0,
+      "nikto_findings": 0,
+      "engine_breakdown": {
+        "SEMGREP": {
+          "status": "SUCCESS",
+          "duration_ms": 1965,
+          "findings_count": 102,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "OSV-SCANNER": {
+          "status": "SUCCESS",
+          "duration_ms": 1143,
+          "findings_count": 38,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "GITLEAKS": {
+          "status": "SUCCESS",
+          "duration_ms": 9279,
+          "findings_count": 13,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        }
+      }
+    }
+  },
+  "overall_risk_score": 92.0,
+  "summary": {
+    "critical": 9,
+    "high": 12,
+    "medium": 11,
+    "low": 0,
+    "info": 0,
+    "total_findings": 32,
+    "correlated_risks_count": 0
+  },
+  "ai_analysis": {
+    "executive_summary": "**Security Assessment Executive Summary**\n**Overall Posture:** CRITICAL POSTURE\nThe automated assessment of None identified immediate critical exposures requiring urgent remediation. A total of 32 findings were recorded, including 9 Critical and 12 High severity vulnerabilities.\n\n**Key Risk Highlights:**\n- Total Discovered Findings: 32 (Critical: 9, High: 12, Medium: 11, Low: 0)\n- Correlated Exploit Chains: 0\n- Primary Concern Areas: Injection, Container Security\n\nLeadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.",
+    "technical_summary": "### Technical Risk Breakdown for None\nThe assessment executed multi-modal analysis across SAST, SCA, Secret Scanning, DAST, Web Exposure, and TLS configurations.\n\n**Top Significant Technical Findings:**\n- **[CRITICAL] Arbitrary Code Execution via eval() or Dynamic Function** in `lib/xml.ts:12`: Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context....\n- **[CRITICAL] Arbitrary Code Execution via eval() or Dynamic Function** in `routes/b2bOrder.ts:23`: Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context....\n- **[CRITICAL] Arbitrary Code Execution via eval() or Dynamic Function** in `routes/captcha.ts:22`: Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context....\n- **[CRITICAL] Arbitrary Code Execution via eval() or Dynamic Function** in `routes/userProfile.ts:65`: Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context....\n- **[CRITICAL] Arbitrary Code Execution via eval() or Dynamic Function** in `test/cypress/e2e/basket.spec.ts:90`: Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context....",
+    "risk_prioritization": "**Vulnerability Prioritization Matrix:**\n1. **Tier 1 (Immediate / Blockers - Critical):** Address 9 Critical vulnerabilities and 0 correlated chains immediately. These represent verified remote execution, full database extraction, or leaked root cloud credentials.\n2. **Tier 2 (High Priority - Next Sprint):** Remediate 12 High-severity findings including unverified injection flaws, missing rate limiting, and vulnerable third-party dependencies.\n3. **Tier 3 (Medium/Low Defense-in-Depth):** Address missing security headers (CSP, HSTS), weak cipher configurations, and deprecated cookie attributes during standard release cycles.",
+    "remediation_playbook": "**Step-by-Step Remediation Actions:**\n- **Code Execution:** Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.",
+    "false_positive_analysis": "**False-Positive & Manual Verification Guidance:**\n- Findings identified by heuristic pattern matching (e.g. potential path traversal or generic SQL queries) should be manually cross-checked against internal data sanitization middleware before marking as resolved.\n- DAST alerts triggered by error messages should be confirmed in a staging environment to rule out custom application error handling false triggers.",
+    "provider_used": "sentinal-expert-engine"
+  },
+  "correlated_risks": [],
+  "findings": [
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Dockerfile Container Running as Root",
+      "description": "Containers running as root increase the impact of container escape vulnerabilities.",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM",
+      "category": "Container Security",
+      "cwe": [
+        "CWE-250"
+      ],
+      "cves": [],
+      "owasp": [
+        "A05:2021-Security Misconfiguration"
+      ],
+      "file": "Dockerfile",
+      "line": 1,
+      "code_snippet": "1: FROM node:24 AS installer\n2: COPY . /juice-shop\n3: WORKDIR /juice-shop",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'FROM node:24 AS installer' at line 1\n[sentinal-sast]: Matched pattern 'COPY . /juice-shop' at line 2\n[sentinal-sast]: Matched pattern 'WORKDIR /juice-shop' at line 3\n[sentinal-sast]: Matched pattern 'RUN npm install -g typescript@^6.0.3' at line 4\n[sentinal-sast]: Matched pattern 'RUN npm install --omit=dev' at line 5\n[sentinal-sast]: Matched pattern 'RUN npm dedupe --omit=dev' at line 6\n[sentinal-sast]: Matched pattern 'RUN rm -rf frontend/node_modules' at line 7\n[sentinal-sast]: Matched pattern 'RUN rm -rf frontend/.angular' at line 8\n[sentinal-sast]: Matched pattern 'RUN rm -rf frontend/src/assets' at line 9\n[sentinal-sast]: Matched pattern 'RUN mkdir logs' at line 10\n[sentinal-sast]: Matched pattern 'RUN chown -R 65532 logs' at line 11\n[sentinal-sast]: Matched pattern 'RUN chgrp -R 0 ftp/ frontend/dist/ logs/ data/ i18n/' at line 12\n[sentinal-sast]: Matched pattern 'RUN chmod -R g=u ftp/ frontend/dist/ logs/ data/ i18n/' at line 13\n[sentinal-sast]: Matched pattern 'RUN rm ftp/legal.md || true' at line 14\n[sentinal-sast]: Matched pattern 'RUN rm i18n/*.json || true' at line 15\n[sentinal-sast]: Matched pattern '' at line 16\n[sentinal-sast]: Matched pattern '# keep version in sync with package.json' at line 17\n[sentinal-sast]: Matched pattern 'ARG CYCLONEDX_NPM_VERSION='^2.0.0||^3.0.0||^4.0.0'' at line 18\n[sentinal-sast]: Matched pattern 'RUN npm install -g @cyclonedx/cyclonedx-npm@$CYCLONEDX_NPM_VERSION' at line 19\n[sentinal-sast]: Matched pattern 'RUN npm run sbom' at line 20\n[sentinal-sast]: Matched pattern '' at line 21\n[sentinal-sast]: Matched pattern 'FROM gcr.io/distroless/nodejs24-debian13' at line 22\n[sentinal-sast]: Matched pattern 'ARG BUILD_DATE' at line 23\n[sentinal-sast]: Matched pattern 'ARG VCS_REF' at line 24\n[sentinal-sast]: Matched pattern 'LABEL maintainer=\"Bjoern Kimminich <bjoern.kimminich@owasp.org>\" \\' at line 25\n[sentinal-sast]: Matched pattern '    org.opencontainers.image.title=\"OWASP Juice Shop\" \\' at line 26\n[sentinal-sast]: Matched pattern '    org.opencontainers.image.description=\"Probably the most modern and sophisticated insecure web application\" \\' at line 27\n[sentinal-sast]: Matched pattern '    org.opencontainers.image.authors=\"Bjoern Kimminich <bjoern.kimminich@owasp.org>\" \\' at line 28\n[sentinal-sast]: Matched pattern '    org.opencontainers.image.vendor=\"Open Worldwide Application Security Project\" \\' at line 29\n[sentinal-sast]: Matched pattern '    org.opencontainers.image.documentation=\"https://help.owasp-juice.shop\" \\' at line 30\n[sentinal-sast]: Matched pattern '    org.opencontainers.image.licenses=\"MIT\" \\' at line 31\n[sentinal-sast]: Matched pattern '    org.opencontainers.image.version=\"20.2.0\" \\' at line 32\n[sentinal-sast]: Matched pattern '    org.opencontainers.image.url=\"https://owasp-juice.shop\" \\' at line 33\n[sentinal-sast]: Matched pattern '    org.opencontainers.image.source=\"https://github.com/juice-shop/juice-shop\" \\' at line 34\n[sentinal-sast]: Matched pattern '    org.opencontainers.image.revision=$VCS_REF \\' at line 35\n[sentinal-sast]: Matched pattern '    org.opencontainers.image.created=$BUILD_DATE' at line 36\n[sentinal-sast]: Matched pattern 'WORKDIR /juice-shop' at line 37\n[sentinal-sast]: Matched pattern 'COPY --from=installer --chown=65532:0 /juice-shop .' at line 38\n[sentinal-sast]: Matched pattern 'EXPOSE 3000' at line 40\n[sentinal-sast]: Matched pattern 'CMD [\"/juice-shop/build/app.js\"]' at line 41",
+      "remediation": "Add `USER nonroot` or a dedicated unprivileged user before the ENTRYPOINT/CMD.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/250.html"
+      ],
+      "fingerprint": "408142bf54ad3683ddb87339a9f84d9b",
+      "risk_score": 42.1,
+      "threat_scenario": "The vulnerability exposes implementation details, internal software versions, or unhardened endpoints that assist attackers in reconnaissance and multi-stage attack chaining.",
+      "potential_impact": {
+        "confidentiality": "LOW-MEDIUM \u2014 Leakage of architecture details and configuration parameters",
+        "integrity": "LOW \u2014 Limited direct modification",
+        "availability": "LOW \u2014 No availability impact",
+        "business_impact": "Increased attack surface visibility for targeted external threat actors.",
+        "attack_vector": "Exposed diagnostic endpoints or permissive application configuration."
+      },
+      "blast_radius": "Information Disclosure & Security Misconfiguration",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 0.85,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.0,
+        "blast_radius_factor": 1.0,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 42.1,
+        "cvss_equivalent": 4.2,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "rule_id": "docker-root-user",
+        "match": "FROM node:24 AS installer"
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Potential NoSQL Injection",
+      "description": "Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Injection",
+      "cwe": [
+        "CWE-943"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "data/static/codefixes/chatbotGreedyInjectionChallenge_1.ts",
+      "line": 65,
+      "code_snippet": "64:       const productId = Number(Id)\n65:       return await db.reviewsCollection.find({ $where: 'this.product == ' + productId }) as Review[]\n66:     }\n67:   }),",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '$where: ' at line 65",
+      "remediation": "Sanitize query keys using mongo-sanitize or enforce strict schema validation.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/943.html"
+      ],
+      "fingerprint": "b3877441dcac65581af5417baf53d56f",
+      "risk_score": 94.3,
+      "threat_scenario": "An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Full database extraction (PII, credentials, business data)",
+        "integrity": "HIGH \u2014 Unauthorized table alteration, record modification, or database truncation",
+        "availability": "MEDIUM \u2014 Database locking, resource exhaustion, denial of service",
+        "business_impact": "Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.",
+        "attack_vector": "Unsanitized user input concatenation into SQL query execution sinks."
+      },
+      "blast_radius": "Database Takeover & Sensitive Data Exfiltration",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 94.3,
+        "cvss_equivalent": 9.4,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-nosql-injection-mongodb",
+        "match": "$where: "
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Potential NoSQL Injection",
+      "description": "Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Injection",
+      "cwe": [
+        "CWE-943"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "data/static/codefixes/chatbotGreedyInjectionChallenge_2_correct.ts",
+      "line": 66,
+      "code_snippet": "65:       const productId = Number(Id)\n66:       return await db.reviewsCollection.find({ $where: 'this.product == ' + productId }) as Review[]\n67:     }\n68:   }),",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '$where: ' at line 66",
+      "remediation": "Sanitize query keys using mongo-sanitize or enforce strict schema validation.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/943.html"
+      ],
+      "fingerprint": "f0ce27e84d2d2ac7efc2eeff16519c42",
+      "risk_score": 94.3,
+      "threat_scenario": "An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Full database extraction (PII, credentials, business data)",
+        "integrity": "HIGH \u2014 Unauthorized table alteration, record modification, or database truncation",
+        "availability": "MEDIUM \u2014 Database locking, resource exhaustion, denial of service",
+        "business_impact": "Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.",
+        "attack_vector": "Unsanitized user input concatenation into SQL query execution sinks."
+      },
+      "blast_radius": "Database Takeover & Sensitive Data Exfiltration",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 94.3,
+        "cvss_equivalent": 9.4,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-nosql-injection-mongodb",
+        "match": "$where: "
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Potential NoSQL Injection",
+      "description": "Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Injection",
+      "cwe": [
+        "CWE-943"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "data/static/codefixes/chatbotGreedyInjectionChallenge_3.ts",
+      "line": 66,
+      "code_snippet": "65:       const productId = Number(Id)\n66:       return await db.reviewsCollection.find({ $where: 'this.product == ' + productId }) as Review[]\n67:     }\n68:   }),",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '$where: ' at line 66",
+      "remediation": "Sanitize query keys using mongo-sanitize or enforce strict schema validation.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/943.html"
+      ],
+      "fingerprint": "cdae49f08805304e840a62bab7b676b5",
+      "risk_score": 94.3,
+      "threat_scenario": "An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Full database extraction (PII, credentials, business data)",
+        "integrity": "HIGH \u2014 Unauthorized table alteration, record modification, or database truncation",
+        "availability": "MEDIUM \u2014 Database locking, resource exhaustion, denial of service",
+        "business_impact": "Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.",
+        "attack_vector": "Unsanitized user input concatenation into SQL query execution sinks."
+      },
+      "blast_radius": "Database Takeover & Sensitive Data Exfiltration",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 94.3,
+        "cvss_equivalent": 9.4,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-nosql-injection-mongodb",
+        "match": "$where: "
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Potential NoSQL Injection",
+      "description": "Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Injection",
+      "cwe": [
+        "CWE-943"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "data/static/codefixes/chatbotGreedyInjectionChallenge_4.ts",
+      "line": 66,
+      "code_snippet": "65:       const productId = Number(Id)\n66:       return await db.reviewsCollection.find({ $where: 'this.product == ' + productId }) as Review[]\n67:     }\n68:   }),",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '$where: ' at line 66",
+      "remediation": "Sanitize query keys using mongo-sanitize or enforce strict schema validation.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/943.html"
+      ],
+      "fingerprint": "dc8d8a8a391c54d0bdd092b0c3a91a29",
+      "risk_score": 94.3,
+      "threat_scenario": "An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Full database extraction (PII, credentials, business data)",
+        "integrity": "HIGH \u2014 Unauthorized table alteration, record modification, or database truncation",
+        "availability": "MEDIUM \u2014 Database locking, resource exhaustion, denial of service",
+        "business_impact": "Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.",
+        "attack_vector": "Unsanitized user input concatenation into SQL query execution sinks."
+      },
+      "blast_radius": "Database Takeover & Sensitive Data Exfiltration",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 94.3,
+        "cvss_equivalent": 9.4,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-nosql-injection-mongodb",
+        "match": "$where: "
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Cross-Site Scripting (XSS) via innerHTML / dangerouslySetInnerHTML",
+      "description": "Directly assigning unsanitized dynamic user input to innerHTML creates Document Object Model (DOM) Cross-Site Scripting vulnerabilities.",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Cross-Site Scripting",
+      "cwe": [
+        "CWE-79"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "frontend/src/assets/private/dat.gui.min.js",
+      "line": 1,
+      "code_snippet": "1: var dat=dat||{};dat.gui=dat.gui||{};dat.utils=dat.utils||{};dat.controllers=dat.controllers||{};dat.dom=dat.dom||{};dat.color=dat.color||{};dat.utils.css=function(){return{load:function(e,a){a=a||document;var b=a.createElement(\"link\");b.type=\"text/css\";b.rel=\"stylesheet\";b.href=e;a.getElementsByTagName(\"head\")[0].appendChild(b)},inject:function(e,a){a=a||document;var b=document.createElement(\"style\");b.type=\"text/css\";b.innerHTML=e;a.getElementsByTagName(\"head\")[0].appendChild(b)}}}();\n2: dat.utils.common=function(){var e=Array.prototype.forEach,a=Array.prototype.slice;return{BREAK:{},extend:function(b){this.each(a.call(arguments,1),function(a){for(var f in a)this.isUndefined(a[f])||(b[f]=a[f])},this);return b},defaults:function(b){this.each(a.call(arguments,1),function(a){for(var f in a)this.isUndefined(b[f])&&(b[f]=a[f])},this);return b},compose:function(){var b=a.call(arguments);return function(){for(var d=a.call(arguments),f=b.length-1;0<=f;f--)d=[b[f].apply(this,d)];return d[0]}},\n3:     each:function(a,d,f){if(e&&a.forEach===e)a.forEach(d,f);else if(a.length===a.length+0)for(var c=0,p=a.length;c<p&&!(c in a&&d.call(f,a[c],c)===this.BREAK);c++);else for(c in a)if(d.call(f,a[c],c)===this.BREAK)break},defer:function(a){setTimeout(a,0)},toArray:function(b){return b.toArray?b.toArray():a.call(b)},isUndefined:function(a){return void 0===a},isNull:function(a){return null===a},isNaN:function(a){return a!==a},isArray:Array.isArray||function(a){return a.constructor===Array},isObject:function(a){return a===",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '.innerHTML=' at line 1\n[sentinal-sast]: Matched pattern '.innerHTML=' at line 13\n[sentinal-sast]: Matched pattern '.innerHTML=' at line 23\n[sentinal-sast]: Matched pattern '.innerHTML=' at line 33\n[sentinal-sast]: Matched pattern '.innerHTML=' at line 35\n[sentinal-sast]: Matched pattern '.innerHTML=' at line 39\n[sentinal-sast]: Matched pattern '.innerHTML=' at line 40\n[sentinal-sast]: Matched pattern '.innerHTML=' at line 41\n[sentinal-sast]: Matched pattern '.innerHTML=' at line 44\n[sentinal-sast]: Matched pattern '.innerHTML=' at line 48\n[sentinal-sast]: Matched pattern '.innerHTML=' at line 49\n[sentinal-sast]: Matched pattern '.innerHTML=' at line 55",
+      "remediation": "Use `textContent` or sanitize user input using DOMPurify before inserting into the DOM.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/79.html"
+      ],
+      "fingerprint": "8ffceaea25946b4705b04b69d63b1f83",
+      "risk_score": 86.6,
+      "threat_scenario": "An adversary can inject malicious JavaScript into the victim's browser session, stealing session tokens and cookies, rewriting web pages for credential phishing, or forcing unauthorized transactions on behalf of authenticated users.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Session token harvesting, DOM extraction, keylogging",
+        "integrity": "HIGH \u2014 Unauthorized client-side actions, phishing modal injection",
+        "availability": "LOW \u2014 Temporary UI defacement",
+        "business_impact": "Account takeover of high-privilege administrators and loss of client trust.",
+        "attack_vector": "Unsanitized reflection or storage of user input in HTML/DOM context."
+      },
+      "blast_radius": "Session Hijacking & Client-Side Execution",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.15,
+        "blast_radius_factor": 1.1,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 86.6,
+        "cvss_equivalent": 8.7,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-dom-xss-innerhtml",
+        "match": ".innerHTML="
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Cross-Site Scripting (XSS) via innerHTML / dangerouslySetInnerHTML",
+      "description": "Directly assigning unsanitized dynamic user input to innerHTML creates Document Object Model (DOM) Cross-Site Scripting vulnerabilities.",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Cross-Site Scripting",
+      "cwe": [
+        "CWE-79"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "frontend/src/assets/private/stats.min.js",
+      "line": 3,
+      "code_snippet": "2: var Stats=function(){var l=Date.now(),m=l,g=0,n=Infinity,o=0,h=0,p=Infinity,q=0,r=0,s=0,f=document.createElement(\"div\");f.id=\"stats\";f.addEventListener(\"mousedown\",function(b){b.preventDefault();t(++s%2)},!1);f.style.cssText=\"width:80px;opacity:0.9;cursor:pointer\";var a=document.createElement(\"div\");a.id=\"fps\";a.style.cssText=\"padding:0 0 3px 3px;text-align:left;background-color:#002\";f.appendChild(a);var i=document.createElement(\"div\");i.id=\"fpsText\";i.style.cssText=\"color:#0ff;font-family:Helvetica,Arial,sans-serif;font-size:9px;font-weight:bold;line-height:15px\";\n3:     i.innerHTML=\"FPS\";a.appendChild(i);var c=document.createElement(\"div\");c.id=\"fpsGraph\";c.style.cssText=\"position:relative;width:74px;height:30px;background-color:#0ff\";for(a.appendChild(c);74>c.children.length;){var j=document.createElement(\"span\");j.style.cssText=\"width:1px;height:30px;float:left;background-color:#113\";c.appendChild(j)}var d=document.createElement(\"div\");d.id=\"ms\";d.style.cssText=\"padding:0 0 3px 3px;text-align:left;background-color:#020;display:none\";f.appendChild(d);var k=document.createElement(\"div\");\n4:     k.id=\"msText\";k.style.cssText=\"color:#0f0;font-family:Helvetica,Arial,sans-serif;font-size:9px;font-weight:bold;line-height:15px\";k.innerHTML=\"MS\";d.appendChild(k);var e=document.createElement(\"div\");e.id=\"msGraph\";e.style.cssText=\"position:relative;width:74px;height:30px;background-color:#0f0\";for(d.appendChild(e);74>e.children.length;)j=document.createElement(\"span\"),j.style.cssText=\"width:1px;height:30px;float:left;background-color:#131\",e.appendChild(j);var t=function(b){s=b;switch(s){case 0:a.style.display=\n5:         \"block\";d.style.display=\"none\";break;case 1:a.style.display=\"none\",d.style.display=\"block\"}};return{REVISION:11,domElement:f,setMode:t,begin:function(){l=Date.now()},end:function(){var b=Date.now();g=b-l;n=Math.min(n,g);o=Math.max(o,g);k.textContent=g+\" MS (\"+n+\"-\"+o+\")\";var a=Math.min(30,30-30*(g/200));e.appendChild(e.firstChild).style.height=a+\"px\";r++;b>m+1E3&&(h=Math.round(1E3*r/(b-m)),p=Math.min(p,h),q=Math.max(q,h),i.textContent=h+\" FPS (\"+p+\"-\"+q+\")\",a=Math.min(30,30-30*(h/100)),c.appendChild(c.firstChild).style.height=",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '.innerHTML=' at line 3\n[sentinal-sast]: Matched pattern '.innerHTML=' at line 4",
+      "remediation": "Use `textContent` or sanitize user input using DOMPurify before inserting into the DOM.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/79.html"
+      ],
+      "fingerprint": "b6436a9042c27ea5d50001f67bb1da8f",
+      "risk_score": 86.6,
+      "threat_scenario": "An adversary can inject malicious JavaScript into the victim's browser session, stealing session tokens and cookies, rewriting web pages for credential phishing, or forcing unauthorized transactions on behalf of authenticated users.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Session token harvesting, DOM extraction, keylogging",
+        "integrity": "HIGH \u2014 Unauthorized client-side actions, phishing modal injection",
+        "availability": "LOW \u2014 Temporary UI defacement",
+        "business_impact": "Account takeover of high-privilege administrators and loss of client trust.",
+        "attack_vector": "Unsanitized reflection or storage of user input in HTML/DOM context."
+      },
+      "blast_radius": "Session Hijacking & Client-Side Execution",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.15,
+        "blast_radius_factor": 1.1,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 86.6,
+        "cvss_equivalent": 8.7,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-dom-xss-innerhtml",
+        "match": ".innerHTML="
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Cross-Site Scripting (XSS) via innerHTML / dangerouslySetInnerHTML",
+      "description": "Directly assigning unsanitized dynamic user input to innerHTML creates Document Object Model (DOM) Cross-Site Scripting vulnerabilities.",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Cross-Site Scripting",
+      "cwe": [
+        "CWE-79"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "frontend/src/assets/private/three.js",
+      "line": 11354,
+      "code_snippet": "11353: \n11354: \t\te.innerHTML = \"Loading ...\";\n11355: \n11356: \t\treturn e;",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '.innerHTML = ' at line 11354\n[sentinal-sast]: Matched pattern '.innerHTML = ' at line 11375",
+      "remediation": "Use `textContent` or sanitize user input using DOMPurify before inserting into the DOM.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/79.html"
+      ],
+      "fingerprint": "321c5924f8929f01fd5ea68e36492def",
+      "risk_score": 86.6,
+      "threat_scenario": "An adversary can inject malicious JavaScript into the victim's browser session, stealing session tokens and cookies, rewriting web pages for credential phishing, or forcing unauthorized transactions on behalf of authenticated users.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Session token harvesting, DOM extraction, keylogging",
+        "integrity": "HIGH \u2014 Unauthorized client-side actions, phishing modal injection",
+        "availability": "LOW \u2014 Temporary UI defacement",
+        "business_impact": "Account takeover of high-privilege administrators and loss of client trust.",
+        "attack_vector": "Unsanitized reflection or storage of user input in HTML/DOM context."
+      },
+      "blast_radius": "Session Hijacking & Client-Side Execution",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.15,
+        "blast_radius_factor": 1.1,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 86.6,
+        "cvss_equivalent": 8.7,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-dom-xss-innerhtml",
+        "match": ".innerHTML = "
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Cross-Site Scripting (XSS) via innerHTML / dangerouslySetInnerHTML",
+      "description": "Directly assigning unsanitized dynamic user input to innerHTML creates Document Object Model (DOM) Cross-Site Scripting vulnerabilities.",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Cross-Site Scripting",
+      "cwe": [
+        "CWE-79"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "frontend/src/hacking-instructor/index.ts",
+      "line": 126,
+      "code_snippet": "125:   const textBox = createElement('span', { flexGrow: '2' })\n126:   textBox.innerHTML = snarkdown(hint.text)\n127: \n128:   const cancelButtonStyles = {",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '.innerHTML = ' at line 126\n[sentinal-sast]: Matched pattern '.innerHTML = ' at line 142",
+      "remediation": "Use `textContent` or sanitize user input using DOMPurify before inserting into the DOM.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/79.html"
+      ],
+      "fingerprint": "4c307d852692885903ada84c236aec49",
+      "risk_score": 86.6,
+      "threat_scenario": "An adversary can inject malicious JavaScript into the victim's browser session, stealing session tokens and cookies, rewriting web pages for credential phishing, or forcing unauthorized transactions on behalf of authenticated users.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Session token harvesting, DOM extraction, keylogging",
+        "integrity": "HIGH \u2014 Unauthorized client-side actions, phishing modal injection",
+        "availability": "LOW \u2014 Temporary UI defacement",
+        "business_impact": "Account takeover of high-privilege administrators and loss of client trust.",
+        "attack_vector": "Unsanitized reflection or storage of user input in HTML/DOM context."
+      },
+      "blast_radius": "Session Hijacking & Client-Side Execution",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.15,
+        "blast_radius_factor": 1.1,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 86.6,
+        "cvss_equivalent": 8.7,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-dom-xss-innerhtml",
+        "match": ".innerHTML = "
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Cross-Site Scripting (XSS) via innerHTML / dangerouslySetInnerHTML",
+      "description": "Directly assigning unsanitized dynamic user input to innerHTML creates Document Object Model (DOM) Cross-Site Scripting vulnerabilities.",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Cross-Site Scripting",
+      "cwe": [
+        "CWE-79"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "frontend/src/hacking-instructor/helpers/helpers.ts",
+      "line": 138,
+      "code_snippet": "137: \n138:       if (element && element.innerHTML === value) {\n139:         break\n140:       }",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '.innerHTML =' at line 138",
+      "remediation": "Use `textContent` or sanitize user input using DOMPurify before inserting into the DOM.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/79.html"
+      ],
+      "fingerprint": "22181517d10fd33c213fd2336fd3173e",
+      "risk_score": 86.6,
+      "threat_scenario": "An adversary can inject malicious JavaScript into the victim's browser session, stealing session tokens and cookies, rewriting web pages for credential phishing, or forcing unauthorized transactions on behalf of authenticated users.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Session token harvesting, DOM extraction, keylogging",
+        "integrity": "HIGH \u2014 Unauthorized client-side actions, phishing modal injection",
+        "availability": "LOW \u2014 Temporary UI defacement",
+        "business_impact": "Account takeover of high-privilege administrators and loss of client trust.",
+        "attack_vector": "Unsanitized reflection or storage of user input in HTML/DOM context."
+      },
+      "blast_radius": "Session Hijacking & Client-Side Execution",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.15,
+        "blast_radius_factor": 1.1,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 86.6,
+        "cvss_equivalent": 8.7,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-dom-xss-innerhtml",
+        "match": ".innerHTML ="
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Dockerfile Container Running as Root",
+      "description": "Containers running as root increase the impact of container escape vulnerabilities.",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM",
+      "category": "Container Security",
+      "cwe": [
+        "CWE-250"
+      ],
+      "cves": [],
+      "owasp": [
+        "A05:2021-Security Misconfiguration"
+      ],
+      "file": "infrastructure/Dockerfile",
+      "line": 1,
+      "code_snippet": "1: FROM node:20.19.2-bookworm-slim AS base\n2: RUN apt-get update && apt-get install -y --no-install-recommends \\\n3:     dumb-init=1.2.5-* \\",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'FROM node:20.19.2-bookworm-slim AS base' at line 1\n[sentinal-sast]: Matched pattern 'RUN apt-get update && apt-get install -y --no-install-recommends \\' at line 2\n[sentinal-sast]: Matched pattern '    dumb-init=1.2.5-* \\' at line 3\n[sentinal-sast]: Matched pattern '    && rm -rf /var/lib/apt/lists/*' at line 4\n[sentinal-sast]: Matched pattern '' at line 5\n[sentinal-sast]: Matched pattern 'FROM node:20.19.2-bookworm AS builder' at line 6\n[sentinal-sast]: Matched pattern '' at line 7\n[sentinal-sast]: Matched pattern 'WORKDIR /juice-shop' at line 8\n[sentinal-sast]: Matched pattern 'COPY package*.json ./' at line 9\n[sentinal-sast]: Matched pattern 'RUN npm ci --ignore-scripts' at line 10\n[sentinal-sast]: Matched pattern 'COPY . .' at line 11\n[sentinal-sast]: Matched pattern 'RUN npm run build && npm prune --production' at line 12\n[sentinal-sast]: Matched pattern '' at line 13\n[sentinal-sast]: Matched pattern 'FROM base AS production' at line 14\n[sentinal-sast]: Matched pattern '' at line 15\n[sentinal-sast]: Matched pattern 'ENV NODE_ENV=production' at line 16\n[sentinal-sast]: Matched pattern 'WORKDIR /juice-shop' at line 17\n[sentinal-sast]: Matched pattern '' at line 18\n[sentinal-sast]: Matched pattern 'COPY --from=builder --chown=node:node /juice-shop .' at line 19\n[sentinal-sast]: Matched pattern '' at line 20\n[sentinal-sast]: Matched pattern 'EXPOSE 3000' at line 22\n[sentinal-sast]: Matched pattern 'ENTRYPOINT [\"dumb-init\", \"--\"]' at line 23\n[sentinal-sast]: Matched pattern 'CMD [\"node\", \"build/app.js\"]' at line 24",
+      "remediation": "Add `USER nonroot` or a dedicated unprivileged user before the ENTRYPOINT/CMD.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/250.html"
+      ],
+      "fingerprint": "75ae5eefed3859221cd22184724e5b51",
+      "risk_score": 42.1,
+      "threat_scenario": "The vulnerability exposes implementation details, internal software versions, or unhardened endpoints that assist attackers in reconnaissance and multi-stage attack chaining.",
+      "potential_impact": {
+        "confidentiality": "LOW-MEDIUM \u2014 Leakage of architecture details and configuration parameters",
+        "integrity": "LOW \u2014 Limited direct modification",
+        "availability": "LOW \u2014 No availability impact",
+        "business_impact": "Increased attack surface visibility for targeted external threat actors.",
+        "attack_vector": "Exposed diagnostic endpoints or permissive application configuration."
+      },
+      "blast_radius": "Information Disclosure & Security Misconfiguration",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 0.85,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.0,
+        "blast_radius_factor": 1.0,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 42.1,
+        "cvss_equivalent": 4.2,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "rule_id": "docker-root-user",
+        "match": "FROM node:20.19.2-bookworm-slim AS base"
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Arbitrary Code Execution via eval() or Dynamic Function",
+      "description": "Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Code Execution",
+      "cwe": [
+        "CWE-95"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "lib/xml.ts",
+      "line": 12,
+      "code_snippet": "11: // eslint-disable-next-line no-new-func -- intentional: hides import() from tsc's CommonJS down-level transform\n12: const dynamicImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>\n13: let libxml2Promise: Promise<any> | undefined\n14: ",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'new Function(' at line 12",
+      "remediation": "Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/95.html"
+      ],
+      "fingerprint": "217101808e15a6250d9401606526a82e",
+      "risk_score": 100.0,
+      "threat_scenario": "An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Arbitrary file read, secrets harvesting, environment variables",
+        "integrity": "CRITICAL \u2014 Arbitrary file write, malware persistence, system modification",
+        "availability": "CRITICAL \u2014 Process termination, ransomware encryption, host destruction",
+        "business_impact": "Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.",
+        "attack_vector": "Direct execution of unvalidated user input via system shell or eval functions."
+      },
+      "blast_radius": "Full Server Takeover & Remote Code Execution (RCE)",
+      "risk_factors": {
+        "base_severity_score": 90.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.3,
+        "blast_radius_factor": 1.3,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 100.0,
+        "cvss_equivalent": 10.0,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-eval-code-execution",
+        "match": "new Function("
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Arbitrary Code Execution via eval() or Dynamic Function",
+      "description": "Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Code Execution",
+      "cwe": [
+        "CWE-95"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "routes/b2bOrder.ts",
+      "line": 23,
+      "code_snippet": "22:         vm.createContext(sandbox)\n23:         vm.runInContext('safeEval(orderLinesData)', sandbox, { timeout: 2000 })\n24:         res.json({ cid: body.cid, orderNo: uniqueOrderNumber(), paymentDue: dateTwoWeeksFromNow() })\n25:       } catch (err) {",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'Eval(' at line 23",
+      "remediation": "Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/95.html"
+      ],
+      "fingerprint": "38e4b6c02489f017ec68a1bb657fbf71",
+      "risk_score": 100.0,
+      "threat_scenario": "An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Arbitrary file read, secrets harvesting, environment variables",
+        "integrity": "CRITICAL \u2014 Arbitrary file write, malware persistence, system modification",
+        "availability": "CRITICAL \u2014 Process termination, ransomware encryption, host destruction",
+        "business_impact": "Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.",
+        "attack_vector": "Direct execution of unvalidated user input via system shell or eval functions."
+      },
+      "blast_radius": "Full Server Takeover & Remote Code Execution (RCE)",
+      "risk_factors": {
+        "base_severity_score": 90.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.3,
+        "blast_radius_factor": 1.3,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 100.0,
+        "cvss_equivalent": 10.0,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-eval-code-execution",
+        "match": "Eval("
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Arbitrary Code Execution via eval() or Dynamic Function",
+      "description": "Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Code Execution",
+      "cwe": [
+        "CWE-95"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "routes/captcha.ts",
+      "line": 22,
+      "code_snippet": "21:     const expression = firstTerm.toString() + firstOperator + secondTerm.toString() + secondOperator + thirdTerm.toString()\n22:     const answer = eval(expression).toString() // eslint-disable-line no-eval\n23: \n24:     const captcha = {",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'eval(' at line 22",
+      "remediation": "Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/95.html"
+      ],
+      "fingerprint": "0352e5fc156562ff4ac9f3bc89c717a0",
+      "risk_score": 100.0,
+      "threat_scenario": "An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Arbitrary file read, secrets harvesting, environment variables",
+        "integrity": "CRITICAL \u2014 Arbitrary file write, malware persistence, system modification",
+        "availability": "CRITICAL \u2014 Process termination, ransomware encryption, host destruction",
+        "business_impact": "Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.",
+        "attack_vector": "Direct execution of unvalidated user input via system shell or eval functions."
+      },
+      "blast_radius": "Full Server Takeover & Remote Code Execution (RCE)",
+      "risk_factors": {
+        "base_severity_score": 90.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.3,
+        "blast_radius_factor": 1.3,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 100.0,
+        "cvss_equivalent": 10.0,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-eval-code-execution",
+        "match": "eval("
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Potential NoSQL Injection",
+      "description": "Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Injection",
+      "cwe": [
+        "CWE-943"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "routes/chat.ts",
+      "line": 149,
+      "code_snippet": "148:           const productId = Number(id)\n149:           return await db.reviewsCollection.find({ $where: 'this.product == ' + productId }) as Review[]\n150:         }\n151:       }),",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '$where: ' at line 149",
+      "remediation": "Sanitize query keys using mongo-sanitize or enforce strict schema validation.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/943.html"
+      ],
+      "fingerprint": "fa4d8ecc328c6e173d6f3b485dfcda4a",
+      "risk_score": 94.3,
+      "threat_scenario": "An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Full database extraction (PII, credentials, business data)",
+        "integrity": "HIGH \u2014 Unauthorized table alteration, record modification, or database truncation",
+        "availability": "MEDIUM \u2014 Database locking, resource exhaustion, denial of service",
+        "business_impact": "Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.",
+        "attack_vector": "Unsanitized user input concatenation into SQL query execution sinks."
+      },
+      "blast_radius": "Database Takeover & Sensitive Data Exfiltration",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 94.3,
+        "cvss_equivalent": 9.4,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-nosql-injection-mongodb",
+        "match": "$where: "
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Potential NoSQL Injection",
+      "description": "Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Injection",
+      "cwe": [
+        "CWE-943"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "routes/showProductReviews.ts",
+      "line": 36,
+      "code_snippet": "35: \n36:     db.reviewsCollection.find({ $where: 'this.product == ' + id }).then((reviews: Review[]) => {\n37:       const t1 = new Date().getTime()\n38:       challengeUtils.solveIf(challenges.noSqlCommandChallenge, () => { return (t1 - t0) > 2000 })",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '$where: ' at line 36",
+      "remediation": "Sanitize query keys using mongo-sanitize or enforce strict schema validation.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/943.html"
+      ],
+      "fingerprint": "2096071bb686a613d058049ffcfed6cf",
+      "risk_score": 94.3,
+      "threat_scenario": "An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Full database extraction (PII, credentials, business data)",
+        "integrity": "HIGH \u2014 Unauthorized table alteration, record modification, or database truncation",
+        "availability": "MEDIUM \u2014 Database locking, resource exhaustion, denial of service",
+        "business_impact": "Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.",
+        "attack_vector": "Unsanitized user input concatenation into SQL query execution sinks."
+      },
+      "blast_radius": "Database Takeover & Sensitive Data Exfiltration",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 94.3,
+        "cvss_equivalent": 9.4,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-nosql-injection-mongodb",
+        "match": "$where: "
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Potential NoSQL Injection",
+      "description": "Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Injection",
+      "cwe": [
+        "CWE-943"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "routes/trackOrder.ts",
+      "line": 18,
+      "code_snippet": "17:     challengeUtils.solveIf(challenges.reflectedXssChallenge, () => { return id.includes('<iframe src=\"javascript:alert(`xss`)\">') })\n18:     db.ordersCollection.find({ $where: `this.orderId === '${id}'` }).then((order: any) => {\n19:       const result = utils.queryResultToJson(order)\n20:       challengeUtils.solveIf(challenges.noSqlOrdersChallenge, () => { return result.data.length > 1 })",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '$where: ' at line 18",
+      "remediation": "Sanitize query keys using mongo-sanitize or enforce strict schema validation.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/943.html"
+      ],
+      "fingerprint": "cccb22ac731fd9b82233f8a017127503",
+      "risk_score": 94.3,
+      "threat_scenario": "An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Full database extraction (PII, credentials, business data)",
+        "integrity": "HIGH \u2014 Unauthorized table alteration, record modification, or database truncation",
+        "availability": "MEDIUM \u2014 Database locking, resource exhaustion, denial of service",
+        "business_impact": "Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.",
+        "attack_vector": "Unsanitized user input concatenation into SQL query execution sinks."
+      },
+      "blast_radius": "Database Takeover & Sensitive Data Exfiltration",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 94.3,
+        "cvss_equivalent": 9.4,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-nosql-injection-mongodb",
+        "match": "$where: "
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Arbitrary Code Execution via eval() or Dynamic Function",
+      "description": "Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Code Execution",
+      "cwe": [
+        "CWE-95"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "routes/userProfile.ts",
+      "line": 65,
+      "code_snippet": "64:           }\n65:           username = eval(code) // eslint-disable-line no-eval\n66:         } catch (err) {\n67:           username = '\\\\' + username",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'eval(' at line 65",
+      "remediation": "Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/95.html"
+      ],
+      "fingerprint": "01798a0cb13a68dff4ec8eec6e8a0edc",
+      "risk_score": 100.0,
+      "threat_scenario": "An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Arbitrary file read, secrets harvesting, environment variables",
+        "integrity": "CRITICAL \u2014 Arbitrary file write, malware persistence, system modification",
+        "availability": "CRITICAL \u2014 Process termination, ransomware encryption, host destruction",
+        "business_impact": "Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.",
+        "attack_vector": "Direct execution of unvalidated user input via system shell or eval functions."
+      },
+      "blast_radius": "Full Server Takeover & Remote Code Execution (RCE)",
+      "risk_factors": {
+        "base_severity_score": 90.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.3,
+        "blast_radius_factor": 1.3,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 100.0,
+        "cvss_equivalent": 10.0,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-eval-code-execution",
+        "match": "eval("
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Arbitrary Code Execution via eval() or Dynamic Function",
+      "description": "Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Code Execution",
+      "cwe": [
+        "CWE-95"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "test/cypress/e2e/basket.spec.ts",
+      "line": 90,
+      "code_snippet": "89:           })\n90:           win.eval(\n91:             'event = new Date(\"March 08, 2019 00:00:00\"); Date = function(Date){return function() {date = event; return date; }}(Date);'\n92:           )",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'eval(' at line 90",
+      "remediation": "Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/95.html"
+      ],
+      "fingerprint": "b6c70817cb681b1c7c7e217a4a3e62eb",
+      "risk_score": 100.0,
+      "threat_scenario": "An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Arbitrary file read, secrets harvesting, environment variables",
+        "integrity": "CRITICAL \u2014 Arbitrary file write, malware persistence, system modification",
+        "availability": "CRITICAL \u2014 Process termination, ransomware encryption, host destruction",
+        "business_impact": "Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.",
+        "attack_vector": "Direct execution of unvalidated user input via system shell or eval functions."
+      },
+      "blast_radius": "Full Server Takeover & Remote Code Execution (RCE)",
+      "risk_factors": {
+        "base_severity_score": 90.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.3,
+        "blast_radius_factor": 1.3,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 100.0,
+        "cvss_equivalent": 10.0,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-eval-code-execution",
+        "match": "eval("
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Arbitrary Code Execution via eval() or Dynamic Function",
+      "description": "Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Code Execution",
+      "cwe": [
+        "CWE-95"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "test/cypress/e2e/contact.spec.ts",
+      "line": 267,
+      "code_snippet": "266:       // eslint-disable-next-line no-eval\n267:       const answer = eval(val).toString()\n268:       cy.get('#captchaControl').type(answer)\n269:     })",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'eval(' at line 267",
+      "remediation": "Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/95.html"
+      ],
+      "fingerprint": "fe4800b1bb80d578555f17377aeeee8b",
+      "risk_score": 100.0,
+      "threat_scenario": "An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Arbitrary file read, secrets harvesting, environment variables",
+        "integrity": "CRITICAL \u2014 Arbitrary file write, malware persistence, system modification",
+        "availability": "CRITICAL \u2014 Process termination, ransomware encryption, host destruction",
+        "business_impact": "Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.",
+        "attack_vector": "Direct execution of unvalidated user input via system shell or eval functions."
+      },
+      "blast_radius": "Full Server Takeover & Remote Code Execution (RCE)",
+      "risk_factors": {
+        "base_severity_score": 90.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.3,
+        "blast_radius_factor": 1.3,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 100.0,
+        "cvss_equivalent": 10.0,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-eval-code-execution",
+        "match": "eval("
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Dockerfile Container Running as Root",
+      "description": "Containers running as root increase the impact of container escape vulnerabilities.",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM",
+      "category": "Container Security",
+      "cwe": [
+        "CWE-250"
+      ],
+      "cves": [],
+      "owasp": [
+        "A05:2021-Security Misconfiguration"
+      ],
+      "file": "test/smoke/Dockerfile",
+      "line": 1,
+      "code_snippet": "1: FROM alpine\n2: \n3: RUN apk add curl",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'FROM alpine' at line 1\n[sentinal-sast]: Matched pattern '' at line 2\n[sentinal-sast]: Matched pattern 'RUN apk add curl' at line 3\n[sentinal-sast]: Matched pattern '' at line 4\n[sentinal-sast]: Matched pattern 'COPY smoke-test.sh smoke-test.sh' at line 5\n[sentinal-sast]: Matched pattern '' at line 6\n[sentinal-sast]: Matched pattern 'CMD [\"sh\", \"smoke-test.sh\", \"http://app:3000\"]' at line 7",
+      "remediation": "Add `USER nonroot` or a dedicated unprivileged user before the ENTRYPOINT/CMD.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/250.html"
+      ],
+      "fingerprint": "2b16c485c2720f2bd8e4402ddd0ebb21",
+      "risk_score": 42.1,
+      "threat_scenario": "The vulnerability exposes implementation details, internal software versions, or unhardened endpoints that assist attackers in reconnaissance and multi-stage attack chaining.",
+      "potential_impact": {
+        "confidentiality": "LOW-MEDIUM \u2014 Leakage of architecture details and configuration parameters",
+        "integrity": "LOW \u2014 Limited direct modification",
+        "availability": "LOW \u2014 No availability impact",
+        "business_impact": "Increased attack surface visibility for targeted external threat actors.",
+        "attack_vector": "Exposed diagnostic endpoints or permissive application configuration."
+      },
+      "blast_radius": "Information Disclosure & Security Misconfiguration",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 0.85,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.0,
+        "blast_radius_factor": 1.0,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 42.1,
+        "cvss_equivalent": 4.2,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "rule_id": "docker-root-user",
+        "match": "FROM alpine"
+      }
+    },
+    {
+      "id": null,
+      "source": "SCA",
+      "scanner": "osv-scanner",
+      "all_scanners": [
+        "osv-scanner"
+      ],
+      "title": "Vulnerable Dependency: body-parser (1.20.4) - GHSA-v422-hmwv-36x6",
+      "description": "Vulnerability in sanitize-html",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Vulnerable Dependency",
+      "cwe": [
+        "CWE-1395"
+      ],
+      "cves": [],
+      "owasp": [
+        "A06:2021-Vulnerable and Outdated Components"
+      ],
+      "file": "package.json",
+      "line": null,
+      "code_snippet": null,
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Package 'body-parser' version '1.20.4' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'express-jwt' version '0.1.3' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'file-type' version '16.5.4' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'glob' version '10.4.5' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'js-yaml' version '3.14.0' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'jsonwebtoken' version '0.4.0' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'marsdb' version '0.6.11' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'morgan' version '1.10.0' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'multer' version '1.4.5-lts.1' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'notevil' version '1.3.3' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'sanitize-html' version '1.4.2' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'sequelize' version '6.37.3' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'socket.io' version '3.1.2' detected in package.json. Upgrade to latest version.",
+      "remediation": "Upgrade sanitize-html to a secure version. Upgrade to latest version.",
+      "references": [],
+      "fingerprint": "15f697c099396cb43fe548ebf0176f2f",
+      "risk_score": 54.5,
+      "threat_scenario": "An outdated third-party dependency contains known, publicly documented CVEs with available exploit payloads, allowing automated scanners and threat actors to target known flaws in the software supply chain.",
+      "potential_impact": {
+        "confidentiality": "MEDIUM-HIGH \u2014 Depends on specific CVE impact profile",
+        "integrity": "MEDIUM-HIGH \u2014 Potential component tampering",
+        "availability": "MEDIUM \u2014 Denial of service or crash vulnerabilities",
+        "business_impact": "Software supply chain vulnerabilities, loss of SOC2/ISO-27001 compliance certification.",
+        "attack_vector": "Execution of public weaponized exploits against unpatched open-source libraries."
+      },
+      "blast_radius": "Third-Party Component Exploitation",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.1,
+        "blast_radius_factor": 1.1,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 54.5,
+        "cvss_equivalent": 5.5,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "id": "GHSA-v422-hmwv-36x6",
+        "modified": "2026-07-21T20:59:34.630741Z"
+      }
+    },
+    {
+      "id": null,
+      "source": "SCA",
+      "scanner": "osv-scanner",
+      "all_scanners": [
+        "osv-scanner"
+      ],
+      "title": "Vulnerable Dependency: @angular/common (22.0.1) - GHSA-jhpw-976m-542j",
+      "description": "Vulnerability in @angular/common",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Vulnerable Dependency",
+      "cwe": [
+        "CWE-1395"
+      ],
+      "cves": [],
+      "owasp": [
+        "A06:2021-Vulnerable and Outdated Components"
+      ],
+      "file": "frontend/package.json",
+      "line": null,
+      "code_snippet": null,
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Package '@angular/common' version '22.0.1' detected in frontend/package.json. Upgrade to latest version.\n[osv-scanner]: Package 'lodash-es' version '4.17.21' detected in frontend/package.json. Upgrade to latest version.",
+      "remediation": "Upgrade @angular/common to a secure version. Upgrade to latest version.",
+      "references": [],
+      "fingerprint": "93544b834da6df1481c89010a4ff6b4e",
+      "risk_score": 54.5,
+      "threat_scenario": "An outdated third-party dependency contains known, publicly documented CVEs with available exploit payloads, allowing automated scanners and threat actors to target known flaws in the software supply chain.",
+      "potential_impact": {
+        "confidentiality": "MEDIUM-HIGH \u2014 Depends on specific CVE impact profile",
+        "integrity": "MEDIUM-HIGH \u2014 Potential component tampering",
+        "availability": "MEDIUM \u2014 Denial of service or crash vulnerabilities",
+        "business_impact": "Software supply chain vulnerabilities, loss of SOC2/ISO-27001 compliance certification.",
+        "attack_vector": "Execution of public weaponized exploits against unpatched open-source libraries."
+      },
+      "blast_radius": "Third-Party Component Exploitation",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.1,
+        "blast_radius_factor": 1.1,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 54.5,
+        "cvss_equivalent": 5.5,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "id": "GHSA-jhpw-976m-542j",
+        "modified": "2026-08-03T16:15:16.925877Z"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: JSON Web Token (JWT)",
+      "description": "Hardcoded secret token or credential (JSON Web Token (JWT)) found in source code repository.",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Authentication Token",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "frontend/src/app/app.guard.spec.ts",
+      "line": 46,
+      "code_snippet": "45: \n46:         localStorage.setItem('token', 'eyJh***************************************************************************************************************************************************sw5c')\n47:         expect(guard.tokenDecode()).toEqual({\n48:             sub: '1234567890',",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for JSON Web Token (JWT) matching 'eyJh***************************************************************************************************************************************************sw5c'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "d54fdba5ff3c25021dd7224716ceaf68",
+      "risk_score": 60.6,
+      "threat_scenario": "Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Unauthorized access to cloud APIs, databases, and third-party SaaS platforms",
+        "integrity": "HIGH \u2014 Direct API mutations, cloud asset provisioning",
+        "availability": "HIGH \u2014 Resource exhaustion, cloud account suspension",
+        "business_impact": "Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.",
+        "attack_vector": "Hardcoded high-entropy tokens or keys committed in repositories or response bodies."
+      },
+      "blast_radius": "Cloud & Third-Party Service Credential Compromise",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 60.6,
+        "cvss_equivalent": 6.1,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "rule_id": "jwt-token",
+        "masked_match": "eyJh***************************************************************************************************************************************************sw5c"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: JSON Web Token (JWT)",
+      "description": "Hardcoded secret token or credential (JSON Web Token (JWT)) found in source code repository.",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Authentication Token",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "frontend/src/app/last-login-ip/last-login-ip.component.spec.ts",
+      "line": 72,
+      "code_snippet": "71:     it('should set Last-Login IP from JWT as trusted HTML', () => {\n72:         localStorage.setItem('token', 'eyJh***********************************************************************************************************************t3bg')\n73:         component.ngOnInit()\n74:         expect(sanitizer.bypassSecurityTrustHtml).toHaveBeenCalledWith('<small>1.2.3.4</small>')",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for JSON Web Token (JWT) matching 'eyJh***********************************************************************************************************************t3bg'\n[gitleaks]: Detected pattern for JSON Web Token (JWT) matching 'eyJh****************************************************************************************enLw'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "e151966017057eacdf15ce0d63156f1f",
+      "risk_score": 60.6,
+      "threat_scenario": "Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Unauthorized access to cloud APIs, databases, and third-party SaaS platforms",
+        "integrity": "HIGH \u2014 Direct API mutations, cloud asset provisioning",
+        "availability": "HIGH \u2014 Resource exhaustion, cloud account suspension",
+        "business_impact": "Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.",
+        "attack_vector": "Hardcoded high-entropy tokens or keys committed in repositories or response bodies."
+      },
+      "blast_radius": "Cloud & Third-Party Service Credential Compromise",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 60.6,
+        "cvss_equivalent": 6.1,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "rule_id": "jwt-token",
+        "masked_match": "eyJh***********************************************************************************************************************t3bg"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: Private Cryptographic Key",
+      "description": "Hardcoded secret token or credential (Private Cryptographic Key) found in source code repository.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Private Key",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "infrastructure/terraform/networking.tf",
+      "line": 171,
+      "code_snippet": "170:   certificate_body = file(\"${path.module}/certs/server.crt\")\n171:   private_key      = \"----***********************----\\nMIICXAIBAAKBgQDNwqLEe9wgTXCbC7+RPdDbBbeqjdbs4kOPOIGzqLpXvJXlxxW8\\niMz0EaM4BKUqYsIa+ndv3NAn2RxCd5ubVdJJcX43zO6Ko0TFEZx/65gY3BE0O6sy\\nCEmUP4qbSd6exou/F+WTISzbQ5FBVPVmhnYhG/kpwt/cIxK5iUn5hm+4tQIDAQAB\\nAoGBAI+8xiPoOrA+KMnG/T4jJsG6TsHQcDHvJi7o1IKC/hnIXha0atTX5AUkRRce\\n95qSfvKFweXdJXSQ0JMGJyfuXgU6dI0TcseFRfewXAa/ssxAC+iUVR6KUMh1PE2w\\nXLitfeI6JLvVtrBYswm2I7CtY0q8n5AGimHWVXJPLfGV7m0BAkEA+fqFt2LXbLty\\ng6wZyxMA/cnmt5Nt3U2dAu77MzFJvibANUNHE4HPLZxjGNXN+a6m0K6TD4kDdh5H\\nfUYLWWRBYQJBANK3carmulBwqzcDBjsJ0YrIONBpCAsXxk8idXb8jL9aNIg15Wum\\nm2enqqObahDHB5jnGOLmbasizvSVqypfM9UCQCQl8xIqy+YgURXzXCN+kwUgHinr\\nutZms87Jyi+D8Br8NY0+Nlf+zHvXAomD2W5CsEK7C+8SLBr3k/TsnRWHJuECQHFE\\n9RA2OP8WoaLPuGCyFXaxzICThSRZYluVnWkZtxsBhW2W8z1b8PvWUE7kMy7Tnkze\\nJS2LSnaNHoyxi7IaPQUCQCwWU4U+v4lD7uYBw00Ga/xt+7+UqFPlPVdz1yyr4q24\\nZxaw0LgmuEvgU5dycq8N7JxjTubX0MIRR+G9fmDBBl8=\\n-----END RSA PRIVATE KEY-----\" # vuln-code-snippet vuln-line iacLeakedKeyChallenge\n172: \n173:   lifecycle {",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for Private Cryptographic Key matching '----***********************----'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "851794dc8f5e938c881727fe2492469c",
+      "risk_score": 100.0,
+      "threat_scenario": "Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Unauthorized access to cloud APIs, databases, and third-party SaaS platforms",
+        "integrity": "HIGH \u2014 Direct API mutations, cloud asset provisioning",
+        "availability": "HIGH \u2014 Resource exhaustion, cloud account suspension",
+        "business_impact": "Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.",
+        "attack_vector": "Hardcoded high-entropy tokens or keys committed in repositories or response bodies."
+      },
+      "blast_radius": "Cloud & Third-Party Service Credential Compromise",
+      "risk_factors": {
+        "base_severity_score": 90.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 100.0,
+        "cvss_equivalent": 10.0,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "private-key",
+        "masked_match": "----***********************----"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: Private Cryptographic Key",
+      "description": "Hardcoded secret token or credential (Private Cryptographic Key) found in source code repository.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Private Key",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "lib/insecurity.ts",
+      "line": 21,
+      "code_snippet": "20: export const publicKey = fs ? fs.readFileSync('encryptionkeys/jwt.pub', 'utf8') : 'placeholder-public-key'\n21: const privateKey = '----***********************----\\r\\nMIICXAIBAAKBgQDNwqLEe9wgTXCbC7+RPdDbBbeqjdbs4kOPOIGzqLpXvJXlxxW8iMz0EaM4BKUqYsIa+ndv3NAn2RxCd5ubVdJJcX43zO6Ko0TFEZx/65gY3BE0O6syCEmUP4qbSd6exou/F+WTISzbQ5FBVPVmhnYhG/kpwt/cIxK5iUn5hm+4tQIDAQABAoGBAI+8xiPoOrA+KMnG/T4jJsG6TsHQcDHvJi7o1IKC/hnIXha0atTX5AUkRRce95qSfvKFweXdJXSQ0JMGJyfuXgU6dI0TcseFRfewXAa/ssxAC+iUVR6KUMh1PE2wXLitfeI6JLvVtrBYswm2I7CtY0q8n5AGimHWVXJPLfGV7m0BAkEA+fqFt2LXbLtyg6wZyxMA/cnmt5Nt3U2dAu77MzFJvibANUNHE4HPLZxjGNXN+a6m0K6TD4kDdh5HfUYLWWRBYQJBANK3carmulBwqzcDBjsJ0YrIONBpCAsXxk8idXb8jL9aNIg15Wumm2enqqObahDHB5jnGOLmbasizvSVqypfM9UCQCQl8xIqy+YgURXzXCN+kwUgHinrutZms87Jyi+D8Br8NY0+Nlf+zHvXAomD2W5CsEK7C+8SLBr3k/TsnRWHJuECQHFE9RA2OP8WoaLPuGCyFXaxzICThSRZYluVnWkZtxsBhW2W8z1b8PvWUE7kMy7TnkzeJS2LSnaNHoyxi7IaPQUCQCwWU4U+v4lD7uYBw00Ga/xt+7+UqFPlPVdz1yyr4q24Zxaw0LgmuEvgU5dycq8N7JxjTubX0MIRR+G9fmDBBl8=\\r\\n-----END RSA PRIVATE KEY-----'\n22: \n23: interface ResponseWithUser {",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for Private Cryptographic Key matching '----***********************----'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "7d941612ed45f8b374c33e83dd69ff60",
+      "risk_score": 100.0,
+      "threat_scenario": "Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Unauthorized access to cloud APIs, databases, and third-party SaaS platforms",
+        "integrity": "HIGH \u2014 Direct API mutations, cloud asset provisioning",
+        "availability": "HIGH \u2014 Resource exhaustion, cloud account suspension",
+        "business_impact": "Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.",
+        "attack_vector": "Hardcoded high-entropy tokens or keys committed in repositories or response bodies."
+      },
+      "blast_radius": "Cloud & Third-Party Service Credential Compromise",
+      "risk_factors": {
+        "base_severity_score": 90.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 100.0,
+        "cvss_equivalent": 10.0,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "private-key",
+        "masked_match": "----***********************----"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: Private Cryptographic Key",
+      "description": "Hardcoded secret token or credential (Private Cryptographic Key) found in source code repository.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Private Key",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "terraform/networking.tf",
+      "line": 171,
+      "code_snippet": "170:   certificate_body = file(\"${path.module}/certs/server.crt\")\n171:   private_key      = \"----***********************----\\nMIICXAIBAAKBgQDNwqLEe9wgTXCbC7+RPdDbBbeqjdbs4kOPOIGzqLpXvJXlxxW8\\niMz0EaM4BKUqYsIa+ndv3NAn2RxCd5ubVdJJcX43zO6Ko0TFEZx/65gY3BE0O6sy\\nCEmUP4qbSd6exou/F+WTISzbQ5FBVPVmhnYhG/kpwt/cIxK5iUn5hm+4tQIDAQAB\\nAoGBAI+8xiPoOrA+KMnG/T4jJsG6TsHQcDHvJi7o1IKC/hnIXha0atTX5AUkRRce\\n95qSfvKFweXdJXSQ0JMGJyfuXgU6dI0TcseFRfewXAa/ssxAC+iUVR6KUMh1PE2w\\nXLitfeI6JLvVtrBYswm2I7CtY0q8n5AGimHWVXJPLfGV7m0BAkEA+fqFt2LXbLty\\ng6wZyxMA/cnmt5Nt3U2dAu77MzFJvibANUNHE4HPLZxjGNXN+a6m0K6TD4kDdh5H\\nfUYLWWRBYQJBANK3carmulBwqzcDBjsJ0YrIONBpCAsXxk8idXb8jL9aNIg15Wum\\nm2enqqObahDHB5jnGOLmbasizvSVqypfM9UCQCQl8xIqy+YgURXzXCN+kwUgHinr\\nutZms87Jyi+D8Br8NY0+Nlf+zHvXAomD2W5CsEK7C+8SLBr3k/TsnRWHJuECQHFE\\n9RA2OP8WoaLPuGCyFXaxzICThSRZYluVnWkZtxsBhW2W8z1b8PvWUE7kMy7Tnkze\\nJS2LSnaNHoyxi7IaPQUCQCwWU4U+v4lD7uYBw00Ga/xt+7+UqFPlPVdz1yyr4q24\\nZxaw0LgmuEvgU5dycq8N7JxjTubX0MIRR+G9fmDBBl8=\\n-----END RSA PRIVATE KEY-----\" # vuln-code-snippet vuln-line iacLeakedKeyChallenge\n172: \n173:   lifecycle {",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for Private Cryptographic Key matching '----***********************----'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "b91470a330ef7b42759bc46ca45548d5",
+      "risk_score": 100.0,
+      "threat_scenario": "Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Unauthorized access to cloud APIs, databases, and third-party SaaS platforms",
+        "integrity": "HIGH \u2014 Direct API mutations, cloud asset provisioning",
+        "availability": "HIGH \u2014 Resource exhaustion, cloud account suspension",
+        "business_impact": "Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.",
+        "attack_vector": "Hardcoded high-entropy tokens or keys committed in repositories or response bodies."
+      },
+      "blast_radius": "Cloud & Third-Party Service Credential Compromise",
+      "risk_factors": {
+        "base_severity_score": 90.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 100.0,
+        "cvss_equivalent": 10.0,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "private-key",
+        "masked_match": "----***********************----"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: JSON Web Token (JWT)",
+      "description": "Hardcoded secret token or credential (JSON Web Token (JWT)) found in source code repository.",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Authentication Token",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "test/api/user.test.ts",
+      "line": 280,
+      "code_snippet": "279:       .get('/rest/user/whoami')\n280:       .set({ Authorization: 'eyJh****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************pC8g' })\n281:     assert.equal(res.status, 200)\n282:     assert.ok(res.headers['content-type']?.includes('application/json'))",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for JSON Web Token (JWT) matching 'eyJh****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************pC8g'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "56c739fd3210ad4a078e048782e2edd0",
+      "risk_score": 60.6,
+      "threat_scenario": "Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Unauthorized access to cloud APIs, databases, and third-party SaaS platforms",
+        "integrity": "HIGH \u2014 Direct API mutations, cloud asset provisioning",
+        "availability": "HIGH \u2014 Resource exhaustion, cloud account suspension",
+        "business_impact": "Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.",
+        "attack_vector": "Hardcoded high-entropy tokens or keys committed in repositories or response bodies."
+      },
+      "blast_radius": "Cloud & Third-Party Service Credential Compromise",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 60.6,
+        "cvss_equivalent": 6.1,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "rule_id": "jwt-token",
+        "masked_match": "eyJh****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************pC8g"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: JSON Web Token (JWT)",
+      "description": "Hardcoded secret token or credential (JSON Web Token (JWT)) found in source code repository.",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Authentication Token",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "test/cypress/e2e/forgedJwt.spec.ts",
+      "line": 22,
+      "code_snippet": "21:               'token',\n22:               'eyJ0*******************************************************************************************************************************************************8Xc8'\n23:             )\n24:           })",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for JSON Web Token (JWT) matching 'eyJ0*******************************************************************************************************************************************************8Xc8'\n[gitleaks]: Detected pattern for JSON Web Token (JWT) matching 'eyJ0*******************************************************************************************************************************************************************************************************************************************************************************************NblU'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "163893c60af43c60a180c1e98096666b",
+      "risk_score": 60.6,
+      "threat_scenario": "Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Unauthorized access to cloud APIs, databases, and third-party SaaS platforms",
+        "integrity": "HIGH \u2014 Direct API mutations, cloud asset provisioning",
+        "availability": "HIGH \u2014 Resource exhaustion, cloud account suspension",
+        "business_impact": "Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.",
+        "attack_vector": "Hardcoded high-entropy tokens or keys committed in repositories or response bodies."
+      },
+      "blast_radius": "Cloud & Third-Party Service Credential Compromise",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 60.6,
+        "cvss_equivalent": 6.1,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "rule_id": "jwt-token",
+        "masked_match": "eyJ0*******************************************************************************************************************************************************8Xc8"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: JSON Web Token (JWT)",
+      "description": "Hardcoded secret token or credential (JSON Web Token (JWT)) found in source code repository.",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Authentication Token",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "test/server/currentUser.unit.test.ts",
+      "line": 31,
+      "code_snippet": "30:   void it('should return ID and email of user belonging to cookie from the request', () => {\n31:     req.cookies.token = 'eyJ0*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************nzH0'\n32:     req.query.callback = undefined\n33:     authenticatedUsers.put(",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for JSON Web Token (JWT) matching 'eyJ0*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************nzH0'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "906b5a2980288b268f501d4c68ca0ca7",
+      "risk_score": 60.6,
+      "threat_scenario": "Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Unauthorized access to cloud APIs, databases, and third-party SaaS platforms",
+        "integrity": "HIGH \u2014 Direct API mutations, cloud asset provisioning",
+        "availability": "HIGH \u2014 Resource exhaustion, cloud account suspension",
+        "business_impact": "Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.",
+        "attack_vector": "Hardcoded high-entropy tokens or keys committed in repositories or response bodies."
+      },
+      "blast_radius": "Cloud & Third-Party Service Credential Compromise",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 60.6,
+        "cvss_equivalent": 6.1,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "rule_id": "jwt-token",
+        "masked_match": "eyJ0*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************nzH0"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: JSON Web Token (JWT)",
+      "description": "Hardcoded secret token or credential (JSON Web Token (JWT)) found in source code repository.",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Authentication Token",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "test/server/verify.unit.test.ts",
+      "line": 308,
+      "code_snippet": "307:     void it('\"jwtForgedChallenge\" is solved when forged token HMAC-signed with public RSA-key has email rsa_lord@juice-sh.op in the payload', { skip: isWindows() ? 'not supported on Windows' : false }, () => {\n308:       req.headers = { authorization: 'Bearer eyJ0*******************************************************************************************************************************************************SEAg' }\n309: \n310:       verify.jwtChallenges()(req, res, next)",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for JSON Web Token (JWT) matching 'eyJ0*******************************************************************************************************************************************************SEAg'\n[gitleaks]: Detected pattern for JSON Web Token (JWT) matching 'eyJ0****************************************************************************************************************************************7Tg8'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "5037f95c40bdc5aab144e65b36bc300d",
+      "risk_score": 60.6,
+      "threat_scenario": "Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Unauthorized access to cloud APIs, databases, and third-party SaaS platforms",
+        "integrity": "HIGH \u2014 Direct API mutations, cloud asset provisioning",
+        "availability": "HIGH \u2014 Resource exhaustion, cloud account suspension",
+        "business_impact": "Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.",
+        "attack_vector": "Hardcoded high-entropy tokens or keys committed in repositories or response bodies."
+      },
+      "blast_radius": "Cloud & Third-Party Service Credential Compromise",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 60.6,
+        "cvss_equivalent": 6.1,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "rule_id": "jwt-token",
+        "masked_match": "eyJ0*******************************************************************************************************************************************************SEAg"
+      }
+    }
+  ]
+}

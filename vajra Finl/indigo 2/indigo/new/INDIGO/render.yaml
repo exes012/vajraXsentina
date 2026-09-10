@@ -1,0 +1,52 @@
+services:
+  # Backend Service (FastAPI)
+  - type: web
+    name: vajra-backend
+    runtime: python
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALIENVAULT_OTX_API_KEY
+        sync: false
+      - key: RANSOMWARE_LIVE_API_KEY
+        sync: false
+      - key: URLSCAN_API_KEY
+        sync: false
+      - key: NEWS_API_KEY
+        sync: false
+      - key: WHOISXML_API_KEY
+        sync: false
+      - key: GRIDINSOFT_API_KEY
+        sync: false
+      - key: NVD_API_KEY
+        sync: false
+      - key: SMTP_SERVER
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SENDER_EMAIL
+        sync: false
+    healthCheckPath: /health
+
+  # Frontend Service (Next.js Static Export)
+  - type: web
+    name: vajra-frontend
+    runtime: node
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npx serve out -l $PORT
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NEXT_PUBLIC_API_URL
+        value: https://vajra-9pjh.onrender.com
+    healthCheckPath: /

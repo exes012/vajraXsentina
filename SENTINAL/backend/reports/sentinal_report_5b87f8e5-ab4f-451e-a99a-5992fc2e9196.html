@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinal Security Assessment Report - Scope: NodeGoat</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #121826;
+            --bg-elevated: #1a2234;
+            --border-color: #243048;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --crit-color: #ff3366;
+            --high-color: #ff9900;
+            --med-color: #ffcc00;
+            --low-color: #00ccff;
+            --info-color: #8899a6;
+            --success-color: #10b981;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 24px;
+            margin-bottom: 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 28px; font-weight: 800; letter-spacing: 2px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .badge-tag { background: #1e293b; color: var(--accent-cyan); padding: 4px 12px; border-radius: 9999px; font-size: 13px; border: 1px solid rgba(0, 242, 254, 0.3); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 36px; }
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        .card-title { font-size: 12px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 1px; }
+        .card-value { font-size: 28px; font-weight: 700; }
+        .score-val { color: var(--accent-cyan); }
+        .crit-val { color: var(--crit-color); }
+        .high-val { color: var(--high-color); }
+        .med-val { color: var(--med-color); }
+        .section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; border-left: 4px solid var(--accent-cyan); padding-left: 12px; }
+        .prose { color: #cbd5e1; margin-bottom: 36px; font-size: 14.5px; }
+        .prose p { margin-bottom: 12px; }
+        .corr-card { background: #191428; border: 1px solid #7c3aed; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .corr-title { font-size: 17px; font-weight: 700; color: #c084fc; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+        .finding-table { width: 100%; border-collapse: collapse; margin-top: 16px; margin-bottom: 36px; background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
+        .finding-table th { background: var(--bg-elevated); padding: 12px 16px; text-align: left; font-size: 12px; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); }
+        .finding-table td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        .sev-badge { display: inline-block; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .sev-CRITICAL { background: rgba(255, 51, 102, 0.2); color: var(--crit-color); border: 1px solid var(--crit-color); }
+        .sev-HIGH { background: rgba(255, 153, 0, 0.2); color: var(--high-color); border: 1px solid var(--high-color); }
+        .sev-MEDIUM { background: rgba(255, 204, 0, 0.2); color: var(--med-color); border: 1px solid var(--med-color); }
+        .sev-LOW { background: rgba(0, 204, 255, 0.2); color: var(--low-color); border: 1px solid var(--low-color); }
+        .sev-INFO { background: rgba(136, 153, 166, 0.2); color: var(--info-color); border: 1px solid var(--info-color); }
+        .engine-pill { display: inline-block; background: #0f172a; border: 1px solid #334155; color: #38bdf8; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-right: 4px; }
+        code { background: #0f172a; color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+        pre { background: #090d16; border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; overflow-x: auto; color: #a5f3fc; font-family: monospace; font-size: 12.5px; margin-top: 8px; }
+        footer { border-top: 1px solid var(--border-color); padding-top: 24px; text-align: center; color: var(--text-secondary); font-size: 12px; margin-top: 60px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <div class="logo">SENTINAL</div>
+                <p style="color: var(--text-secondary); font-size: 13.5px; margin-top: 4px;">Unified SAST + SCA + DAST Security Assessment Report</p>
+            </div>
+            <div style="text-align: right;">
+                <span class="badge-tag">SOURCE SCAN • STANDARD</span>
+                <p style="color: var(--text-secondary); font-size: 12px; margin-top: 6px;">Generated: September 08, 2026 at 08:42 UTC</p>
+            </div>
+        </header>
+
+        <!-- Target Scope & Authorization Details -->
+        <div class="card" style="margin-bottom: 24px; background: #0b1120; border: 1px solid #1e293b;">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <span style="font-size: 11px; color: #64748b; text-transform: uppercase;">Assessment Target</span>
+                    <div style="font-size: 16px; font-weight: 700; color: #f8fafc; font-family: monospace;">None</div>
+                </div>
+                <div>
+                    <span style="font-size: 11px; color: #64748b; text-transform: uppercase;">Authorization Status</span>
+                    <div style="font-size: 14px; font-weight: 700; color: #fbbf24;">
+                        ● DEV_MODE
+                    </div>
+                </div>
+                <div>
+                    <span style="font-size: 11px; color: #64748b; text-transform: uppercase;">DAST Coverage Status</span>
+                    <div style="font-size: 14px; font-weight: 700; color: #ef4444;">
+                        NOT_APPLICABLE (100.0%)
+                    </div>
+                </div>
+                <div>
+                    <span style="font-size: 11px; color: #64748b; text-transform: uppercase;">Scan Mode</span>
+                    <div style="font-size: 14px; font-weight: 700; color: #38bdf8;">STANDARD</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Metrics -->
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Security Risk Score</div>
+                <div class="card-value score-val">92.0/100</div>
+            </div>
+            <div class="card">
+                <div class="card-title">DAST Coverage Score</div>
+                <div class="card-value" style="color: #38bdf8;">100.0%</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Critical Flaws</div>
+                <div class="card-value crit-val">9</div>
+            </div>
+            <div class="card">
+                <div class="card-title">High Flaws</div>
+                <div class="card-value high-val">12</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Total Findings</div>
+                <div class="card-value"></div>
+            </div>
+        </div>
+
+        <!-- Target Connectivity & Blocking Diagnostics -->
+        
+
+        <!-- Executive Summary -->
+        <h2 class="section-title">2. Executive Summary</h2>
+        <div class="card prose" style="margin-bottom: 36px;">
+            <p>**Security Assessment Executive Summary**<br>**Overall Posture:** CRITICAL POSTURE<br>The automated assessment of None identified immediate critical exposures requiring urgent remediation. A total of 32 findings were recorded, including 9 Critical and 12 High severity vulnerabilities.<br><br>**Key Risk Highlights:**<br>- Total Discovered Findings: 32 (Critical: 9, High: 12, Medium: 11, Low: 0)<br>- Correlated Exploit Chains: 0<br>- Primary Concern Areas: Injection, Container Security<br><br>Leadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.</p>
+        </div>
+
+        <!-- Correlated Risks -->
+        
+
+        <!-- Findings Inventory -->
+        <h2 class="section-title">3. Comprehensive Findings Inventory</h2>
+        <table class="finding-table">
+            <thead>
+                <tr>
+                    <th style="width: 105px;">Severity</th>
+                    <th style="width: 130px;">Detected By</th>
+                    <th>Vulnerability Details</th>
+                    <th>Evidence & Remediation</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">MEDIUM Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 42.1/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Information Disclosure & Security Misconfiguration
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Dockerfile Container Running as Root</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Containers running as root increase the impact of container escape vulnerabilities.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> The vulnerability exposes implementation details, internal software versions, or unhardened endpoints that assist attackers in reconnaissance and multi-stage attack chaining.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> LOW-MEDIUM — Leakage of architecture details and configuration parameters</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> LOW — Limited direct modification</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Increased attack surface visibility for targeted external threat actors.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>Dockerfile:1</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-250</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern 'FROM node:24 AS installer' at line 1
+[sentinal-sast]: Matched pattern 'COPY . /juice-shop' at line 2
+[sentinal-sast]: Matched pattern 'WORKDIR /juice-shop' at line 3
+[sentinal-sast]: Matched pattern 'RUN npm install -g typescript@^6.0.3' at line 4
+[sentinal-sast]: Matched pattern 'RUN npm install --omit=dev' at line 5
+[sentinal-sast]: Matched pattern 'RUN npm dedupe --omit=dev' at line 6
+[sentinal-sast]: Matched pattern 'RUN rm -rf frontend/node_modules' at line 7
+[sentinal-sast]: Matched pattern 'RUN rm -rf frontend/.angular' at line 8
+[sentinal-sast]: Matched pattern 'RUN rm -rf frontend/src/assets' at line 9
+[sentinal-sast]: Matched pattern 'RUN mkdir logs' at line 10
+[sentinal-sast]: Matched pattern 'RUN chown -R 65532 logs' at line 11
+[sentinal-sast]: Matched pattern 'RUN chgrp -R 0 ftp/ frontend/dist/ logs/ data/ i18n/' at line 12
+[sentinal-sast]: Matched pattern 'RUN chmod -R g=u ftp/ frontend/dist/ logs/ data/ i18n/' at line 13
+[sentinal-sast]: Matched pattern 'RUN rm ftp/legal.md || true' at line 14
+[sentinal-sast]: Matched pattern 'RUN rm i18n/*.json || true' at line 15
+[sentinal-sast]: Matched pattern '' at line 16
+[sentinal-sast]: Matched pattern '# keep version in sync with package.json' at line 17
+[sentinal-sast]: Matched pattern 'ARG CYCLONEDX_NPM_VERSION='^2.0.0||^3.0.0||^4.0.0'' at line 18
+[sentinal-sast]: Matched pattern 'RUN npm install -g @cyclonedx/cyclonedx-npm@$CYCLONEDX_NPM_VERSION' at line 19
+[sentinal-sast]: Matched pattern 'RUN npm run sbom' at line 20
+[sentinal-sast]: Matched pattern '' at line 21
+[sentinal-sast]: Matched pattern 'FROM gcr.io/distroless/nodejs24-debian13' at line 22
+[sentinal-sast]: Matched pattern 'ARG BUILD_DATE' at line 23
+[sentinal-sast]: Matched pattern 'ARG VCS_REF' at line 24
+[sentinal-sast]: Matched pattern 'LABEL maintainer="Bjoern Kimminich <bjoern.kimminich@owasp.org>" \' at line 25
+[sentinal-sast]: Matched pattern '    org.opencontainers.image.title="OWASP Juice Shop" \' at line 26
+[sentinal-sast]: Matched pattern '    org.opencontainers.image.description="Probably the most modern and sophisticated insecure web application" \' at line 27
+[sentinal-sast]: Matched pattern '    org.opencontainers.image.authors="Bjoern Kimminich <bjoern.kimminich@owasp.org>" \' at line 28
+[sentinal-sast]: Matched pattern '    org.opencontainers.image.vendor="Open Worldwide Application Security Project" \' at line 29
+[sentinal-sast]: Matched pattern '    org.opencontainers.image.documentation="https://help.owasp-juice.shop" \' at line 30
+[sentinal-sast]: Matched pattern '    org.opencontainers.image.licenses="MIT" \' at line 31
+[sentinal-sast]: Matched pattern '    org.opencontainers.image.version="20.2.0" \' at line 32
+[sentinal-sast]: Matched pattern '    org.opencontainers.image.url="https://owasp-juice.shop" \' at line 33
+[sentinal-sast]: Matched pattern '    org.opencontainers.image.source="https://github.com/juice-shop/juice-shop" \' at line 34
+[sentinal-sast]: Matched pattern '    org.opencontainers.image.revision=$VCS_REF \' at line 35
+[sentinal-sast]: Matched pattern '    org.opencontainers.image.created=$BUILD_DATE' at line 36
+[sentinal-sast]: Matched pattern 'WORKDIR /juice-shop' at line 37
+[sentinal-sast]: Matched pattern 'COPY --from=installer --chown=65532:0 /juice-shop .' at line 38
+[sentinal-sast]: Matched pattern 'EXPOSE 3000' at line 40
+[sentinal-sast]: Matched pattern 'CMD ["/juice-shop/build/app.js"]' at line 41</div>
+                        
+                        
+                        <pre><code>1: FROM node:24 AS installer
+2: COPY . /juice-shop
+3: WORKDIR /juice-shop</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add `USER nonroot` or a dedicated unprivileged user before the ENTRYPOINT/CMD.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 94.3/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Database Takeover & Sensitive Data Exfiltration
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Potential NoSQL Injection</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Full database extraction (PII, credentials, business data)</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Unauthorized table alteration, record modification, or database truncation</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>data/static/codefixes/chatbotGreedyInjectionChallenge_1.ts:65</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-943</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern '$where: ' at line 65</div>
+                        
+                        
+                        <pre><code>64:       const productId = Number(Id)
+65:       return await db.reviewsCollection.find({ $where: 'this.product == ' + productId }) as Review[]
+66:     }
+67:   }),</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Sanitize query keys using mongo-sanitize or enforce strict schema validation.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 94.3/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Database Takeover & Sensitive Data Exfiltration
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Potential NoSQL Injection</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Full database extraction (PII, credentials, business data)</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Unauthorized table alteration, record modification, or database truncation</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>data/static/codefixes/chatbotGreedyInjectionChallenge_2_correct.ts:66</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-943</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern '$where: ' at line 66</div>
+                        
+                        
+                        <pre><code>65:       const productId = Number(Id)
+66:       return await db.reviewsCollection.find({ $where: 'this.product == ' + productId }) as Review[]
+67:     }
+68:   }),</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Sanitize query keys using mongo-sanitize or enforce strict schema validation.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 94.3/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Database Takeover & Sensitive Data Exfiltration
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Potential NoSQL Injection</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Full database extraction (PII, credentials, business data)</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Unauthorized table alteration, record modification, or database truncation</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>data/static/codefixes/chatbotGreedyInjectionChallenge_3.ts:66</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-943</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern '$where: ' at line 66</div>
+                        
+                        
+                        <pre><code>65:       const productId = Number(Id)
+66:       return await db.reviewsCollection.find({ $where: 'this.product == ' + productId }) as Review[]
+67:     }
+68:   }),</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Sanitize query keys using mongo-sanitize or enforce strict schema validation.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 94.3/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Database Takeover & Sensitive Data Exfiltration
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Potential NoSQL Injection</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Full database extraction (PII, credentials, business data)</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Unauthorized table alteration, record modification, or database truncation</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>data/static/codefixes/chatbotGreedyInjectionChallenge_4.ts:66</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-943</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern '$where: ' at line 66</div>
+                        
+                        
+                        <pre><code>65:       const productId = Number(Id)
+66:       return await db.reviewsCollection.find({ $where: 'this.product == ' + productId }) as Review[]
+67:     }
+68:   }),</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Sanitize query keys using mongo-sanitize or enforce strict schema validation.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 86.6/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Session Hijacking & Client-Side Execution
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Cross-Site Scripting (XSS) via innerHTML / dangerouslySetInnerHTML</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Directly assigning unsanitized dynamic user input to innerHTML creates Document Object Model (DOM) Cross-Site Scripting vulnerabilities.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An adversary can inject malicious JavaScript into the victim's browser session, stealing session tokens and cookies, rewriting web pages for credential phishing, or forcing unauthorized transactions on behalf of authenticated users.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Session token harvesting, DOM extraction, keylogging</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Unauthorized client-side actions, phishing modal injection</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Account takeover of high-privilege administrators and loss of client trust.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>frontend/src/assets/private/dat.gui.min.js:1</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-79</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern '.innerHTML=' at line 1
+[sentinal-sast]: Matched pattern '.innerHTML=' at line 13
+[sentinal-sast]: Matched pattern '.innerHTML=' at line 23
+[sentinal-sast]: Matched pattern '.innerHTML=' at line 33
+[sentinal-sast]: Matched pattern '.innerHTML=' at line 35
+[sentinal-sast]: Matched pattern '.innerHTML=' at line 39
+[sentinal-sast]: Matched pattern '.innerHTML=' at line 40
+[sentinal-sast]: Matched pattern '.innerHTML=' at line 41
+[sentinal-sast]: Matched pattern '.innerHTML=' at line 44
+[sentinal-sast]: Matched pattern '.innerHTML=' at line 48
+[sentinal-sast]: Matched pattern '.innerHTML=' at line 49
+[sentinal-sast]: Matched pattern '.innerHTML=' at line 55</div>
+                        
+                        
+                        <pre><code>1: var dat=dat||{};dat.gui=dat.gui||{};dat.utils=dat.utils||{};dat.controllers=dat.controllers||{};dat.dom=dat.dom||{};dat.color=dat.color||{};dat.utils.css=function(){return{load:function(e,a){a=a||document;var b=a.createElement("link");b.type="text/css";b.rel="stylesheet";b.href=e;a.getElementsByTagName("head")[0].appendChild(b)},inject:function(e,a){a=a||document;var b=document.createElement("style");b.type="text/css";b.innerHTML=e;a.getElementsByTagName("head")[0].appendChild(b)}}}();
+2: dat.utils.common=function(){var e=Array.prototype.forEach,a=Array.prototype.slice;return{BREAK:{},extend:function(b){this.each(a.call(arguments,1),function(a){for(var f in a)this.isUndefined(a[f])||(b[f]=a[f])},this);return b},defaults:function(b){this.each(a.call(arguments,1),function(a){for(var f in a)this.isUndefined(b[f])&&(b[f]=a[f])},this);return b},compose:function(){var b=a.call(arguments);return function(){for(var d=a.call(arguments),f=b.length-1;0<=f;f--)d=[b[f].apply(this,d)];return d[0]}},
+3:     each:function(a,d,f){if(e&&a.forEach===e)a.forEach(d,f);else if(a.length===a.length+0)for(var c=0,p=a.length;c<p&&!(c in a&&d.call(f,a[c],c)===this.BREAK);c++);else for(c in a)if(d.call(f,a[c],c)===this.BREAK)break},defer:function(a){setTimeout(a,0)},toArray:function(b){return b.toArray?b.toArray():a.call(b)},isUndefined:function(a){return void 0===a},isNull:function(a){return null===a},isNaN:function(a){return a!==a},isArray:Array.isArray||function(a){return a.constructor===Array},isObject:function(a){return a===</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Use `textContent` or sanitize user input using DOMPurify before inserting into the DOM.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 86.6/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Session Hijacking & Client-Side Execution
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Cross-Site Scripting (XSS) via innerHTML / dangerouslySetInnerHTML</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Directly assigning unsanitized dynamic user input to innerHTML creates Document Object Model (DOM) Cross-Site Scripting vulnerabilities.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An adversary can inject malicious JavaScript into the victim's browser session, stealing session tokens and cookies, rewriting web pages for credential phishing, or forcing unauthorized transactions on behalf of authenticated users.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Session token harvesting, DOM extraction, keylogging</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Unauthorized client-side actions, phishing modal injection</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Account takeover of high-privilege administrators and loss of client trust.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>frontend/src/assets/private/stats.min.js:3</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-79</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern '.innerHTML=' at line 3
+[sentinal-sast]: Matched pattern '.innerHTML=' at line 4</div>
+                        
+                        
+                        <pre><code>2: var Stats=function(){var l=Date.now(),m=l,g=0,n=Infinity,o=0,h=0,p=Infinity,q=0,r=0,s=0,f=document.createElement("div");f.id="stats";f.addEventListener("mousedown",function(b){b.preventDefault();t(++s%2)},!1);f.style.cssText="width:80px;opacity:0.9;cursor:pointer";var a=document.createElement("div");a.id="fps";a.style.cssText="padding:0 0 3px 3px;text-align:left;background-color:#002";f.appendChild(a);var i=document.createElement("div");i.id="fpsText";i.style.cssText="color:#0ff;font-family:Helvetica,Arial,sans-serif;font-size:9px;font-weight:bold;line-height:15px";
+3:     i.innerHTML="FPS";a.appendChild(i);var c=document.createElement("div");c.id="fpsGraph";c.style.cssText="position:relative;width:74px;height:30px;background-color:#0ff";for(a.appendChild(c);74>c.children.length;){var j=document.createElement("span");j.style.cssText="width:1px;height:30px;float:left;background-color:#113";c.appendChild(j)}var d=document.createElement("div");d.id="ms";d.style.cssText="padding:0 0 3px 3px;text-align:left;background-color:#020;display:none";f.appendChild(d);var k=document.createElement("div");
+4:     k.id="msText";k.style.cssText="color:#0f0;font-family:Helvetica,Arial,sans-serif;font-size:9px;font-weight:bold;line-height:15px";k.innerHTML="MS";d.appendChild(k);var e=document.createElement("div");e.id="msGraph";e.style.cssText="position:relative;width:74px;height:30px;background-color:#0f0";for(d.appendChild(e);74>e.children.length;)j=document.createElement("span"),j.style.cssText="width:1px;height:30px;float:left;background-color:#131",e.appendChild(j);var t=function(b){s=b;switch(s){case 0:a.style.display=
+5:         "block";d.style.display="none";break;case 1:a.style.display="none",d.style.display="block"}};return{REVISION:11,domElement:f,setMode:t,begin:function(){l=Date.now()},end:function(){var b=Date.now();g=b-l;n=Math.min(n,g);o=Math.max(o,g);k.textContent=g+" MS ("+n+"-"+o+")";var a=Math.min(30,30-30*(g/200));e.appendChild(e.firstChild).style.height=a+"px";r++;b>m+1E3&&(h=Math.round(1E3*r/(b-m)),p=Math.min(p,h),q=Math.max(q,h),i.textContent=h+" FPS ("+p+"-"+q+")",a=Math.min(30,30-30*(h/100)),c.appendChild(c.firstChild).style.height=</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Use `textContent` or sanitize user input using DOMPurify before inserting into the DOM.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 86.6/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Session Hijacking & Client-Side Execution
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Cross-Site Scripting (XSS) via innerHTML / dangerouslySetInnerHTML</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Directly assigning unsanitized dynamic user input to innerHTML creates Document Object Model (DOM) Cross-Site Scripting vulnerabilities.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An adversary can inject malicious JavaScript into the victim's browser session, stealing session tokens and cookies, rewriting web pages for credential phishing, or forcing unauthorized transactions on behalf of authenticated users.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Session token harvesting, DOM extraction, keylogging</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Unauthorized client-side actions, phishing modal injection</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Account takeover of high-privilege administrators and loss of client trust.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>frontend/src/assets/private/three.js:11354</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-79</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern '.innerHTML = ' at line 11354
+[sentinal-sast]: Matched pattern '.innerHTML = ' at line 11375</div>
+                        
+                        
+                        <pre><code>11353: 
+11354: 		e.innerHTML = "Loading ...";
+11355: 
+11356: 		return e;</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Use `textContent` or sanitize user input using DOMPurify before inserting into the DOM.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 86.6/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Session Hijacking & Client-Side Execution
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Cross-Site Scripting (XSS) via innerHTML / dangerouslySetInnerHTML</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Directly assigning unsanitized dynamic user input to innerHTML creates Document Object Model (DOM) Cross-Site Scripting vulnerabilities.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An adversary can inject malicious JavaScript into the victim's browser session, stealing session tokens and cookies, rewriting web pages for credential phishing, or forcing unauthorized transactions on behalf of authenticated users.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Session token harvesting, DOM extraction, keylogging</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Unauthorized client-side actions, phishing modal injection</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Account takeover of high-privilege administrators and loss of client trust.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>frontend/src/hacking-instructor/index.ts:126</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-79</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern '.innerHTML = ' at line 126
+[sentinal-sast]: Matched pattern '.innerHTML = ' at line 142</div>
+                        
+                        
+                        <pre><code>125:   const textBox = createElement('span', { flexGrow: '2' })
+126:   textBox.innerHTML = snarkdown(hint.text)
+127: 
+128:   const cancelButtonStyles = {</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Use `textContent` or sanitize user input using DOMPurify before inserting into the DOM.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 86.6/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Session Hijacking & Client-Side Execution
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Cross-Site Scripting (XSS) via innerHTML / dangerouslySetInnerHTML</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Directly assigning unsanitized dynamic user input to innerHTML creates Document Object Model (DOM) Cross-Site Scripting vulnerabilities.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An adversary can inject malicious JavaScript into the victim's browser session, stealing session tokens and cookies, rewriting web pages for credential phishing, or forcing unauthorized transactions on behalf of authenticated users.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Session token harvesting, DOM extraction, keylogging</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Unauthorized client-side actions, phishing modal injection</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Account takeover of high-privilege administrators and loss of client trust.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>frontend/src/hacking-instructor/helpers/helpers.ts:138</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-79</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern '.innerHTML =' at line 138</div>
+                        
+                        
+                        <pre><code>137: 
+138:       if (element && element.innerHTML === value) {
+139:         break
+140:       }</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Use `textContent` or sanitize user input using DOMPurify before inserting into the DOM.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">MEDIUM Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 42.1/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Information Disclosure & Security Misconfiguration
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Dockerfile Container Running as Root</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Containers running as root increase the impact of container escape vulnerabilities.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> The vulnerability exposes implementation details, internal software versions, or unhardened endpoints that assist attackers in reconnaissance and multi-stage attack chaining.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> LOW-MEDIUM — Leakage of architecture details and configuration parameters</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> LOW — Limited direct modification</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Increased attack surface visibility for targeted external threat actors.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>infrastructure/Dockerfile:1</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-250</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern 'FROM node:20.19.2-bookworm-slim AS base' at line 1
+[sentinal-sast]: Matched pattern 'RUN apt-get update && apt-get install -y --no-install-recommends \' at line 2
+[sentinal-sast]: Matched pattern '    dumb-init=1.2.5-* \' at line 3
+[sentinal-sast]: Matched pattern '    && rm -rf /var/lib/apt/lists/*' at line 4
+[sentinal-sast]: Matched pattern '' at line 5
+[sentinal-sast]: Matched pattern 'FROM node:20.19.2-bookworm AS builder' at line 6
+[sentinal-sast]: Matched pattern '' at line 7
+[sentinal-sast]: Matched pattern 'WORKDIR /juice-shop' at line 8
+[sentinal-sast]: Matched pattern 'COPY package*.json ./' at line 9
+[sentinal-sast]: Matched pattern 'RUN npm ci --ignore-scripts' at line 10
+[sentinal-sast]: Matched pattern 'COPY . .' at line 11
+[sentinal-sast]: Matched pattern 'RUN npm run build && npm prune --production' at line 12
+[sentinal-sast]: Matched pattern '' at line 13
+[sentinal-sast]: Matched pattern 'FROM base AS production' at line 14
+[sentinal-sast]: Matched pattern '' at line 15
+[sentinal-sast]: Matched pattern 'ENV NODE_ENV=production' at line 16
+[sentinal-sast]: Matched pattern 'WORKDIR /juice-shop' at line 17
+[sentinal-sast]: Matched pattern '' at line 18
+[sentinal-sast]: Matched pattern 'COPY --from=builder --chown=node:node /juice-shop .' at line 19
+[sentinal-sast]: Matched pattern '' at line 20
+[sentinal-sast]: Matched pattern 'EXPOSE 3000' at line 22
+[sentinal-sast]: Matched pattern 'ENTRYPOINT ["dumb-init", "--"]' at line 23
+[sentinal-sast]: Matched pattern 'CMD ["node", "build/app.js"]' at line 24</div>
+                        
+                        
+                        <pre><code>1: FROM node:20.19.2-bookworm-slim AS base
+2: RUN apt-get update && apt-get install -y --no-install-recommends \
+3:     dumb-init=1.2.5-* \</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add `USER nonroot` or a dedicated unprivileged user before the ENTRYPOINT/CMD.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-CRITICAL">CRITICAL</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 100.0/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Full Server Takeover & Remote Code Execution (RCE)
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Arbitrary Code Execution via eval() or Dynamic Function</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Arbitrary file read, secrets harvesting, environment variables</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> CRITICAL — Arbitrary file write, malware persistence, system modification</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>lib/xml.ts:12</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-95</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern 'new Function(' at line 12</div>
+                        
+                        
+                        <pre><code>11: // eslint-disable-next-line no-new-func -- intentional: hides import() from tsc's CommonJS down-level transform
+12: const dynamicImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>
+13: let libxml2Promise: Promise<any> | undefined
+14: </code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-CRITICAL">CRITICAL</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 100.0/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Full Server Takeover & Remote Code Execution (RCE)
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Arbitrary Code Execution via eval() or Dynamic Function</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Arbitrary file read, secrets harvesting, environment variables</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> CRITICAL — Arbitrary file write, malware persistence, system modification</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>routes/b2bOrder.ts:23</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-95</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern 'Eval(' at line 23</div>
+                        
+                        
+                        <pre><code>22:         vm.createContext(sandbox)
+23:         vm.runInContext('safeEval(orderLinesData)', sandbox, { timeout: 2000 })
+24:         res.json({ cid: body.cid, orderNo: uniqueOrderNumber(), paymentDue: dateTwoWeeksFromNow() })
+25:       } catch (err) {</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-CRITICAL">CRITICAL</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 100.0/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Full Server Takeover & Remote Code Execution (RCE)
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Arbitrary Code Execution via eval() or Dynamic Function</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Arbitrary file read, secrets harvesting, environment variables</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> CRITICAL — Arbitrary file write, malware persistence, system modification</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>routes/captcha.ts:22</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-95</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern 'eval(' at line 22</div>
+                        
+                        
+                        <pre><code>21:     const expression = firstTerm.toString() + firstOperator + secondTerm.toString() + secondOperator + thirdTerm.toString()
+22:     const answer = eval(expression).toString() // eslint-disable-line no-eval
+23: 
+24:     const captcha = {</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 94.3/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Database Takeover & Sensitive Data Exfiltration
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Potential NoSQL Injection</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Full database extraction (PII, credentials, business data)</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Unauthorized table alteration, record modification, or database truncation</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>routes/chat.ts:149</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-943</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern '$where: ' at line 149</div>
+                        
+                        
+                        <pre><code>148:           const productId = Number(id)
+149:           return await db.reviewsCollection.find({ $where: 'this.product == ' + productId }) as Review[]
+150:         }
+151:       }),</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Sanitize query keys using mongo-sanitize or enforce strict schema validation.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 94.3/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Database Takeover & Sensitive Data Exfiltration
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Potential NoSQL Injection</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Full database extraction (PII, credentials, business data)</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Unauthorized table alteration, record modification, or database truncation</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>routes/showProductReviews.ts:36</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-943</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern '$where: ' at line 36</div>
+                        
+                        
+                        <pre><code>35: 
+36:     db.reviewsCollection.find({ $where: 'this.product == ' + id }).then((reviews: Review[]) => {
+37:       const t1 = new Date().getTime()
+38:       challengeUtils.solveIf(challenges.noSqlCommandChallenge, () => { return (t1 - t0) > 2000 })</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Sanitize query keys using mongo-sanitize or enforce strict schema validation.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 94.3/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Database Takeover & Sensitive Data Exfiltration
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Potential NoSQL Injection</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Full database extraction (PII, credentials, business data)</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Unauthorized table alteration, record modification, or database truncation</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>routes/trackOrder.ts:18</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-943</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern '$where: ' at line 18</div>
+                        
+                        
+                        <pre><code>17:     challengeUtils.solveIf(challenges.reflectedXssChallenge, () => { return id.includes('<iframe src="javascript:alert(`xss`)">') })
+18:     db.ordersCollection.find({ $where: `this.orderId === '${id}'` }).then((order: any) => {
+19:       const result = utils.queryResultToJson(order)
+20:       challengeUtils.solveIf(challenges.noSqlOrdersChallenge, () => { return result.data.length > 1 })</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Sanitize query keys using mongo-sanitize or enforce strict schema validation.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-CRITICAL">CRITICAL</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 100.0/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Full Server Takeover & Remote Code Execution (RCE)
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Arbitrary Code Execution via eval() or Dynamic Function</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Arbitrary file read, secrets harvesting, environment variables</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> CRITICAL — Arbitrary file write, malware persistence, system modification</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>routes/userProfile.ts:65</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-95</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern 'eval(' at line 65</div>
+                        
+                        
+                        <pre><code>64:           }
+65:           username = eval(code) // eslint-disable-line no-eval
+66:         } catch (err) {
+67:           username = '\\' + username</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-CRITICAL">CRITICAL</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 100.0/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Full Server Takeover & Remote Code Execution (RCE)
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Arbitrary Code Execution via eval() or Dynamic Function</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Arbitrary file read, secrets harvesting, environment variables</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> CRITICAL — Arbitrary file write, malware persistence, system modification</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>test/cypress/e2e/basket.spec.ts:90</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-95</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern 'eval(' at line 90</div>
+                        
+                        
+                        <pre><code>89:           })
+90:           win.eval(
+91:             'event = new Date("March 08, 2019 00:00:00"); Date = function(Date){return function() {date = event; return date; }}(Date);'
+92:           )</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-CRITICAL">CRITICAL</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 100.0/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Full Server Takeover & Remote Code Execution (RCE)
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Arbitrary Code Execution via eval() or Dynamic Function</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> CRITICAL — Arbitrary file read, secrets harvesting, environment variables</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> CRITICAL — Arbitrary file write, malware persistence, system modification</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>test/cypress/e2e/contact.spec.ts:267</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-95</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern 'eval(' at line 267</div>
+                        
+                        
+                        <pre><code>266:       // eslint-disable-next-line no-eval
+267:       const answer = eval(val).toString()
+268:       cy.get('#captchaControl').type(answer)
+269:     })</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">MEDIUM Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 42.1/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SAST</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">sentinal-sast</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Information Disclosure & Security Misconfiguration
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Dockerfile Container Running as Root</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Containers running as root increase the impact of container escape vulnerabilities.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> The vulnerability exposes implementation details, internal software versions, or unhardened endpoints that assist attackers in reconnaissance and multi-stage attack chaining.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> LOW-MEDIUM — Leakage of architecture details and configuration parameters</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> LOW — Limited direct modification</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Increased attack surface visibility for targeted external threat actors.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>test/smoke/Dockerfile:1</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-250</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Matched pattern 'FROM alpine' at line 1
+[sentinal-sast]: Matched pattern '' at line 2
+[sentinal-sast]: Matched pattern 'RUN apk add curl' at line 3
+[sentinal-sast]: Matched pattern '' at line 4
+[sentinal-sast]: Matched pattern 'COPY smoke-test.sh smoke-test.sh' at line 5
+[sentinal-sast]: Matched pattern '' at line 6
+[sentinal-sast]: Matched pattern 'CMD ["sh", "smoke-test.sh", "http://app:3000"]' at line 7</div>
+                        
+                        
+                        <pre><code>1: FROM alpine
+2: 
+3: RUN apk add curl</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add `USER nonroot` or a dedicated unprivileged user before the ENTRYPOINT/CMD.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 54.5/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SCA</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">osv-scanner</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Third-Party Component Exploitation
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Vulnerable Dependency: body-parser (1.20.4) - GHSA-v422-hmwv-36x6</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Vulnerability in sanitize-html</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An outdated third-party dependency contains known, publicly documented CVEs with available exploit payloads, allowing automated scanners and threat actors to target known flaws in the software supply chain.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> MEDIUM-HIGH — Depends on specific CVE impact profile</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> MEDIUM-HIGH — Potential component tampering</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Software supply chain vulnerabilities, loss of SOC2/ISO-27001 compliance certification.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>package.json:None</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-1395</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Package 'body-parser' version '1.20.4' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'express-jwt' version '0.1.3' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'file-type' version '16.5.4' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'glob' version '10.4.5' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'js-yaml' version '3.14.0' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'jsonwebtoken' version '0.4.0' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'marsdb' version '0.6.11' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'morgan' version '1.10.0' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'multer' version '1.4.5-lts.1' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'notevil' version '1.3.3' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'sanitize-html' version '1.4.2' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'sequelize' version '6.37.3' detected in package.json. Upgrade to latest version.
+[osv-scanner]: Package 'socket.io' version '3.1.2' detected in package.json. Upgrade to latest version.</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Upgrade sanitize-html to a secure version. Upgrade to latest version.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 54.5/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SCA</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">osv-scanner</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Third-Party Component Exploitation
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Vulnerable Dependency: @angular/common (22.0.1) - GHSA-jhpw-976m-542j</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Vulnerability in @angular/common</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> An outdated third-party dependency contains known, publicly documented CVEs with available exploit payloads, allowing automated scanners and threat actors to target known flaws in the software supply chain.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> MEDIUM-HIGH — Depends on specific CVE impact profile</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> MEDIUM-HIGH — Potential component tampering</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Software supply chain vulnerabilities, loss of SOC2/ISO-27001 compliance certification.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>frontend/package.json:None</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-1395</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Package '@angular/common' version '22.0.1' detected in frontend/package.json. Upgrade to latest version.
+[osv-scanner]: Package 'lodash-es' version '4.17.21' detected in frontend/package.json. Upgrade to latest version.</div>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Upgrade @angular/common to a secure version. Upgrade to latest version.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 60.6/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SECRETS</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">gitleaks</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Cloud & Third-Party Service Credential Compromise
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Exposed Secret: JSON Web Token (JWT)</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Hardcoded secret token or credential (JSON Web Token (JWT)) found in source code repository.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Unauthorized access to cloud APIs, databases, and third-party SaaS platforms</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Direct API mutations, cloud asset provisioning</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>frontend/src/app/app.guard.spec.ts:46</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-798, CWE-312</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Detected pattern for JSON Web Token (JWT) matching 'eyJh***************************************************************************************************************************************************sw5c'</div>
+                        
+                        
+                        <pre><code>45: 
+46:         localStorage.setItem('token', 'eyJh***************************************************************************************************************************************************sw5c')
+47:         expect(guard.tokenDecode()).toEqual({
+48:             sub: '1234567890',</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 60.6/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SECRETS</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">gitleaks</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Cloud & Third-Party Service Credential Compromise
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Exposed Secret: JSON Web Token (JWT)</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Hardcoded secret token or credential (JSON Web Token (JWT)) found in source code repository.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Unauthorized access to cloud APIs, databases, and third-party SaaS platforms</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Direct API mutations, cloud asset provisioning</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>frontend/src/app/last-login-ip/last-login-ip.component.spec.ts:72</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-798, CWE-312</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Detected pattern for JSON Web Token (JWT) matching 'eyJh***********************************************************************************************************************t3bg'
+[gitleaks]: Detected pattern for JSON Web Token (JWT) matching 'eyJh****************************************************************************************enLw'</div>
+                        
+                        
+                        <pre><code>71:     it('should set Last-Login IP from JWT as trusted HTML', () => {
+72:         localStorage.setItem('token', 'eyJh***********************************************************************************************************************t3bg')
+73:         component.ngOnInit()
+74:         expect(sanitizer.bypassSecurityTrustHtml).toHaveBeenCalledWith('<small>1.2.3.4</small>')</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-CRITICAL">CRITICAL</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 100.0/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SECRETS</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">gitleaks</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Cloud & Third-Party Service Credential Compromise
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Exposed Secret: Private Cryptographic Key</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Hardcoded secret token or credential (Private Cryptographic Key) found in source code repository.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Unauthorized access to cloud APIs, databases, and third-party SaaS platforms</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Direct API mutations, cloud asset provisioning</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>infrastructure/terraform/networking.tf:171</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-798, CWE-312</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Detected pattern for Private Cryptographic Key matching '----***********************----'</div>
+                        
+                        
+                        <pre><code>170:   certificate_body = file("${path.module}/certs/server.crt")
+171:   private_key      = "----***********************----\nMIICXAIBAAKBgQDNwqLEe9wgTXCbC7+RPdDbBbeqjdbs4kOPOIGzqLpXvJXlxxW8\niMz0EaM4BKUqYsIa+ndv3NAn2RxCd5ubVdJJcX43zO6Ko0TFEZx/65gY3BE0O6sy\nCEmUP4qbSd6exou/F+WTISzbQ5FBVPVmhnYhG/kpwt/cIxK5iUn5hm+4tQIDAQAB\nAoGBAI+8xiPoOrA+KMnG/T4jJsG6TsHQcDHvJi7o1IKC/hnIXha0atTX5AUkRRce\n95qSfvKFweXdJXSQ0JMGJyfuXgU6dI0TcseFRfewXAa/ssxAC+iUVR6KUMh1PE2w\nXLitfeI6JLvVtrBYswm2I7CtY0q8n5AGimHWVXJPLfGV7m0BAkEA+fqFt2LXbLty\ng6wZyxMA/cnmt5Nt3U2dAu77MzFJvibANUNHE4HPLZxjGNXN+a6m0K6TD4kDdh5H\nfUYLWWRBYQJBANK3carmulBwqzcDBjsJ0YrIONBpCAsXxk8idXb8jL9aNIg15Wum\nm2enqqObahDHB5jnGOLmbasizvSVqypfM9UCQCQl8xIqy+YgURXzXCN+kwUgHinr\nutZms87Jyi+D8Br8NY0+Nlf+zHvXAomD2W5CsEK7C+8SLBr3k/TsnRWHJuECQHFE\n9RA2OP8WoaLPuGCyFXaxzICThSRZYluVnWkZtxsBhW2W8z1b8PvWUE7kMy7Tnkze\nJS2LSnaNHoyxi7IaPQUCQCwWU4U+v4lD7uYBw00Ga/xt+7+UqFPlPVdz1yyr4q24\nZxaw0LgmuEvgU5dycq8N7JxjTubX0MIRR+G9fmDBBl8=\n-----END RSA PRIVATE KEY-----" # vuln-code-snippet vuln-line iacLeakedKeyChallenge
+172: 
+173:   lifecycle {</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-CRITICAL">CRITICAL</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 100.0/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SECRETS</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">gitleaks</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Cloud & Third-Party Service Credential Compromise
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Exposed Secret: Private Cryptographic Key</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Hardcoded secret token or credential (Private Cryptographic Key) found in source code repository.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Unauthorized access to cloud APIs, databases, and third-party SaaS platforms</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Direct API mutations, cloud asset provisioning</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>lib/insecurity.ts:21</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-798, CWE-312</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Detected pattern for Private Cryptographic Key matching '----***********************----'</div>
+                        
+                        
+                        <pre><code>20: export const publicKey = fs ? fs.readFileSync('encryptionkeys/jwt.pub', 'utf8') : 'placeholder-public-key'
+21: const privateKey = '----***********************----\r\nMIICXAIBAAKBgQDNwqLEe9wgTXCbC7+RPdDbBbeqjdbs4kOPOIGzqLpXvJXlxxW8iMz0EaM4BKUqYsIa+ndv3NAn2RxCd5ubVdJJcX43zO6Ko0TFEZx/65gY3BE0O6syCEmUP4qbSd6exou/F+WTISzbQ5FBVPVmhnYhG/kpwt/cIxK5iUn5hm+4tQIDAQABAoGBAI+8xiPoOrA+KMnG/T4jJsG6TsHQcDHvJi7o1IKC/hnIXha0atTX5AUkRRce95qSfvKFweXdJXSQ0JMGJyfuXgU6dI0TcseFRfewXAa/ssxAC+iUVR6KUMh1PE2wXLitfeI6JLvVtrBYswm2I7CtY0q8n5AGimHWVXJPLfGV7m0BAkEA+fqFt2LXbLtyg6wZyxMA/cnmt5Nt3U2dAu77MzFJvibANUNHE4HPLZxjGNXN+a6m0K6TD4kDdh5HfUYLWWRBYQJBANK3carmulBwqzcDBjsJ0YrIONBpCAsXxk8idXb8jL9aNIg15Wumm2enqqObahDHB5jnGOLmbasizvSVqypfM9UCQCQl8xIqy+YgURXzXCN+kwUgHinrutZms87Jyi+D8Br8NY0+Nlf+zHvXAomD2W5CsEK7C+8SLBr3k/TsnRWHJuECQHFE9RA2OP8WoaLPuGCyFXaxzICThSRZYluVnWkZtxsBhW2W8z1b8PvWUE7kMy7TnkzeJS2LSnaNHoyxi7IaPQUCQCwWU4U+v4lD7uYBw00Ga/xt+7+UqFPlPVdz1yyr4q24Zxaw0LgmuEvgU5dycq8N7JxjTubX0MIRR+G9fmDBBl8=\r\n-----END RSA PRIVATE KEY-----'
+22: 
+23: interface ResponseWithUser {</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-CRITICAL">CRITICAL</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 100.0/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SECRETS</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">gitleaks</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Cloud & Third-Party Service Credential Compromise
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Exposed Secret: Private Cryptographic Key</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Hardcoded secret token or credential (Private Cryptographic Key) found in source code repository.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Unauthorized access to cloud APIs, databases, and third-party SaaS platforms</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Direct API mutations, cloud asset provisioning</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>terraform/networking.tf:171</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-798, CWE-312</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Detected pattern for Private Cryptographic Key matching '----***********************----'</div>
+                        
+                        
+                        <pre><code>170:   certificate_body = file("${path.module}/certs/server.crt")
+171:   private_key      = "----***********************----\nMIICXAIBAAKBgQDNwqLEe9wgTXCbC7+RPdDbBbeqjdbs4kOPOIGzqLpXvJXlxxW8\niMz0EaM4BKUqYsIa+ndv3NAn2RxCd5ubVdJJcX43zO6Ko0TFEZx/65gY3BE0O6sy\nCEmUP4qbSd6exou/F+WTISzbQ5FBVPVmhnYhG/kpwt/cIxK5iUn5hm+4tQIDAQAB\nAoGBAI+8xiPoOrA+KMnG/T4jJsG6TsHQcDHvJi7o1IKC/hnIXha0atTX5AUkRRce\n95qSfvKFweXdJXSQ0JMGJyfuXgU6dI0TcseFRfewXAa/ssxAC+iUVR6KUMh1PE2w\nXLitfeI6JLvVtrBYswm2I7CtY0q8n5AGimHWVXJPLfGV7m0BAkEA+fqFt2LXbLty\ng6wZyxMA/cnmt5Nt3U2dAu77MzFJvibANUNHE4HPLZxjGNXN+a6m0K6TD4kDdh5H\nfUYLWWRBYQJBANK3carmulBwqzcDBjsJ0YrIONBpCAsXxk8idXb8jL9aNIg15Wum\nm2enqqObahDHB5jnGOLmbasizvSVqypfM9UCQCQl8xIqy+YgURXzXCN+kwUgHinr\nutZms87Jyi+D8Br8NY0+Nlf+zHvXAomD2W5CsEK7C+8SLBr3k/TsnRWHJuECQHFE\n9RA2OP8WoaLPuGCyFXaxzICThSRZYluVnWkZtxsBhW2W8z1b8PvWUE7kMy7Tnkze\nJS2LSnaNHoyxi7IaPQUCQCwWU4U+v4lD7uYBw00Ga/xt+7+UqFPlPVdz1yyr4q24\nZxaw0LgmuEvgU5dycq8N7JxjTubX0MIRR+G9fmDBBl8=\n-----END RSA PRIVATE KEY-----" # vuln-code-snippet vuln-line iacLeakedKeyChallenge
+172: 
+173:   lifecycle {</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 60.6/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SECRETS</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">gitleaks</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Cloud & Third-Party Service Credential Compromise
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Exposed Secret: JSON Web Token (JWT)</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Hardcoded secret token or credential (JSON Web Token (JWT)) found in source code repository.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Unauthorized access to cloud APIs, databases, and third-party SaaS platforms</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Direct API mutations, cloud asset provisioning</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>test/api/user.test.ts:280</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-798, CWE-312</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Detected pattern for JSON Web Token (JWT) matching 'eyJh****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************pC8g'</div>
+                        
+                        
+                        <pre><code>279:       .get('/rest/user/whoami')
+280:       .set({ Authorization: 'eyJh****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************pC8g' })
+281:     assert.equal(res.status, 200)
+282:     assert.ok(res.headers['content-type']?.includes('application/json'))</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 60.6/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SECRETS</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">gitleaks</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Cloud & Third-Party Service Credential Compromise
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Exposed Secret: JSON Web Token (JWT)</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Hardcoded secret token or credential (JSON Web Token (JWT)) found in source code repository.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Unauthorized access to cloud APIs, databases, and third-party SaaS platforms</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Direct API mutations, cloud asset provisioning</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>test/cypress/e2e/forgedJwt.spec.ts:22</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-798, CWE-312</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Detected pattern for JSON Web Token (JWT) matching 'eyJ0*******************************************************************************************************************************************************8Xc8'
+[gitleaks]: Detected pattern for JSON Web Token (JWT) matching 'eyJ0*******************************************************************************************************************************************************************************************************************************************************************************************NblU'</div>
+                        
+                        
+                        <pre><code>21:               'token',
+22:               'eyJ0*******************************************************************************************************************************************************8Xc8'
+23:             )
+24:           })</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 60.6/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SECRETS</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">gitleaks</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Cloud & Third-Party Service Credential Compromise
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Exposed Secret: JSON Web Token (JWT)</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Hardcoded secret token or credential (JSON Web Token (JWT)) found in source code repository.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Unauthorized access to cloud APIs, databases, and third-party SaaS platforms</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Direct API mutations, cloud asset provisioning</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>test/server/currentUser.unit.test.ts:31</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-798, CWE-312</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Detected pattern for JSON Web Token (JWT) matching 'eyJ0*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************nzH0'</div>
+                        
+                        
+                        <pre><code>30:   void it('should return ID and email of user belonging to cookie from the request', () => {
+31:     req.cookies.token = 'eyJ0*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************nzH0'
+32:     req.query.callback = undefined
+33:     authenticatedUsers.put(</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #ff3366; margin-top: 4px;">Risk: 60.6/100</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">SECRETS</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">gitleaks</span>
+                            
+                        </div>
+                        
+                        <div style="margin-top: 6px;">
+                            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">
+                                🔥 Cloud & Third-Party Service Credential Compromise
+                            </span>
+                        </div>
+                        
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Exposed Secret: JSON Web Token (JWT)</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Hardcoded secret token or credential (JSON Web Token (JWT)) found in source code repository.</p>
+                        
+                        
+                        <div style="margin-top: 8px; padding: 8px 10px; border-radius: 6px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; font-size: 12px; color: #fca5a5;">
+                            <strong>Threat Scenario:</strong> Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div><span style="color: #38bdf8;">Confidentiality:</span> HIGH — Unauthorized access to cloud APIs, databases, and third-party SaaS platforms</div>
+                            <div><span style="color: #f59e0b;">Integrity:</span> HIGH — Direct API mutations, cloud asset provisioning</div>
+                            <div style="grid-column: span 2;"><span style="color: #ef4444;">Business:</span> Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.</div>
+                        </div>
+                        
+
+                        
+                        <div style="margin-top: 6px;"><code>test/server/verify.unit.test.ts:308</code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-798, CWE-312</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 12.5px; margin-bottom: 6px;"><strong>Evidence:</strong> Detected pattern for JSON Web Token (JWT) matching 'eyJ0*******************************************************************************************************************************************************SEAg'
+[gitleaks]: Detected pattern for JSON Web Token (JWT) matching 'eyJ0****************************************************************************************************************************************7Tg8'</div>
+                        
+                        
+                        <pre><code>307:     void it('"jwtForgedChallenge" is solved when forged token HMAC-signed with public RSA-key has email rsa_lord@juice-sh.op in the payload', { skip: isWindows() ? 'not supported on Windows' : false }, () => {
+308:       req.headers = { authorization: 'Bearer eyJ0*******************************************************************************************************************************************************SEAg' }
+309: 
+310:       verify.jwtChallenges()(req, res, next)</code></pre>
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.</div>
+                        
+                    </td>
+                </tr>
+                
+            </tbody>
+        </table>
+
+        <!-- Technical Remediation Playbook -->
+        <h2 class="section-title">4. Strategic Remediation Playbook</h2>
+        <div class="card prose">
+            <p>**Step-by-Step Remediation Actions:**<br>- **Code Execution:** Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.</p>
+        </div>
+
+        <footer>
+            <p>Sentinal Security Assessment Platform • Confidential Audit Report • Generated September 08, 2026 at 08:42 UTC</p>
+        </footer>
+    </div>
+</body>
+</html>

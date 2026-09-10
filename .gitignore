@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Python Virtual Environments & Bytecode
+venv/
+**/venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+**/.pytest_cache/
+.coverage
+htmlcov/
+
+# Next.js & Frontend Builds
+.next/
+**/.next/
+out/
+**/out/
+dist/
+**/dist/
+build/
+**/build/
+*.tsbuildinfo
+
+# Sensitive credentials, Service Accounts & Secrets
+*firebase*.json
+*adminsdk*.json
+*service-account*.json
+*.env
+.env
+.env.local
+.env.*.local
+.env.production
+!.env.example
+**/backend/.env
+
+# OS & Editor files
+.DS_Store
+**/.DS_Store
+Thumbs.db
+ehthumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*.log

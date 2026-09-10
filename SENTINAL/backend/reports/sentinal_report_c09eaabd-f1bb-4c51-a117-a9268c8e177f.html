@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinal Security Assessment Report - Scope: NodeGoat</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #121826;
+            --bg-elevated: #1a2234;
+            --border-color: #243048;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --crit-color: #ff3366;
+            --high-color: #ff9900;
+            --med-color: #ffcc00;
+            --low-color: #00ccff;
+            --info-color: #8899a6;
+            --success-color: #10b981;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 24px;
+            margin-bottom: 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 28px; font-weight: 800; letter-spacing: 2px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .badge-tag { background: #1e293b; color: var(--accent-cyan); padding: 4px 12px; border-radius: 9999px; font-size: 13px; border: 1px solid rgba(0, 242, 254, 0.3); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 36px; }
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        .card-title { font-size: 12px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 1px; }
+        .card-value { font-size: 28px; font-weight: 700; }
+        .score-val { color: var(--accent-cyan); }
+        .crit-val { color: var(--crit-color); }
+        .high-val { color: var(--high-color); }
+        .med-val { color: var(--med-color); }
+        .section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; border-left: 4px solid var(--accent-cyan); padding-left: 12px; }
+        .prose { color: #cbd5e1; margin-bottom: 36px; font-size: 14.5px; }
+        .prose p { margin-bottom: 12px; }
+        .corr-card { background: #191428; border: 1px solid #7c3aed; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .corr-title { font-size: 17px; font-weight: 700; color: #c084fc; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+        .finding-table { width: 100%; border-collapse: collapse; margin-top: 16px; margin-bottom: 36px; background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
+        .finding-table th { background: var(--bg-elevated); padding: 12px 16px; text-align: left; font-size: 12px; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); }
+        .finding-table td { padding: 12px 16px; font-size: 13.5px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        .sev-badge { display: inline-block; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .sev-CRITICAL { background: rgba(255, 51, 102, 0.2); color: var(--crit-color); border: 1px solid var(--crit-color); }
+        .sev-HIGH { background: rgba(255, 153, 0, 0.2); color: var(--high-color); border: 1px solid var(--high-color); }
+        .sev-MEDIUM { background: rgba(255, 204, 0, 0.2); color: var(--med-color); border: 1px solid var(--med-color); }
+        .sev-LOW { background: rgba(0, 204, 255, 0.2); color: var(--low-color); border: 1px solid var(--low-color); }
+        .sev-INFO { background: rgba(136, 153, 166, 0.2); color: var(--info-color); border: 1px solid var(--info-color); }
+        .engine-pill { display: inline-block; background: #0f172a; border: 1px solid #334155; color: #38bdf8; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-right: 4px; }
+        code { background: #0f172a; color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+        pre { background: #090d16; border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; overflow-x: auto; color: #a5f3fc; font-family: monospace; font-size: 12.5px; margin-top: 8px; }
+        footer { border-top: 1px solid var(--border-color); padding-top: 24px; text-align: center; color: var(--text-secondary); font-size: 12px; margin-top: 60px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <div class="logo">SENTINAL</div>
+                <p style="color: var(--text-secondary); font-size: 13.5px; margin-top: 4px;">Unified SAST + SCA + DAST Security Assessment Report</p>
+            </div>
+            <div style="text-align: right;">
+                <span class="badge-tag">DAST SCAN • DEEP</span>
+                <p style="color: var(--text-secondary); font-size: 12px; margin-top: 6px;">Generated: September 04, 2026 at 04:19 UTC</p>
+            </div>
+        </header>
+
+        <!-- Target Scope & Authorization Details -->
+        <div class="card" style="margin-bottom: 24px; background: #0b1120; border: 1px solid #1e293b;">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <span style="font-size: 11px; color: #64748b; text-transform: uppercase;">Assessment Target</span>
+                    <div style="font-size: 16px; font-weight: 700; color: #f8fafc; font-family: monospace;">https://www.goindigo.in</div>
+                </div>
+                <div>
+                    <span style="font-size: 11px; color: #64748b; text-transform: uppercase;">Authorization Status</span>
+                    <div style="font-size: 14px; font-weight: 700; color: #10b981;">
+                        ● VERIFIED
+                    </div>
+                </div>
+                <div>
+                    <span style="font-size: 11px; color: #64748b; text-transform: uppercase;">Scan Mode</span>
+                    <div style="font-size: 14px; font-weight: 700; color: #38bdf8;">DEEP</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Metrics -->
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Overall Risk Score</div>
+                <div class="card-value score-val">56.4/100</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Critical Flaws</div>
+                <div class="card-value crit-val">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">High Flaws</div>
+                <div class="card-value high-val">1</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Medium Flaws</div>
+                <div class="card-value med-val">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Total Findings</div>
+                <div class="card-value"></div>
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <h2 class="section-title">1. Executive Summary</h2>
+        <div class="card prose" style="margin-bottom: 36px;">
+            <p>**Security Assessment Executive Summary**<br>**Overall Posture:** ELEVATED RISK<br>The assessment revealed notable security weaknesses across https://www.goindigo.in, comprising 1 High and 0 Medium issues.<br><br>**Key Risk Highlights:**<br>- Total Discovered Findings: 1 (Critical: 0, High: 1, Medium: 0, Low: 0)<br>- Correlated Exploit Chains: 0<br>- Primary Concern Areas: Network Availability<br><br>Leadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.</p>
+        </div>
+
+        <!-- Correlated Risks -->
+        
+
+        <!-- Findings Inventory -->
+        <h2 class="section-title">3. Comprehensive Findings Inventory</h2>
+        <table class="finding-table">
+            <thead>
+                <tr>
+                    <th style="width: 105px;">Severity</th>
+                    <th style="width: 130px;">Detected By</th>
+                    <th>Vulnerability Details</th>
+                    <th>Evidence & Remediation</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-HIGH">HIGH</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 10px; padding: 2px 6px;">WEB</span>
+                        <div style="margin-top: 6px;">
+                            
+                            <span class="engine-pill">DISCOVERY</span>
+                            
+                        </div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 14.5px;">Target Host Unreachable</strong>
+                        <p style="color: var(--text-secondary); font-size: 12.5px; margin-top: 4px;">Sentina Discovery Worker was unable to establish an HTTP connection with https://www.goindigo.in: </p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: https://www.goindigo.in </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #38bdf8;">CWE: CWE-693</div>
+                        
+                    </td>
+                    <td>
+                        
+                        
+                        
+                        <div style="font-size: 12.5px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Verify target DNS, firewall ingress rules, and that the web service is actively running.</div>
+                        
+                    </td>
+                </tr>
+                
+            </tbody>
+        </table>
+
+        <!-- Technical Remediation Playbook -->
+        <h2 class="section-title">4. Strategic Remediation Playbook</h2>
+        <div class="card prose">
+            <p>**Step-by-Step Remediation Actions:**<br>- **Network Availability:** Verify target DNS, firewall ingress rules, and that the web service is actively running.</p>
+        </div>
+
+        <footer>
+            <p>Sentinal Security Assessment Platform • Confidential Audit Report • Generated September 04, 2026 at 04:19 UTC</p>
+        </footer>
+    </div>
+</body>
+</html>

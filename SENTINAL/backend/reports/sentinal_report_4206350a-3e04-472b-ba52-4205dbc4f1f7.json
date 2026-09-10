@@ -1,0 +1,38 @@
+{
+  "sentinal_version": "1.0.0",
+  "report_id": "4206350a-3e04-472b-ba52-4205dbc4f1f7",
+  "generated_at": "2026-09-04T03:23:49.960380+00:00",
+  "assessment": {
+    "id": "4206350a-3e04-472b-ba52-4205dbc4f1f7",
+    "project_name": "Scope: NodeGoat",
+    "assessment_type": "dast",
+    "repository": "None",
+    "target": "https://goindigo.in",
+    "overall_risk_score": 0.0,
+    "critical_count": 0,
+    "high_count": 0,
+    "medium_count": 0,
+    "low_count": 0,
+    "info_count": 0
+  },
+  "overall_risk_score": 0.0,
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0,
+    "total_findings": 0,
+    "correlated_risks_count": 0
+  },
+  "ai_analysis": {
+    "executive_summary": "**Security Assessment Executive Summary**\n**Overall Posture:** MODERATE POSTURE\nThe assessment identified 0 security items, mostly of Medium, Low, or Informational severity with no critical remote exploit chains detected.\n\n**Key Risk Highlights:**\n- Total Discovered Findings: 0 (Critical: 0, High: 0, Medium: 0, Low: 0)\n- Correlated Exploit Chains: 0\n- Primary Concern Areas: None\n\nLeadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.",
+    "technical_summary": "### Technical Risk Breakdown for https://goindigo.in\nThe assessment executed multi-modal analysis across SAST, SCA, Secret Scanning, DAST, Web Exposure, and TLS configurations.",
+    "risk_prioritization": "**Vulnerability Prioritization Matrix:**\n1. **Tier 1 (Immediate / Blockers - Critical):** Address 0 Critical vulnerabilities and 0 correlated chains immediately. These represent verified remote execution, full database extraction, or leaked root cloud credentials.\n2. **Tier 2 (High Priority - Next Sprint):** Remediate 0 High-severity findings including unverified injection flaws, missing rate limiting, and vulnerable third-party dependencies.\n3. **Tier 3 (Medium/Low Defense-in-Depth):** Address missing security headers (CSP, HSTS), weak cipher configurations, and deprecated cookie attributes during standard release cycles.",
+    "remediation_playbook": "**Step-by-Step Remediation Actions:**\n- Maintain regular dependency updates and automated vulnerability scanning.",
+    "false_positive_analysis": "**False-Positive & Manual Verification Guidance:**\n- Findings identified by heuristic pattern matching (e.g. potential path traversal or generic SQL queries) should be manually cross-checked against internal data sanitization middleware before marking as resolved.\n- DAST alerts triggered by error messages should be confirmed in a staging environment to rule out custom application error handling false triggers.",
+    "provider_used": "sentinal-expert-engine"
+  },
+  "correlated_risks": [],
+  "findings": []
+}

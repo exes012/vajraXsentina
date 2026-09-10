@@ -1,0 +1,487 @@
+{
+  "sentinal_version": "1.0.0",
+  "report_id": "37e08f9c-c868-41a7-a322-14e3990f9a3c",
+  "generated_at": "2026-09-08T08:38:14.829192+00:00",
+  "assessment": {
+    "id": "37e08f9c-c868-41a7-a322-14e3990f9a3c",
+    "project_name": "Scope: NodeGoat",
+    "assessment_type": "repo",
+    "scan_mode": "STANDARD",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "target": "None",
+    "authorization_status": "DEV_MODE",
+    "overall_risk_score": 85.4,
+    "dast_coverage_score": 100.0,
+    "coverage_status": "NOT_APPLICABLE",
+    "finding_confidence": "FULL",
+    "critical_count": 2,
+    "high_count": 2,
+    "medium_count": 3,
+    "low_count": 0,
+    "info_count": 0,
+    "connectivity_diagnostics": {},
+    "coverage_telemetry": {
+      "requests_attempted": 0,
+      "requests_successful": 0,
+      "requests_blocked": 0,
+      "status_distribution": {},
+      "count_2xx": 0,
+      "count_3xx": 0,
+      "count_4xx": 0,
+      "count_5xx": 0,
+      "count_401": 0,
+      "count_403": 0,
+      "count_429": 0,
+      "scanner_errors": [],
+      "crawlable_urls": 0,
+      "urls_scanned": 0,
+      "zap_alerts": 0,
+      "nuclei_matches": 0,
+      "wapiti_findings": 0,
+      "nikto_findings": 0,
+      "engine_breakdown": {
+        "SEMGREP": {
+          "status": "SUCCESS",
+          "duration_ms": 53,
+          "findings_count": 23,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "OSV-SCANNER": {
+          "status": "SUCCESS",
+          "duration_ms": 5841,
+          "findings_count": 302,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "GITLEAKS": {
+          "status": "SUCCESS",
+          "duration_ms": 329,
+          "findings_count": 3,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        }
+      }
+    }
+  },
+  "overall_risk_score": 85.4,
+  "summary": {
+    "critical": 2,
+    "high": 2,
+    "medium": 3,
+    "low": 0,
+    "info": 0,
+    "total_findings": 7,
+    "correlated_risks_count": 0
+  },
+  "ai_analysis": {
+    "executive_summary": "**Security Assessment Executive Summary**\n**Overall Posture:** CRITICAL POSTURE\nThe automated assessment of None identified immediate critical exposures requiring urgent remediation. A total of 7 findings were recorded, including 2 Critical and 2 High severity vulnerabilities.\n\n**Key Risk Highlights:**\n- Total Discovered Findings: 7 (Critical: 2, High: 2, Medium: 3, Low: 0)\n- Correlated Exploit Chains: 0\n- Primary Concern Areas: Injection, Container Security, Code Execution, Vulnerable Dependency\n\nLeadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.",
+    "technical_summary": "### Technical Risk Breakdown for None\nThe assessment executed multi-modal analysis across SAST, SCA, Secret Scanning, DAST, Web Exposure, and TLS configurations.\n\n**Top Significant Technical Findings:**\n- **[CRITICAL] Arbitrary Code Execution via eval() or Dynamic Function** in `app/routes/contributions.js:31`: Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context....\n- **[CRITICAL] Exposed Secret: Private Cryptographic Key** in `artifacts/cert/server.key:1`: Hardcoded secret token or credential (Private Cryptographic Key) found in source code repository....\n- **[HIGH] Potential NoSQL Injection** in `app/data/allocations-dao.js:73`: Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injec...\n- **[HIGH] Exposed Secret: Database Connection String with Password** in `README.md:61`: Hardcoded secret token or credential (Database Connection String with Password) found in source code repository....\n- **[MEDIUM] Dockerfile Container Running as Root** in `Dockerfile:1`: Containers running as root increase the impact of container escape vulnerabilities....",
+    "risk_prioritization": "**Vulnerability Prioritization Matrix:**\n1. **Tier 1 (Immediate / Blockers - Critical):** Address 2 Critical vulnerabilities and 0 correlated chains immediately. These represent verified remote execution, full database extraction, or leaked root cloud credentials.\n2. **Tier 2 (High Priority - Next Sprint):** Remediate 2 High-severity findings including unverified injection flaws, missing rate limiting, and vulnerable third-party dependencies.\n3. **Tier 3 (Medium/Low Defense-in-Depth):** Address missing security headers (CSP, HSTS), weak cipher configurations, and deprecated cookie attributes during standard release cycles.",
+    "remediation_playbook": "**Step-by-Step Remediation Actions:**\n- **Code Execution:** Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.\n- **Private Key:** Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.\n- **Injection:** Sanitize query keys using mongo-sanitize or enforce strict schema validation.\n- **Database Credentials:** Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.\n- **Container Security:** Add `USER nonroot` or a dedicated unprivileged user before the ENTRYPOINT/CMD.",
+    "false_positive_analysis": "**False-Positive & Manual Verification Guidance:**\n- Findings identified by heuristic pattern matching (e.g. potential path traversal or generic SQL queries) should be manually cross-checked against internal data sanitization middleware before marking as resolved.\n- DAST alerts triggered by error messages should be confirmed in a staging environment to rule out custom application error handling false triggers.",
+    "provider_used": "sentinal-expert-engine"
+  },
+  "correlated_risks": [],
+  "findings": [
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Dockerfile Container Running as Root",
+      "description": "Containers running as root increase the impact of container escape vulnerabilities.",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM",
+      "category": "Container Security",
+      "cwe": [
+        "CWE-250"
+      ],
+      "cves": [],
+      "owasp": [
+        "A05:2021-Security Misconfiguration"
+      ],
+      "file": "Dockerfile",
+      "line": 1,
+      "code_snippet": "1: FROM node:12-alpine\n2: ENV WORKDIR /usr/src/app/\n3: WORKDIR $WORKDIR",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'FROM node:12-alpine' at line 1\n[sentinal-sast]: Matched pattern 'ENV WORKDIR /usr/src/app/' at line 2\n[sentinal-sast]: Matched pattern 'WORKDIR $WORKDIR' at line 3\n[sentinal-sast]: Matched pattern 'COPY package*.json $WORKDIR' at line 4\n[sentinal-sast]: Matched pattern 'RUN npm install --production --no-cache' at line 5\n[sentinal-sast]: Matched pattern '' at line 6\n[sentinal-sast]: Matched pattern 'FROM node:12-alpine' at line 7\n[sentinal-sast]: Matched pattern 'ENV WORKDIR /home/$USER/app' at line 9\n[sentinal-sast]: Matched pattern 'WORKDIR $WORKDIR' at line 10\n[sentinal-sast]: Matched pattern 'COPY --from=0 /usr/src/app/node_modules node_modules' at line 11\n[sentinal-sast]: Matched pattern 'RUN chown $USER:$USER $WORKDIR' at line 12\n[sentinal-sast]: Matched pattern 'COPY --chown=node . $WORKDIR' at line 13\n[sentinal-sast]: Matched pattern '# In production environment uncomment the next line' at line 14\n[sentinal-sast]: Matched pattern '#RUN chown -R $USER:$USER /home/$USER && chmod -R g-s,o-rx /home/$USER && chmod -R o-wrx $WORKDIR' at line 15\n[sentinal-sast]: Matched pattern '# Then all further actions including running the containers should be done under non-root user.' at line 16\n[sentinal-sast]: Matched pattern 'USER $USER' at line 17\n[sentinal-sast]: Matched pattern 'EXPOSE 4000' at line 18",
+      "remediation": "Add `USER nonroot` or a dedicated unprivileged user before the ENTRYPOINT/CMD.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/250.html"
+      ],
+      "fingerprint": "408142bf54ad3683ddb87339a9f84d9b",
+      "risk_score": 42.1,
+      "threat_scenario": "The vulnerability exposes implementation details, internal software versions, or unhardened endpoints that assist attackers in reconnaissance and multi-stage attack chaining.",
+      "potential_impact": {
+        "confidentiality": "LOW-MEDIUM \u2014 Leakage of architecture details and configuration parameters",
+        "integrity": "LOW \u2014 Limited direct modification",
+        "availability": "LOW \u2014 No availability impact",
+        "business_impact": "Increased attack surface visibility for targeted external threat actors.",
+        "attack_vector": "Exposed diagnostic endpoints or permissive application configuration."
+      },
+      "blast_radius": "Information Disclosure & Security Misconfiguration",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 0.85,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.0,
+        "blast_radius_factor": 1.0,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 42.1,
+        "cvss_equivalent": 4.2,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "rule_id": "docker-root-user",
+        "match": "FROM node:12-alpine"
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Potential NoSQL Injection",
+      "description": "Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Injection",
+      "cwe": [
+        "CWE-943"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "app/data/allocations-dao.js",
+      "line": 73,
+      "code_snippet": "72:                 if (parsedThreshold >= 0 && parsedThreshold <= 99) {\n73:                     return {$where: `this.userId == ${parsedUserId} && this.stocks > ${parsedThreshold}`};\n74:                 }\n75:                 throw `The user supplied threshold: ${parsedThreshold} was not valid.`;",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '$where: ' at line 73\n[sentinal-sast]: Matched pattern '$where: ' at line 78",
+      "remediation": "Sanitize query keys using mongo-sanitize or enforce strict schema validation.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/943.html"
+      ],
+      "fingerprint": "63154036bb15c13ff17278074cfc004f",
+      "risk_score": 94.3,
+      "threat_scenario": "An attacker can supply crafted SQL payloads to bypass authentication barriers, extract proprietary customer PII and database tables, modify financial or user records, or execute administrative commands on the underlying database host.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Full database extraction (PII, credentials, business data)",
+        "integrity": "HIGH \u2014 Unauthorized table alteration, record modification, or database truncation",
+        "availability": "MEDIUM \u2014 Database locking, resource exhaustion, denial of service",
+        "business_impact": "Severe regulatory penalties (GDPR, PCI-DSS), reputational damage, and customer loss.",
+        "attack_vector": "Unsanitized user input concatenation into SQL query execution sinks."
+      },
+      "blast_radius": "Database Takeover & Sensitive Data Exfiltration",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 94.3,
+        "cvss_equivalent": 9.4,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-nosql-injection-mongodb",
+        "match": "$where: "
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Arbitrary Code Execution via eval() or Dynamic Function",
+      "description": "Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Code Execution",
+      "cwe": [
+        "CWE-95"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "app/routes/contributions.js",
+      "line": 31,
+      "code_snippet": "30:         /*jslint evil: true */\n31:         // Insecure use of eval() to parse inputs\n32:         const preTax = eval(req.body.preTax);\n33:         const afterTax = eval(req.body.afterTax);",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'eval(' at line 31\n[sentinal-sast]: Matched pattern 'eval(' at line 32\n[sentinal-sast]: Matched pattern 'eval(' at line 33\n[sentinal-sast]: Matched pattern 'eval(' at line 34",
+      "remediation": "Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/95.html"
+      ],
+      "fingerprint": "afbf7e1895844dfa0437ac9055928f70",
+      "risk_score": 100.0,
+      "threat_scenario": "An adversary can execute arbitrary operating system commands with web process privileges, allowing them to spawn reverse shells, install backdoors/ransomware, and pivot laterally inside internal cloud VPCs.",
+      "potential_impact": {
+        "confidentiality": "CRITICAL \u2014 Arbitrary file read, secrets harvesting, environment variables",
+        "integrity": "CRITICAL \u2014 Arbitrary file write, malware persistence, system modification",
+        "availability": "CRITICAL \u2014 Process termination, ransomware encryption, host destruction",
+        "business_impact": "Catastrophic infrastructure compromise, total loss of system governance, and operational downtime.",
+        "attack_vector": "Direct execution of unvalidated user input via system shell or eval functions."
+      },
+      "blast_radius": "Full Server Takeover & Remote Code Execution (RCE)",
+      "risk_factors": {
+        "base_severity_score": 90.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.3,
+        "blast_radius_factor": 1.3,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 100.0,
+        "cvss_equivalent": 10.0,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "js-eval-code-execution",
+        "match": "eval("
+      }
+    },
+    {
+      "id": null,
+      "source": "SCA",
+      "scanner": "osv-scanner",
+      "all_scanners": [
+        "osv-scanner"
+      ],
+      "title": "Vulnerable Dependency: debug (3.2.6) - GHSA-gxpj-cx7g-858c",
+      "description": "Vulnerability in decode-uri-component",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Vulnerable Dependency",
+      "cwe": [
+        "CWE-1395"
+      ],
+      "cves": [],
+      "owasp": [
+        "A06:2021-Vulnerable and Outdated Components"
+      ],
+      "file": "package-lock.json",
+      "line": null,
+      "code_snippet": null,
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Package 'debug' version '3.2.6' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'adm-zip' version '0.4.4' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'ajv' version '6.10.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'ansi-regex' version '3.0.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'async' version '2.6.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'kind-of' version '6.0.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'bl' version '1.0.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'body-parser' version '1.18.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'brace-expansion' version '1.1.11' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'braces' version '2.3.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'nconf' version '0.6.9' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'bson' version '1.0.9' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'debug' version '2.2.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'ms' version '0.7.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'cookie' version '0.3.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'js-yaml' version '3.6.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimist' version '1.2.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'cross-spawn' version '7.0.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'cross-spawn' version '4.0.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'cross-spawn' version '6.0.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'form-data' version '2.3.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'request' version '2.88.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tmp' version '0.1.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tough-cookie' version '2.4.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'decode-uri-component' version '0.2.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'diff' version '1.4.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'dot-prop' version '4.2.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'cross-spawn' version '5.1.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'express' version '4.16.4' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'extract-zip' version '1.6.7' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'form-data' version '2.1.4' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'fsevents' version '1.2.9' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'debug' version '4.1.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'ini' version '1.3.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimatch' version '3.0.4' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimist' version '0.0.8' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'semver' version '5.7.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tar' version '4.4.8' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'getobject' version '0.1.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'got' version '6.7.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'growl' version '1.9.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'grunt' version '1.0.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'lodash' version '4.17.21' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'lodash' version '4.17.20' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'form-data' version '1.0.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'qs' version '5.2.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'request' version '2.67.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tough-cookie' version '2.2.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'hawk' version '3.1.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'helmet-csp' version '1.2.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'hoek' version '2.16.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'hosted-git-info' version '2.7.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'i' version '0.3.6' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'js-yaml' version '3.5.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'json-schema' version '0.2.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'jsonpointer' version '4.0.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'micromatch' version '3.1.10' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'lodash' version '4.17.11' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'marked' version '0.3.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimist' version '0.0.10' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'mixin-deep' version '1.3.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimatch' version '0.3.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'moment' version '2.24.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'mongodb' version '2.2.36' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'nconf' version '0.10.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'npm' version '3.10.10' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'chownr' version '1.0.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'fstream' version '1.0.10' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimatch' version '3.0.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'brace-expansion' version '1.1.6' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'hosted-git-info' version '2.1.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'ini' version '1.3.4' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'es5-ext' version '0.10.12' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'npm-user-validate' version '0.1.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'request' version '2.75.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'bl' version '1.1.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'extend' version '3.0.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'form-data' version '2.0.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'is-my-json-valid' version '2.15.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'jsonpointer' version '4.0.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'sshpk' version '1.10.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'qs' version '6.2.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'stringstream' version '0.0.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tough-cookie' version '2.3.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tunnel-agent' version '0.4.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'semver' version '5.3.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tar' version '2.2.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'babel-traverse' version '6.11.4' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'braces' version '1.8.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'cross-spawn' version '4.0.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'handlebars' version '4.0.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'lodash' version '4.13.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'micromatch' version '2.3.11' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimatch' version '3.0.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'path-parse' version '1.0.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'randomatic' version '1.1.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'y18n' version '3.2.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'yargs-parser' version '2.4.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'on-headers' version '1.0.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'path-to-regexp' version '0.1.7' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimist' version '1.2.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'qs' version '6.5.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'request' version '2.79.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'qs' version '6.3.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'underscore' version '1.8.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'semver' version '5.6.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'send' version '0.16.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'serve-static' version '1.13.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'set-value' version '2.0.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'shelljs' version '0.3.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'swig' version '1.4.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tmp' version '0.0.24' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tough-cookie' version '2.3.4' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'trim-newlines' version '1.0.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'uglify-js' version '2.4.24' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'undefsafe' version '2.0.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'underscore' version '1.9.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'set-value' version '0.4.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'uuid' version '3.3.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'websocket-driver' version '0.7.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'websocket-extensions' version '0.1.3' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'ws' version '1.1.5' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'xml2js' version '0.4.4' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'form-data' version '0.1.4' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'hawk' version '1.0.0' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'hoek' version '0.9.1' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'lodash' version '2.4.2' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'mime' version '1.2.11' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'qs' version '0.6.6' detected in package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'request' version '2.36.0' detected in package-lock.json. Upgrade to latest version.",
+      "remediation": "Upgrade decode-uri-component to a secure version. Upgrade to latest version.",
+      "references": [],
+      "fingerprint": "2edce96f9b6571a9963a8efcfd887833",
+      "risk_score": 54.5,
+      "threat_scenario": "An outdated third-party dependency contains known, publicly documented CVEs with available exploit payloads, allowing automated scanners and threat actors to target known flaws in the software supply chain.",
+      "potential_impact": {
+        "confidentiality": "MEDIUM-HIGH \u2014 Depends on specific CVE impact profile",
+        "integrity": "MEDIUM-HIGH \u2014 Potential component tampering",
+        "availability": "MEDIUM \u2014 Denial of service or crash vulnerabilities",
+        "business_impact": "Software supply chain vulnerabilities, loss of SOC2/ISO-27001 compliance certification.",
+        "attack_vector": "Execution of public weaponized exploits against unpatched open-source libraries."
+      },
+      "blast_radius": "Third-Party Component Exploitation",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.1,
+        "blast_radius_factor": 1.1,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 54.5,
+        "cvss_equivalent": 5.5,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "id": "GHSA-gxpj-cx7g-858c",
+        "modified": "2026-02-04T02:48:03.221457Z"
+      }
+    },
+    {
+      "id": null,
+      "source": "SCA",
+      "scanner": "osv-scanner",
+      "all_scanners": [
+        "osv-scanner"
+      ],
+      "title": "Vulnerable Dependency: body-parser (1.15.1) - GHSA-qwcr-r2fm-qrc7",
+      "description": "Vulnerability in body-parser",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Vulnerable Dependency",
+      "cwe": [
+        "CWE-1395"
+      ],
+      "cves": [],
+      "owasp": [
+        "A06:2021-Vulnerable and Outdated Components"
+      ],
+      "file": "package.json",
+      "line": null,
+      "code_snippet": null,
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Package 'body-parser' version '1.15.1' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'express' version '4.13.4' detected in package.json. Upgrade to latest version.\n[osv-scanner]: Package 'mongodb' version '2.1.18' detected in package.json. Upgrade to latest version.",
+      "remediation": "Upgrade body-parser to a secure version. Upgrade to latest version.",
+      "references": [],
+      "fingerprint": "15f697c099396cb43fe548ebf0176f2f",
+      "risk_score": 54.5,
+      "threat_scenario": "An outdated third-party dependency contains known, publicly documented CVEs with available exploit payloads, allowing automated scanners and threat actors to target known flaws in the software supply chain.",
+      "potential_impact": {
+        "confidentiality": "MEDIUM-HIGH \u2014 Depends on specific CVE impact profile",
+        "integrity": "MEDIUM-HIGH \u2014 Potential component tampering",
+        "availability": "MEDIUM \u2014 Denial of service or crash vulnerabilities",
+        "business_impact": "Software supply chain vulnerabilities, loss of SOC2/ISO-27001 compliance certification.",
+        "attack_vector": "Execution of public weaponized exploits against unpatched open-source libraries."
+      },
+      "blast_radius": "Third-Party Component Exploitation",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.1,
+        "blast_radius_factor": 1.1,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 54.5,
+        "cvss_equivalent": 5.5,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "id": "GHSA-qwcr-r2fm-qrc7",
+        "modified": "2026-02-04T03:23:13.937941Z"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: Database Connection String with Password",
+      "description": "Hardcoded secret token or credential (Database Connection String with Password) found in source code repository.",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Database Credentials",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "README.md",
+      "line": 61,
+      "code_snippet": "60:         ```\n61:         mongodb://<username>:<pas**ord>@<cluster>/<dbname>?ssl=true&replicaSet=<rsname>&authSource=admin&retryWrites=true&w=majority\n62:         ```\n63:         The `<username>` and `<pas**ord>` fields need filling in with the details of the database user added earlier. The `<dbname>` field sets the name of the",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for Database Connection String with Password matching '<pas**ord>'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "534f2adf23a2f1824ff24acf0e9845f1",
+      "risk_score": 94.3,
+      "threat_scenario": "Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Unauthorized access to cloud APIs, databases, and third-party SaaS platforms",
+        "integrity": "HIGH \u2014 Direct API mutations, cloud asset provisioning",
+        "availability": "HIGH \u2014 Resource exhaustion, cloud account suspension",
+        "business_impact": "Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.",
+        "attack_vector": "Hardcoded high-entropy tokens or keys committed in repositories or response bodies."
+      },
+      "blast_radius": "Cloud & Third-Party Service Credential Compromise",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 94.3,
+        "cvss_equivalent": 9.4,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "db-connection-string",
+        "masked_match": "<pas**ord>"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: Private Cryptographic Key",
+      "description": "Hardcoded secret token or credential (Private Cryptographic Key) found in source code repository.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Private Key",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "artifacts/cert/server.key",
+      "line": 1,
+      "code_snippet": "1: ----***********************----\n2: MIICXgIBAAKBgQCfn8uP4FuHaaAPrMkcl1fNMQM5EGMT4nnNSVoaEVdiDLc6P0mC\n3: AZtUO9W0OjWow+TwGk3HkqoSJOA9KRMrzK7MtEKfwNgzpsHo4m+mHaPg5DUyicnU",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for Private Cryptographic Key matching '----***********************----'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "1b451a3e6af94e24b7e5cf2226ad8a1e",
+      "risk_score": 100.0,
+      "threat_scenario": "Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Unauthorized access to cloud APIs, databases, and third-party SaaS platforms",
+        "integrity": "HIGH \u2014 Direct API mutations, cloud asset provisioning",
+        "availability": "HIGH \u2014 Resource exhaustion, cloud account suspension",
+        "business_impact": "Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.",
+        "attack_vector": "Hardcoded high-entropy tokens or keys committed in repositories or response bodies."
+      },
+      "blast_radius": "Cloud & Third-Party Service Credential Compromise",
+      "risk_factors": {
+        "base_severity_score": 90.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 100.0,
+        "cvss_equivalent": 10.0,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "private-key",
+        "masked_match": "----***********************----"
+      }
+    }
+  ]
+}

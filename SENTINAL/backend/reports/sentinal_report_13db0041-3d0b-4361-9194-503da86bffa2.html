@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinal Security Assessment Report - Scope: NodeGoat</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #121826;
+            --bg-elevated: #1a2234;
+            --border-color: #243048;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --crit-color: #ff3366;
+            --high-color: #ff9900;
+            --med-color: #ffcc00;
+            --low-color: #00ccff;
+            --info-color: #8899a6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 24px;
+            margin-bottom: 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 28px; font-weight: 800; letter-spacing: 2px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .badge-tag { background: #1e293b; color: var(--accent-cyan); padding: 4px 12px; border-radius: 9999px; font-size: 13px; border: 1px solid rgba(0, 242, 254, 0.3); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 36px; }
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        .card-title { font-size: 13px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 1px; }
+        .card-value { font-size: 32px; font-weight: 700; }
+        .score-val { color: var(--accent-cyan); }
+        .crit-val { color: var(--crit-color); }
+        .high-val { color: var(--high-color); }
+        .med-val { color: var(--med-color); }
+        .section-title { font-size: 22px; font-weight: 700; margin-bottom: 16px; border-left: 4px solid var(--accent-cyan); padding-left: 12px; }
+        .prose { color: #cbd5e1; margin-bottom: 36px; font-size: 15px; }
+        .prose p { margin-bottom: 12px; }
+        .corr-card { background: #191428; border: 1px solid #7c3aed; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .corr-title { font-size: 18px; font-weight: 700; color: #c084fc; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+        .finding-table { width: 100%; border-collapse: collapse; margin-top: 16px; margin-bottom: 36px; background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
+        .finding-table th { background: var(--bg-elevated); padding: 14px 16px; text-align: left; font-size: 13px; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); }
+        .finding-table td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        .sev-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .sev-CRITICAL { background: rgba(255, 51, 102, 0.2); color: var(--crit-color); border: 1px solid var(--crit-color); }
+        .sev-HIGH { background: rgba(255, 153, 0, 0.2); color: var(--high-color); border: 1px solid var(--high-color); }
+        .sev-MEDIUM { background: rgba(255, 204, 0, 0.2); color: var(--med-color); border: 1px solid var(--med-color); }
+        .sev-LOW { background: rgba(0, 204, 255, 0.2); color: var(--low-color); border: 1px solid var(--low-color); }
+        .sev-INFO { background: rgba(136, 153, 166, 0.2); color: var(--info-color); border: 1px solid var(--info-color); }
+        code { background: #0f172a; color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+        pre { background: #090d16; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; overflow-x: auto; color: #a5f3fc; font-family: monospace; font-size: 13px; margin-top: 8px; }
+        footer { border-top: 1px solid var(--border-color); padding-top: 24px; text-align: center; color: var(--text-secondary); font-size: 13px; margin-top: 60px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <div class="logo">SENTINAL</div>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">Unified SAST + SCA + DAST Security Assessment Report</p>
+            </div>
+            <div style="text-align: right;">
+                <span class="badge-tag">COMBINED SCAN</span>
+                <p style="color: var(--text-secondary); font-size: 12px; margin-top: 6px;">Generated: 2026-09-03 09:28:23 UTC</p>
+            </div>
+        </header>
+
+        <!-- Executive Metrics -->
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Overall Risk Score</div>
+                <div class="card-value score-val">24.2/100</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Critical Risks</div>
+                <div class="card-value crit-val">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">High Risks</div>
+                <div class="card-value high-val">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Medium Risks</div>
+                <div class="card-value med-val">1</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Total Findings</div>
+                <div class="card-value"></div>
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <h2 class="section-title">1. Executive Summary</h2>
+        <div class="card prose" style="margin-bottom: 36px;">
+            <p>**Security Assessment Executive Summary**<br>**Overall Posture:** MODERATE POSTURE<br>The assessment identified 1 security items, mostly of Medium, Low, or Informational severity with no critical remote exploit chains detected.<br><br>**Key Risk Highlights:**<br>- Total Discovered Findings: 1 (Critical: 0, High: 0, Medium: 1, Low: 0)<br>- Correlated Exploit Chains: 0<br>- Primary Concern Areas: Cryptographic Failures<br><br>Leadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.</p>
+        </div>
+
+        <!-- Correlated Risks -->
+        
+
+        <!-- Findings Inventory -->
+        <h2 class="section-title">3. Comprehensive Findings Inventory</h2>
+        <table class="finding-table">
+            <thead>
+                <tr>
+                    <th style="width: 110px;">Severity</th>
+                    <th style="width: 90px;">Source</th>
+                    <th>Vulnerability / Location</th>
+                    <th>Evidence & Remediation</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">SSL</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">testssl</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">TLS Connection / Certificate Validation Error: localhost</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">Failed to establish a valid TLS handshake with localhost: [WinError 10061] No connection could be made because the target machine actively refused it</p>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-295</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> TLS handshake error: [WinError 10061] No connection could be made because the target machine actively refused it</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Ensure the host has a valid TLS certificate issued by a trusted Certificate Authority.</div>
+                        
+                    </td>
+                </tr>
+                
+            </tbody>
+        </table>
+
+        <!-- Technical Remediation Playbook -->
+        <h2 class="section-title">4. Strategic Remediation Playbook</h2>
+        <div class="card prose">
+            <p>**Step-by-Step Remediation Actions:**<br>- **Cryptographic Failures:** Ensure the host has a valid TLS certificate issued by a trusted Certificate Authority.</p>
+        </div>
+
+        <footer>
+            <p>Sentinal Security Assessment Platform • Confidential Audit Report • Generated 2026-09-03 09:28:23 UTC</p>
+        </footer>
+    </div>
+</body>
+</html>

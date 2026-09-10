@@ -1,0 +1,773 @@
+{
+  "sentinal_version": "1.0.0",
+  "report_id": "2f9b8b9a-e658-4b95-abc6-8a73cc97eba8",
+  "generated_at": "2026-09-03T06:45:39.580438+00:00",
+  "assessment": {
+    "id": "2f9b8b9a-e658-4b95-abc6-8a73cc97eba8",
+    "project_name": "Scope: NodeGoat",
+    "assessment_type": "combined",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "target": "https://ginandjuice.shop",
+    "overall_risk_score": 90.6,
+    "critical_count": 2,
+    "high_count": 2,
+    "medium_count": 6,
+    "low_count": 11,
+    "info_count": 0
+  },
+  "overall_risk_score": 90.6,
+  "summary": {
+    "critical": 2,
+    "high": 2,
+    "medium": 6,
+    "low": 11,
+    "info": 0,
+    "total_findings": 21,
+    "correlated_risks_count": 0
+  },
+  "ai_analysis": {
+    "executive_summary": "**Security Assessment Executive Summary**\n**Overall Posture:** CRITICAL POSTURE\nThe automated assessment of https://ginandjuice.shop identified immediate critical exposures requiring urgent remediation. A total of 21 findings were recorded, including 2 Critical and 2 High severity vulnerabilities.\n\n**Key Risk Highlights:**\n- Total Discovered Findings: 21 (Critical: 2, High: 2, Medium: 6, Low: 11)\n- Correlated Exploit Chains: 0\n- Primary Concern Areas: Container Security, Vulnerable Dependency, Injection, Code Execution\n\nLeadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.",
+    "technical_summary": "### Technical Risk Breakdown for https://ginandjuice.shop\nThe assessment executed multi-modal analysis across SAST, SCA, Secret Scanning, DAST, Web Exposure, and TLS configurations.\n\n**Top Significant Technical Findings:**\n- **[CRITICAL] Arbitrary Code Execution via eval() or Dynamic Function** in `OWASP-NodeGoat-c5cb68a/app/routes/contributions.js:31`: Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context....\n- **[CRITICAL] Exposed Secret: Private Cryptographic Key** in `OWASP-NodeGoat-c5cb68a/artifacts/cert/server.key:1`: Hardcoded secret token or credential (Private Cryptographic Key) found in source code repository....\n- **[HIGH] Potential NoSQL Injection** in `OWASP-NodeGoat-c5cb68a/app/data/allocations-dao.js:73`: Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injec...\n- **[HIGH] Exposed Secret: Database Connection String with Password** in `OWASP-NodeGoat-c5cb68a/README.md:61`: Hardcoded secret token or credential (Database Connection String with Password) found in source code repository....\n- **[MEDIUM] Dockerfile Container Running as Root** in `OWASP-NodeGoat-c5cb68a/Dockerfile:1`: Containers running as root increase the impact of container escape vulnerabilities....",
+    "risk_prioritization": "**Vulnerability Prioritization Matrix:**\n1. **Tier 1 (Immediate / Blockers - Critical):** Address 2 Critical vulnerabilities and 0 correlated chains immediately. These represent verified remote execution, full database extraction, or leaked root cloud credentials.\n2. **Tier 2 (High Priority - Next Sprint):** Remediate 2 High-severity findings including unverified injection flaws, missing rate limiting, and vulnerable third-party dependencies.\n3. **Tier 3 (Medium/Low Defense-in-Depth):** Address missing security headers (CSP, HSTS), weak cipher configurations, and deprecated cookie attributes during standard release cycles.",
+    "remediation_playbook": "**Step-by-Step Remediation Actions:**\n- **Code Execution:** Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.\n- **Private Key:** Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.\n- **Injection:** Sanitize query keys using mongo-sanitize or enforce strict schema validation.\n- **Database Credentials:** Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.\n- **Container Security:** Add `USER nonroot` or a dedicated unprivileged user before the ENTRYPOINT/CMD.",
+    "false_positive_analysis": "**False-Positive & Manual Verification Guidance:**\n- Findings identified by heuristic pattern matching (e.g. potential path traversal or generic SQL queries) should be manually cross-checked against internal data sanitization middleware before marking as resolved.\n- DAST alerts triggered by error messages should be confirmed in a staging environment to rule out custom application error handling false triggers.",
+    "provider_used": "sentinal-expert-engine"
+  },
+  "correlated_risks": [],
+  "findings": [
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Dockerfile Container Running as Root",
+      "description": "Containers running as root increase the impact of container escape vulnerabilities.",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM",
+      "category": "Container Security",
+      "cwe": [
+        "CWE-250"
+      ],
+      "cves": [],
+      "owasp": [
+        "A05:2021-Security Misconfiguration"
+      ],
+      "file": "OWASP-NodeGoat-c5cb68a/Dockerfile",
+      "line": 1,
+      "code_snippet": "1: FROM node:12-alpine\n2: ENV WORKDIR /usr/src/app/\n3: WORKDIR $WORKDIR",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'FROM node:12-alpine' at line 1\n[sentinal-sast]: Matched pattern 'ENV WORKDIR /usr/src/app/' at line 2\n[sentinal-sast]: Matched pattern 'WORKDIR $WORKDIR' at line 3\n[sentinal-sast]: Matched pattern 'COPY package*.json $WORKDIR' at line 4\n[sentinal-sast]: Matched pattern 'RUN npm install --production --no-cache' at line 5\n[sentinal-sast]: Matched pattern '' at line 6\n[sentinal-sast]: Matched pattern 'FROM node:12-alpine' at line 7\n[sentinal-sast]: Matched pattern 'ENV WORKDIR /home/$USER/app' at line 9\n[sentinal-sast]: Matched pattern 'WORKDIR $WORKDIR' at line 10\n[sentinal-sast]: Matched pattern 'COPY --from=0 /usr/src/app/node_modules node_modules' at line 11\n[sentinal-sast]: Matched pattern 'RUN chown $USER:$USER $WORKDIR' at line 12\n[sentinal-sast]: Matched pattern 'COPY --chown=node . $WORKDIR' at line 13\n[sentinal-sast]: Matched pattern '# In production environment uncomment the next line' at line 14\n[sentinal-sast]: Matched pattern '#RUN chown -R $USER:$USER /home/$USER && chmod -R g-s,o-rx /home/$USER && chmod -R o-wrx $WORKDIR' at line 15\n[sentinal-sast]: Matched pattern '# Then all further actions including running the containers should be done under non-root user.' at line 16\n[sentinal-sast]: Matched pattern 'USER $USER' at line 17\n[sentinal-sast]: Matched pattern 'EXPOSE 4000' at line 18",
+      "remediation": "Add `USER nonroot` or a dedicated unprivileged user before the ENTRYPOINT/CMD.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/250.html"
+      ],
+      "fingerprint": "799b593538ad971e75f19584a6676892",
+      "risk_score": 38.2,
+      "raw_evidence": {
+        "rule_id": "docker-root-user",
+        "match": "FROM node:12-alpine"
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Potential NoSQL Injection",
+      "description": "Passing unvalidated `req.body` directly into MongoDB query operators allows authentication bypass and data extraction through operator injection (e.g. `$ne`).",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Injection",
+      "cwe": [
+        "CWE-943"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "OWASP-NodeGoat-c5cb68a/app/data/allocations-dao.js",
+      "line": 73,
+      "code_snippet": "72:                 if (parsedThreshold >= 0 && parsedThreshold <= 99) {\n73:                     return {$where: `this.userId == ${parsedUserId} && this.stocks > ${parsedThreshold}`};\n74:                 }\n75:                 throw `The user supplied threshold: ${parsedThreshold} was not valid.`;",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern '$where: ' at line 73\n[sentinal-sast]: Matched pattern '$where: ' at line 78",
+      "remediation": "Sanitize query keys using mongo-sanitize or enforce strict schema validation.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/943.html"
+      ],
+      "fingerprint": "36749d2332a444e83b2a214632420692",
+      "risk_score": 70.0,
+      "raw_evidence": {
+        "rule_id": "js-nosql-injection-mongodb",
+        "match": "$where: "
+      }
+    },
+    {
+      "id": null,
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Arbitrary Code Execution via eval() or Dynamic Function",
+      "description": "Invoking `eval()` or `new Function()` with dynamic strings evaluates untrusted JavaScript in the application runtime context.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Code Execution",
+      "cwe": [
+        "CWE-95"
+      ],
+      "cves": [],
+      "owasp": [
+        "A03:2021-Injection"
+      ],
+      "file": "OWASP-NodeGoat-c5cb68a/app/routes/contributions.js",
+      "line": 31,
+      "code_snippet": "30:         /*jslint evil: true */\n31:         // Insecure use of eval() to parse inputs\n32:         const preTax = eval(req.body.preTax);\n33:         const afterTax = eval(req.body.afterTax);",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'eval(' at line 31\n[sentinal-sast]: Matched pattern 'eval(' at line 32\n[sentinal-sast]: Matched pattern 'eval(' at line 33\n[sentinal-sast]: Matched pattern 'eval(' at line 34",
+      "remediation": "Avoid `eval()` and `new Function()`. Use structured JSON parsers or declarative data structures.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/95.html"
+      ],
+      "fingerprint": "50e6b3626483a83d867b933def523c77",
+      "risk_score": 90.0,
+      "raw_evidence": {
+        "rule_id": "js-eval-code-execution",
+        "match": "eval("
+      }
+    },
+    {
+      "id": null,
+      "source": "SCA",
+      "scanner": "osv-scanner",
+      "all_scanners": [
+        "osv-scanner"
+      ],
+      "title": "Vulnerable Dependency: debug (3.2.6) - GHSA-gxpj-cx7g-858c",
+      "description": "Vulnerability in decode-uri-component",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Vulnerable Dependency",
+      "cwe": [
+        "CWE-1395"
+      ],
+      "cves": [],
+      "owasp": [
+        "A06:2021-Vulnerable and Outdated Components"
+      ],
+      "file": "OWASP-NodeGoat-c5cb68a/package-lock.json",
+      "line": null,
+      "code_snippet": null,
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Package 'debug' version '3.2.6' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'adm-zip' version '0.4.4' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'ajv' version '6.10.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'ansi-regex' version '3.0.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'async' version '2.6.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'kind-of' version '6.0.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'bl' version '1.0.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'body-parser' version '1.18.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'brace-expansion' version '1.1.11' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'braces' version '2.3.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'nconf' version '0.6.9' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'bson' version '1.0.9' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'debug' version '2.2.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'ms' version '0.7.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'cookie' version '0.3.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'js-yaml' version '3.6.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimist' version '1.2.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'cross-spawn' version '7.0.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'cross-spawn' version '4.0.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'cross-spawn' version '6.0.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'form-data' version '2.3.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'request' version '2.88.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tmp' version '0.1.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tough-cookie' version '2.4.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'decode-uri-component' version '0.2.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'diff' version '1.4.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'dot-prop' version '4.2.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'cross-spawn' version '5.1.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'express' version '4.16.4' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'extract-zip' version '1.6.7' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'form-data' version '2.1.4' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'fsevents' version '1.2.9' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'debug' version '4.1.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'ini' version '1.3.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimatch' version '3.0.4' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimist' version '0.0.8' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'semver' version '5.7.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tar' version '4.4.8' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'getobject' version '0.1.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'got' version '6.7.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'growl' version '1.9.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'grunt' version '1.0.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'lodash' version '4.17.21' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'lodash' version '4.17.20' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'form-data' version '1.0.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'qs' version '5.2.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'request' version '2.67.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tough-cookie' version '2.2.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'hawk' version '3.1.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'helmet-csp' version '1.2.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'hoek' version '2.16.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'hosted-git-info' version '2.7.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'i' version '0.3.6' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'js-yaml' version '3.5.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'json-schema' version '0.2.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'jsonpointer' version '4.0.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'micromatch' version '3.1.10' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'lodash' version '4.17.11' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'marked' version '0.3.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimist' version '0.0.10' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'mixin-deep' version '1.3.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimatch' version '0.3.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'moment' version '2.24.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'mongodb' version '2.2.36' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'nconf' version '0.10.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'npm' version '3.10.10' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'chownr' version '1.0.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'fstream' version '1.0.10' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimatch' version '3.0.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'brace-expansion' version '1.1.6' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'hosted-git-info' version '2.1.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'ini' version '1.3.4' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'es5-ext' version '0.10.12' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'npm-user-validate' version '0.1.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'request' version '2.75.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'bl' version '1.1.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'extend' version '3.0.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'form-data' version '2.0.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'is-my-json-valid' version '2.15.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'jsonpointer' version '4.0.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'sshpk' version '1.10.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'qs' version '6.2.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'stringstream' version '0.0.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tough-cookie' version '2.3.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tunnel-agent' version '0.4.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'semver' version '5.3.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tar' version '2.2.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'babel-traverse' version '6.11.4' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'braces' version '1.8.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'cross-spawn' version '4.0.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'handlebars' version '4.0.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'lodash' version '4.13.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'micromatch' version '2.3.11' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimatch' version '3.0.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'path-parse' version '1.0.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'randomatic' version '1.1.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'y18n' version '3.2.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'yargs-parser' version '2.4.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'on-headers' version '1.0.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'path-to-regexp' version '0.1.7' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'minimist' version '1.2.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'qs' version '6.5.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'request' version '2.79.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'qs' version '6.3.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'underscore' version '1.8.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'semver' version '5.6.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'send' version '0.16.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'serve-static' version '1.13.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'set-value' version '2.0.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'shelljs' version '0.3.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'swig' version '1.4.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tmp' version '0.0.24' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'tough-cookie' version '2.3.4' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'trim-newlines' version '1.0.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'uglify-js' version '2.4.24' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'undefsafe' version '2.0.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'underscore' version '1.9.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'set-value' version '0.4.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'uuid' version '3.3.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'websocket-driver' version '0.7.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'websocket-extensions' version '0.1.3' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'ws' version '1.1.5' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'xml2js' version '0.4.4' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'form-data' version '0.1.4' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'hawk' version '1.0.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'hoek' version '0.9.1' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'lodash' version '2.4.2' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'mime' version '1.2.11' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'qs' version '0.6.6' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.\n[osv-scanner]: Package 'request' version '2.36.0' detected in OWASP-NodeGoat-c5cb68a/package-lock.json. Upgrade to latest version.",
+      "remediation": "Upgrade decode-uri-component to a secure version. Upgrade to latest version.",
+      "references": [],
+      "fingerprint": "62b59660fb462e3273945bc1d8174f73",
+      "risk_score": 45.0,
+      "raw_evidence": {
+        "id": "GHSA-gxpj-cx7g-858c",
+        "modified": "2026-02-04T02:48:03.221457Z"
+      }
+    },
+    {
+      "id": null,
+      "source": "SCA",
+      "scanner": "osv-scanner",
+      "all_scanners": [
+        "osv-scanner"
+      ],
+      "title": "Vulnerable Dependency: body-parser (1.15.1) - GHSA-qwcr-r2fm-qrc7",
+      "description": "Vulnerability in body-parser",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Vulnerable Dependency",
+      "cwe": [
+        "CWE-1395"
+      ],
+      "cves": [],
+      "owasp": [
+        "A06:2021-Vulnerable and Outdated Components"
+      ],
+      "file": "OWASP-NodeGoat-c5cb68a/package.json",
+      "line": null,
+      "code_snippet": null,
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Package 'body-parser' version '1.15.1' detected in OWASP-NodeGoat-c5cb68a/package.json. Upgrade to latest version.\n[osv-scanner]: Package 'express' version '4.13.4' detected in OWASP-NodeGoat-c5cb68a/package.json. Upgrade to latest version.\n[osv-scanner]: Package 'mongodb' version '2.1.18' detected in OWASP-NodeGoat-c5cb68a/package.json. Upgrade to latest version.",
+      "remediation": "Upgrade body-parser to a secure version. Upgrade to latest version.",
+      "references": [],
+      "fingerprint": "c1432141c81ba01daae9f06f725ceac4",
+      "risk_score": 45.0,
+      "raw_evidence": {
+        "id": "GHSA-qwcr-r2fm-qrc7",
+        "modified": "2026-02-04T03:23:13.937941Z"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: Database Connection String with Password",
+      "description": "Hardcoded secret token or credential (Database Connection String with Password) found in source code repository.",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Database Credentials",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "OWASP-NodeGoat-c5cb68a/README.md",
+      "line": 61,
+      "code_snippet": "60:         ```\n61:         mongodb://<username>:<pas**ord>@<cluster>/<dbname>?ssl=true&replicaSet=<rsname>&authSource=admin&retryWrites=true&w=majority\n62:         ```\n63:         The `<username>` and `<pas**ord>` fields need filling in with the details of the database user added earlier. The `<dbname>` field sets the name of the",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for Database Connection String with Password matching '<pas**ord>'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "daa3deed76ba3ff972c98bb7a5543a9d",
+      "risk_score": 78.0,
+      "raw_evidence": {
+        "rule_id": "db-connection-string",
+        "masked_match": "<pas**ord>"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: Private Cryptographic Key",
+      "description": "Hardcoded secret token or credential (Private Cryptographic Key) found in source code repository.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Private Key",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "OWASP-NodeGoat-c5cb68a/artifacts/cert/server.key",
+      "line": 1,
+      "code_snippet": "1: ----***********************----\n2: MIICXgIBAAKBgQCfn8uP4FuHaaAPrMkcl1fNMQM5EGMT4nnNSVoaEVdiDLc6P0mC\n3: AZtUO9W0OjWow+TwGk3HkqoSJOA9KRMrzK7MtEKfwNgzpsHo4m+mHaPg5DUyicnU",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for Private Cryptographic Key matching '----***********************----'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "5df187d6eea0b43982d1a6ce2d7014b3",
+      "risk_score": 98.0,
+      "raw_evidence": {
+        "rule_id": "private-key",
+        "masked_match": "----***********************----"
+      }
+    },
+    {
+      "id": null,
+      "source": "DAST",
+      "scanner": "owasp-zap",
+      "all_scanners": [
+        "owasp-zap"
+      ],
+      "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
+      "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "category": "Session Management",
+      "cwe": [
+        "CWE-614",
+        "CWE-1004"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/",
+      "parameter": null,
+      "evidence": "Set-Cookie: AWSALB=8eN7DfT0r9Q9RUsjI4P+1D0cz7kHyjv7PwKqU8J09HH6V/lhbM5wsRdjtzLou2KXQxdOCLrZWbkH9g9A3DGBI8UTv2Goa3wddF8m53Fz2uMRhxg5SP5MrSoKp1G6; Expires=Thu, 10 Sep 2026 06:45:32 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=8eN7DfT0r9Q9RUsjI4P+1D0cz7kHyjv7PwKqU8J09HH6V/lhbM5wsRdjtzLou2KXQxdOCLrZWbkH9g9A3DGBI8UTv2Goa3wddF8m53Fz2uMRhxg5SP5MrSoKp1G6; Expires=Thu, 10 Sep 2026 06:45:32 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=m2wLY102JMkkdobliSKNbj3Alu5EoPLMklts2vbCyQovxDEvRZEP08caZ8QsSH7Jf4zZWNZLsrh6+Q62znMwkY5xHi5B2MUW9+PE8+eps8ztLGvvPsmGAcWtDggS; Expires=Thu, 10 Sep 2026 06:45:33 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=m2wLY102JMkkdobliSKNbj3Alu5EoPLMklts2vbCyQovxDEvRZEP08caZ8QsSH7Jf4zZWNZLsrh6+Q62znMwkY5xHi5B2MUW9+PE8+eps8ztLGvvPsmGAcWtDggS; Expires=Thu, 10 Sep 2026 06:45:33 GMT; Path=/; SameSite=None; Secure",
+      "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+      "references": [
+        "https://owasp.org/www-community/controls/SecureCookieAttribute"
+      ],
+      "fingerprint": "f2da97839c1a1631f96172fa090efbab",
+      "risk_score": 25.0,
+      "raw_evidence": {}
+    },
+    {
+      "id": null,
+      "source": "DAST",
+      "scanner": "owasp-zap",
+      "all_scanners": [
+        "owasp-zap"
+      ],
+      "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
+      "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "category": "Session Management",
+      "cwe": [
+        "CWE-614",
+        "CWE-1004"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/catalog",
+      "parameter": null,
+      "evidence": "Set-Cookie: AWSALB=cM8xMU1SjtOO46hyCali9TG2SmC8IM7PCR22jofgZOpngE6gYY83FuIjx+4PkUoRxvu33Rvyf6KkdvmQ/iYW1mKP/zUjsF2BVga4NAY1huOrIbL6Zk5NsNkG9RvF; Expires=Thu, 10 Sep 2026 06:45:33 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=cM8xMU1SjtOO46hyCali9TG2SmC8IM7PCR22jofgZOpngE6gYY83FuIjx+4PkUoRxvu33Rvyf6KkdvmQ/iYW1mKP/zUjsF2BVga4NAY1huOrIbL6Zk5NsNkG9RvF; Expires=Thu, 10 Sep 2026 06:45:33 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: TrackingId=eyJ0eXBlIjoiY2xhc3MiLCJ2YWx1ZSI6ImZmSldaRThKN0FESkVsQTUifQ==; Secure; HttpOnly",
+      "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+      "references": [
+        "https://owasp.org/www-community/controls/SecureCookieAttribute"
+      ],
+      "fingerprint": "ae1f16069745426302cc479ad18085e3",
+      "risk_score": 25.0,
+      "raw_evidence": {}
+    },
+    {
+      "id": null,
+      "source": "DAST",
+      "scanner": "owasp-zap",
+      "all_scanners": [
+        "owasp-zap"
+      ],
+      "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
+      "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "category": "Session Management",
+      "cwe": [
+        "CWE-614",
+        "CWE-1004"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/blog",
+      "parameter": null,
+      "evidence": "Set-Cookie: AWSALB=9CugU0GBN3Z2Iis8gmrLSX+ZpYHUAe2Ic/eKrW+yPpDFjyLuhIgXp6ml6vqBuNc3B8Vn2/DhhVSoDIPcmIUEM4qMQAIW/+V7d6R7EM+yojUnQ7t04tSM9tLV0VUm; Expires=Thu, 10 Sep 2026 06:45:33 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=9CugU0GBN3Z2Iis8gmrLSX+ZpYHUAe2Ic/eKrW+yPpDFjyLuhIgXp6ml6vqBuNc3B8Vn2/DhhVSoDIPcmIUEM4qMQAIW/+V7d6R7EM+yojUnQ7t04tSM9tLV0VUm; Expires=Thu, 10 Sep 2026 06:45:33 GMT; Path=/; SameSite=None; Secure",
+      "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+      "references": [
+        "https://owasp.org/www-community/controls/SecureCookieAttribute"
+      ],
+      "fingerprint": "6873753fc9804f0e251e033a362b130b",
+      "risk_score": 25.0,
+      "raw_evidence": {}
+    },
+    {
+      "id": null,
+      "source": "DAST",
+      "scanner": "owasp-zap",
+      "all_scanners": [
+        "owasp-zap"
+      ],
+      "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
+      "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "category": "Session Management",
+      "cwe": [
+        "CWE-614",
+        "CWE-1004"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/about",
+      "parameter": null,
+      "evidence": "Set-Cookie: AWSALB=D+Z8YSQBRxkqOafozYIYiIGqZR1nycbG0T1zCpzCgA0s/KiZ+coACAZZdJiEc6GlivM5LENUiiKqUog7DVVKV7/Yh4zAuHrfr+EXGfKJYsKnokDdr1GnTxaKTrj0; Expires=Thu, 10 Sep 2026 06:45:33 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=D+Z8YSQBRxkqOafozYIYiIGqZR1nycbG0T1zCpzCgA0s/KiZ+coACAZZdJiEc6GlivM5LENUiiKqUog7DVVKV7/Yh4zAuHrfr+EXGfKJYsKnokDdr1GnTxaKTrj0; Expires=Thu, 10 Sep 2026 06:45:33 GMT; Path=/; SameSite=None; Secure",
+      "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+      "references": [
+        "https://owasp.org/www-community/controls/SecureCookieAttribute"
+      ],
+      "fingerprint": "06461db7a99a72bd604a050772cbf961",
+      "risk_score": 25.0,
+      "raw_evidence": {}
+    },
+    {
+      "id": null,
+      "source": "DAST",
+      "scanner": "owasp-zap",
+      "all_scanners": [
+        "owasp-zap"
+      ],
+      "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
+      "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "category": "Session Management",
+      "cwe": [
+        "CWE-614",
+        "CWE-1004"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/my-account",
+      "parameter": null,
+      "evidence": "Set-Cookie: AWSALB=Sgk5+3+XIACGpFouWqnU63PbRq+Fa36YpmD7ANDVL4J7iqtHXTXhF+JR1vre/sqxIkPVtEEKroQb63SR83P05lY7DklKM+LT6HMzTmA19frIDAhm8g2Img7HsS4T; Expires=Thu, 10 Sep 2026 06:45:33 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=Sgk5+3+XIACGpFouWqnU63PbRq+Fa36YpmD7ANDVL4J7iqtHXTXhF+JR1vre/sqxIkPVtEEKroQb63SR83P05lY7DklKM+LT6HMzTmA19frIDAhm8g2Img7HsS4T; Expires=Thu, 10 Sep 2026 06:45:33 GMT; Path=/; SameSite=None; Secure",
+      "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+      "references": [
+        "https://owasp.org/www-community/controls/SecureCookieAttribute"
+      ],
+      "fingerprint": "a53b69875506f9132c5cb444427cc3ba",
+      "risk_score": 25.0,
+      "raw_evidence": {}
+    },
+    {
+      "id": null,
+      "source": "DAST",
+      "scanner": "owasp-zap",
+      "all_scanners": [
+        "owasp-zap"
+      ],
+      "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
+      "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "category": "Session Management",
+      "cwe": [
+        "CWE-614",
+        "CWE-1004"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/login",
+      "parameter": null,
+      "evidence": "Set-Cookie: AWSALB=FiZTeJEZaAzMFU6D0Ta8lvfjbFk5xtFwrgZc0yLv4X6RKs7wMpaKsd+hVXaeX2ZQk5q4rBG9qe0yOTw9yJwmgPqmA+VqPtEiOkSm5zsIrptnr89h1zbyWQ1zukeG; Expires=Thu, 10 Sep 2026 06:45:34 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=FiZTeJEZaAzMFU6D0Ta8lvfjbFk5xtFwrgZc0yLv4X6RKs7wMpaKsd+hVXaeX2ZQk5q4rBG9qe0yOTw9yJwmgPqmA+VqPtEiOkSm5zsIrptnr89h1zbyWQ1zukeG; Expires=Thu, 10 Sep 2026 06:45:34 GMT; Path=/; SameSite=None; Secure",
+      "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+      "references": [
+        "https://owasp.org/www-community/controls/SecureCookieAttribute"
+      ],
+      "fingerprint": "0ad220c3910a29b778754686722ead72",
+      "risk_score": 25.0,
+      "raw_evidence": {}
+    },
+    {
+      "id": null,
+      "source": "DAST",
+      "scanner": "owasp-zap",
+      "all_scanners": [
+        "owasp-zap"
+      ],
+      "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
+      "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "category": "Session Management",
+      "cwe": [
+        "CWE-614",
+        "CWE-1004"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/catalog/cart",
+      "parameter": null,
+      "evidence": "Set-Cookie: AWSALB=qxvRy2BozgrPc/VaOSwLeWNjTuGAeLRPBwIlxVYuHmIang2b14O72xc+dNQmfBHPqBAcAuJPxuVxjqXFE+LfHuDER6WLWqnOZGksxdu0YzvmBAb+Nbzjr8q1rwi7; Expires=Thu, 10 Sep 2026 06:45:34 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=qxvRy2BozgrPc/VaOSwLeWNjTuGAeLRPBwIlxVYuHmIang2b14O72xc+dNQmfBHPqBAcAuJPxuVxjqXFE+LfHuDER6WLWqnOZGksxdu0YzvmBAb+Nbzjr8q1rwi7; Expires=Thu, 10 Sep 2026 06:45:34 GMT; Path=/; SameSite=None; Secure",
+      "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+      "references": [
+        "https://owasp.org/www-community/controls/SecureCookieAttribute"
+      ],
+      "fingerprint": "28cda55a9c8bce958b2b0538b229772b",
+      "risk_score": 25.0,
+      "raw_evidence": {}
+    },
+    {
+      "id": null,
+      "source": "DAST",
+      "scanner": "owasp-zap",
+      "all_scanners": [
+        "owasp-zap"
+      ],
+      "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
+      "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "category": "Session Management",
+      "cwe": [
+        "CWE-614",
+        "CWE-1004"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/catalog/product",
+      "parameter": null,
+      "evidence": "Set-Cookie: AWSALB=gP7+zHuPvWBWHIJFuBGIK6gTw0xrSsJni5C6/5xPzSspPoRdllxUNUb/OMv4n7LqSe8gEnZ7x+h3ezKgJkxstjBsOZdN5EOrZY+5xNDZsQQZ9bg7tR+Wu73VjbLv; Expires=Thu, 10 Sep 2026 06:45:34 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=gP7+zHuPvWBWHIJFuBGIK6gTw0xrSsJni5C6/5xPzSspPoRdllxUNUb/OMv4n7LqSe8gEnZ7x+h3ezKgJkxstjBsOZdN5EOrZY+5xNDZsQQZ9bg7tR+Wu73VjbLv; Expires=Thu, 10 Sep 2026 06:45:34 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=cdPQ44xO0tAJmKYuNF3TQE2oe9YSrxD9MbJ/8TFAKYeDChN/Tlpapq5NEH7sMNrfLGb8XD+H7bMvLmSDBV4d8Amj8gZjcJH8E4TAorvk+zP2m6yRoyFgxxrf3Qnb; Expires=Thu, 10 Sep 2026 06:45:35 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=cdPQ44xO0tAJmKYuNF3TQE2oe9YSrxD9MbJ/8TFAKYeDChN/Tlpapq5NEH7sMNrfLGb8XD+H7bMvLmSDBV4d8Amj8gZjcJH8E4TAorvk+zP2m6yRoyFgxxrf3Qnb; Expires=Thu, 10 Sep 2026 06:45:35 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=Xa9nbh+a3hmdZpuT28mF1kBDX90V5Cu1D8F0fze1K4JG+newog/yd8rYUlAOLHNPQzz1MQ4niBByvyHMyP7GXr/oqeNoz5n0eAEQtROgho7msc2Np77WzQGBSpmz; Expires=Thu, 10 Sep 2026 06:45:35 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=Xa9nbh+a3hmdZpuT28mF1kBDX90V5Cu1D8F0fze1K4JG+newog/yd8rYUlAOLHNPQzz1MQ4niBByvyHMyP7GXr/oqeNoz5n0eAEQtROgho7msc2Np77WzQGBSpmz; Expires=Thu, 10 Sep 2026 06:45:35 GMT; Path=/; SameSite=None; Secure",
+      "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+      "references": [
+        "https://owasp.org/www-community/controls/SecureCookieAttribute"
+      ],
+      "fingerprint": "40b3a764996a5ec07ae48193013d0652",
+      "risk_score": 25.0,
+      "raw_evidence": {}
+    },
+    {
+      "id": null,
+      "source": "DAST",
+      "scanner": "owasp-zap",
+      "all_scanners": [
+        "owasp-zap"
+      ],
+      "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
+      "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "category": "Session Management",
+      "cwe": [
+        "CWE-614",
+        "CWE-1004"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/catalog/product/stock",
+      "parameter": null,
+      "evidence": "Set-Cookie: AWSALB=sGDOMuWamD8W1SKvTwkNZ2HRDVtMCmPktgI0zGjhpaEwYf8/p0DKywWImZ/FGTW3FUeZJpBXTe4JE3liWR7XbwZqxA6e3WWNAQIaqF2emcw8DzggnF7/ZV14pVnY; Expires=Thu, 10 Sep 2026 06:45:35 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=sGDOMuWamD8W1SKvTwkNZ2HRDVtMCmPktgI0zGjhpaEwYf8/p0DKywWImZ/FGTW3FUeZJpBXTe4JE3liWR7XbwZqxA6e3WWNAQIaqF2emcw8DzggnF7/ZV14pVnY; Expires=Thu, 10 Sep 2026 06:45:35 GMT; Path=/; SameSite=None; Secure",
+      "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+      "references": [
+        "https://owasp.org/www-community/controls/SecureCookieAttribute"
+      ],
+      "fingerprint": "8900985d9d2f0bb2516da99911b126ca",
+      "risk_score": 25.0,
+      "raw_evidence": {}
+    },
+    {
+      "id": null,
+      "source": "DAST",
+      "scanner": "owasp-zap",
+      "all_scanners": [
+        "owasp-zap"
+      ],
+      "title": "Missing Clickjacking Defense (X-Frame-Options / CSP frame-ancestors)",
+      "description": "The target web page does not enforce frame embedding restrictions, leaving users vulnerable to UI redressing (Clickjacking).",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Broken Access Control",
+      "cwe": [
+        "CWE-1021"
+      ],
+      "cves": [],
+      "owasp": [
+        "A05:2021-Security Misconfiguration"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/catalog/product/stock",
+      "parameter": null,
+      "evidence": "No 'X-Frame-Options' header or CSP 'frame-ancestors' directive detected in HTTP response.",
+      "remediation": "Set `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`.",
+      "references": [
+        "https://cheatsheetseries.owasp.org/cheatsheets/Clickjacking_Defense_Cheat_Sheet.html"
+      ],
+      "fingerprint": "32293fb033e900169ce9e929cbe87528",
+      "risk_score": 50.0,
+      "raw_evidence": {}
+    },
+    {
+      "id": null,
+      "source": "WEB",
+      "scanner": "sentinal-headers",
+      "all_scanners": [
+        "sentinal-headers"
+      ],
+      "title": "Missing HTTP Strict Transport Security (HSTS) Header",
+      "description": "The HSTS header forces web browsers to communicate exclusively over encrypted HTTPS, mitigating SSL-stripping and man-in-the-middle attacks.",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Cryptographic Failures",
+      "cwe": [
+        "CWE-319",
+        "CWE-523"
+      ],
+      "cves": [],
+      "owasp": [
+        "A02:2021-Cryptographic Failures"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/",
+      "parameter": null,
+      "evidence": "Header 'Strict-Transport-Security' was absent in response to https://ginandjuice.shop",
+      "remediation": "Add `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` header to all HTTPS responses.",
+      "references": [
+        "https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html#strict-transport-security-hsts"
+      ],
+      "fingerprint": "24c9d7d42241945864c46b0d3ac98ba0",
+      "risk_score": 50.0,
+      "raw_evidence": {
+        "missing_header": "Strict-Transport-Security"
+      }
+    },
+    {
+      "id": null,
+      "source": "WEB",
+      "scanner": "sentinal-headers",
+      "all_scanners": [
+        "sentinal-headers"
+      ],
+      "title": "Missing Content Security Policy (CSP) Header",
+      "description": "A Content Security Policy restricts sources of executable scripts, stylesheets, and frames, preventing Cross-Site Scripting (XSS) and data injection attacks.",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Security Misconfiguration",
+      "cwe": [
+        "CWE-1021",
+        "CWE-79"
+      ],
+      "cves": [],
+      "owasp": [
+        "A05:2021-Security Misconfiguration"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/",
+      "parameter": null,
+      "evidence": "Header 'Content-Security-Policy' was absent in response to https://ginandjuice.shop",
+      "remediation": "Implement a strong `Content-Security-Policy` header (e.g. `default-src 'self'; script-src 'self'; object-src 'none'`).",
+      "references": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP"
+      ],
+      "fingerprint": "a2e44eeb396e04611467c9be3e627dc9",
+      "risk_score": 50.0,
+      "raw_evidence": {
+        "missing_header": "Content-Security-Policy"
+      }
+    },
+    {
+      "id": null,
+      "source": "WEB",
+      "scanner": "sentinal-headers",
+      "all_scanners": [
+        "sentinal-headers"
+      ],
+      "title": "Missing X-Content-Type-Options Header",
+      "description": "Setting `X-Content-Type-Options: nosniff` prevents browsers from MIME-sniffing a response away from the declared content-type, mitigating drive-by downloads and script execution.",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "category": "Security Misconfiguration",
+      "cwe": [
+        "CWE-16"
+      ],
+      "cves": [],
+      "owasp": [
+        "A05:2021-Security Misconfiguration"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/",
+      "parameter": null,
+      "evidence": "Header 'X-Content-Type-Options' was absent in response to https://ginandjuice.shop\n[sentinal-headers]: Header 'Permissions-Policy' was absent in response to https://ginandjuice.shop",
+      "remediation": "Configure `Permissions-Policy: camera=(), microphone=(), geolocation=()` to disable unused browser APIs.",
+      "references": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options",
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy"
+      ],
+      "fingerprint": "a8a3b1999c57d25ca3a1e9a1f4083be2",
+      "risk_score": 25.0,
+      "raw_evidence": {
+        "missing_header": "X-Content-Type-Options"
+      }
+    },
+    {
+      "id": null,
+      "source": "WEB",
+      "scanner": "sentinal-headers",
+      "all_scanners": [
+        "sentinal-headers"
+      ],
+      "title": "Missing Referrer-Policy Header",
+      "description": "The Referrer-Policy header controls how much referrer information (sent via the Referer header) should be included with requests.",
+      "severity": "LOW",
+      "confidence": "HIGH",
+      "category": "Information Disclosure",
+      "cwe": [
+        "CWE-200"
+      ],
+      "cves": [],
+      "owasp": [
+        "A01:2021-Broken Access Control"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/",
+      "parameter": null,
+      "evidence": "Header 'Referrer-Policy' was absent in response to https://ginandjuice.shop",
+      "remediation": "Configure `Referrer-Policy: strict-origin-when-cross-origin` or `no-referrer`.",
+      "references": [
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy"
+      ],
+      "fingerprint": "b70e19d0beb56d81c89cc1b922de5a02",
+      "risk_score": 25.0,
+      "raw_evidence": {
+        "missing_header": "Referrer-Policy"
+      }
+    }
+  ]
+}

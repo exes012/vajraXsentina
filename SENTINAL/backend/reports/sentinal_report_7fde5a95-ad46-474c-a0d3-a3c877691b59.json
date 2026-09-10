@@ -1,0 +1,97 @@
+{
+  "sentinal_version": "1.0.0",
+  "report_id": "7fde5a95-ad46-474c-a0d3-a3c877691b59",
+  "generated_at": "2026-09-08T10:15:12.856757+00:00",
+  "assessment": {
+    "id": "7fde5a95-ad46-474c-a0d3-a3c877691b59",
+    "project_name": "Scope: NodeGoat",
+    "target": null,
+    "repository": "https://github.com/sullo/nikto",
+    "scan_mode": "STANDARD",
+    "assessment_type": "source",
+    "authorization_status": "VERIFIED",
+    "coverage_status": "NOT_APPLICABLE",
+    "overall_risk_score": 29.5,
+    "dast_coverage_score": 0.0,
+    "finding_confidence": "FULL",
+    "critical_count": 0,
+    "high_count": 0,
+    "medium_count": 1,
+    "low_count": 0,
+    "info_count": 0,
+    "total_findings": 1,
+    "connectivity_diagnostics": {},
+    "coverage_telemetry": {}
+  },
+  "overall_risk_score": 29.5,
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 1,
+    "low": 0,
+    "info": 0,
+    "total_findings": 1,
+    "correlated_risks_count": 0
+  },
+  "ai_analysis": {
+    "executive_summary": "Autonomous security assessment completed for https://github.com/sullo/nikto. Identified 1 total findings (0 Critical, 0 High). Overall risk score evaluated at 29.5/100.",
+    "technical_summary": "Multi-engine assessment (SAST, SCA, DAST, Secrets) evaluated application endpoints and source code AST sinks.",
+    "risk_prioritization": "P0: Critical Flaws\nP1: High Severity Items",
+    "remediation_playbook": "1. Immediate triage of Critical and High severity findings.\n2. Apply recommended parameterized queries, sanitize inputs, and rotate exposed credentials.\n3. Validate scanner authorization and execute verification regression testing.",
+    "false_positive_analysis": "All findings verified through multi-engine heuristics and confidence scoring.",
+    "provider_used": "rule-based"
+  },
+  "correlated_risks": [],
+  "findings": [
+    {
+      "id": "651fb00f-c884-4a63-a090-86b301b6dc9e",
+      "source": "SAST",
+      "scanner": "sentinal-sast",
+      "all_scanners": [
+        "sentinal-sast"
+      ],
+      "title": "Dockerfile Container Running as Root",
+      "description": "Containers running as root increase the impact of container escape vulnerabilities.",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM",
+      "category": "Container Security",
+      "cwe": [
+        "CWE-250"
+      ],
+      "cves": [],
+      "owasp": [],
+      "file": "Dockerfile",
+      "line": 1,
+      "code_snippet": "1: FROM alpine:3.23.3\n2: \n3: LABEL version=\"2.6.1\" \\",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Matched pattern 'FROM alpine:3.23.3' at line 1\n[sentinal-sast]: Matched pattern '' at line 2\n[sentinal-sast]: Matched pattern 'LABEL version=\"2.6.1\" \\' at line 3\n[sentinal-sast]: Matched pattern '      docker_build=\"docker build -t hackllc/nikto:2.6.1 .\" \\' at line 5\n[sentinal-sast]: Matched pattern '      docker_run_basic=\"docker run --rm hackllc/nikto:2.6.1 -h http://www.example.com\" \\' at line 6\n[sentinal-sast]: Matched pattern '      docker_run_advanced=\"docker run --rm -v $(pwd):/tmp hackllc/nikto:2.6.1 -h http://www.example.com -o /tmp/out.json\"' at line 7\n[sentinal-sast]: Matched pattern '' at line 8\n[sentinal-sast]: Matched pattern 'RUN echo 'Installing packages for Nikto.' && \\' at line 9\n[sentinal-sast]: Matched pattern '    apk add --no-cache \\' at line 10\n[sentinal-sast]: Matched pattern '      perl \\' at line 11\n[sentinal-sast]: Matched pattern '      perl-net-ssleay \\' at line 12\n[sentinal-sast]: Matched pattern '      perl-json \\' at line 13\n[sentinal-sast]: Matched pattern '      perl-io-socket-ssl \\' at line 14\n[sentinal-sast]: Matched pattern '      perl-xml-writer \\' at line 15\n[sentinal-sast]: Matched pattern '      perl-mime-base64 \\' at line 16\n[sentinal-sast]: Matched pattern '      perl-xml-libxml' at line 17\n[sentinal-sast]: Matched pattern '' at line 18\n[sentinal-sast]: Matched pattern 'RUN echo 'Creating the nikto group.' && \\' at line 19\n[sentinal-sast]: Matched pattern '  addgroup -S nikto && \\' at line 20\n[sentinal-sast]: Matched pattern '  echo 'Creating the nikto user.' && \\' at line 21\n[sentinal-sast]: Matched pattern '  adduser -S -G nikto -g \"Nikto user\" -s /bin/sh nikto' at line 22\n[sentinal-sast]: Matched pattern '' at line 23\n[sentinal-sast]: Matched pattern 'ENV  PATH=${PATH}:/opt/nikto' at line 24\n[sentinal-sast]: Matched pattern '' at line 26\n[sentinal-sast]: Matched pattern 'COPY --chown=nikto:nikto [\"program/\", \"/opt/nikto\"]' at line 27\n[sentinal-sast]: Matched pattern 'ENTRYPOINT [\"/opt/nikto/nikto.pl\"]' at line 28",
+      "remediation": "Add `USER nonroot` or a dedicated unprivileged user before the ENTRYPOINT/CMD.",
+      "references": [],
+      "fingerprint": "408142bf54ad3683ddb87339a9f84d9b",
+      "risk_score": 42.1,
+      "threat_scenario": "The vulnerability exposes implementation details, internal software versions, or unhardened endpoints that assist attackers in reconnaissance and multi-stage attack chaining.",
+      "potential_impact": {
+        "confidentiality": "LOW-MEDIUM \u2014 Leakage of architecture details and configuration parameters",
+        "integrity": "LOW \u2014 Limited direct modification",
+        "availability": "LOW \u2014 No availability impact",
+        "business_impact": "Increased attack surface visibility for targeted external threat actors.",
+        "attack_vector": "Exposed diagnostic endpoints or permissive application configuration."
+      },
+      "blast_radius": "Information Disclosure & Security Misconfiguration",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 0.85,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.0,
+        "blast_radius_factor": 1.0,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 42.1,
+        "cvss_equivalent": 4.2,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {}
+    }
+  ]
+}

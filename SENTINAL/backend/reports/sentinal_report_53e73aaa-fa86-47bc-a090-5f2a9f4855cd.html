@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinal Security Assessment Report - Scope: NodeGoat</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: #121826;
+            --bg-elevated: #1a2234;
+            --border-color: #243048;
+            --text-primary: #f0f4f8;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --crit-color: #ff3366;
+            --high-color: #ff9900;
+            --med-color: #ffcc00;
+            --low-color: #00ccff;
+            --info-color: #8899a6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 24px;
+            margin-bottom: 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 28px; font-weight: 800; letter-spacing: 2px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .badge-tag { background: #1e293b; color: var(--accent-cyan); padding: 4px 12px; border-radius: 9999px; font-size: 13px; border: 1px solid rgba(0, 242, 254, 0.3); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 36px; }
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        .card-title { font-size: 13px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 1px; }
+        .card-value { font-size: 32px; font-weight: 700; }
+        .score-val { color: var(--accent-cyan); }
+        .crit-val { color: var(--crit-color); }
+        .high-val { color: var(--high-color); }
+        .med-val { color: var(--med-color); }
+        .section-title { font-size: 22px; font-weight: 700; margin-bottom: 16px; border-left: 4px solid var(--accent-cyan); padding-left: 12px; }
+        .prose { color: #cbd5e1; margin-bottom: 36px; font-size: 15px; }
+        .prose p { margin-bottom: 12px; }
+        .corr-card { background: #191428; border: 1px solid #7c3aed; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .corr-title { font-size: 18px; font-weight: 700; color: #c084fc; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+        .finding-table { width: 100%; border-collapse: collapse; margin-top: 16px; margin-bottom: 36px; background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
+        .finding-table th { background: var(--bg-elevated); padding: 14px 16px; text-align: left; font-size: 13px; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); }
+        .finding-table td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        .sev-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .sev-CRITICAL { background: rgba(255, 51, 102, 0.2); color: var(--crit-color); border: 1px solid var(--crit-color); }
+        .sev-HIGH { background: rgba(255, 153, 0, 0.2); color: var(--high-color); border: 1px solid var(--high-color); }
+        .sev-MEDIUM { background: rgba(255, 204, 0, 0.2); color: var(--med-color); border: 1px solid var(--med-color); }
+        .sev-LOW { background: rgba(0, 204, 255, 0.2); color: var(--low-color); border: 1px solid var(--low-color); }
+        .sev-INFO { background: rgba(136, 153, 166, 0.2); color: var(--info-color); border: 1px solid var(--info-color); }
+        code { background: #0f172a; color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+        pre { background: #090d16; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; overflow-x: auto; color: #a5f3fc; font-family: monospace; font-size: 13px; margin-top: 8px; }
+        footer { border-top: 1px solid var(--border-color); padding-top: 24px; text-align: center; color: var(--text-secondary); font-size: 13px; margin-top: 60px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <div class="logo">SENTINAL</div>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">Unified SAST + SCA + DAST Security Assessment Report</p>
+            </div>
+            <div style="text-align: right;">
+                <span class="badge-tag">DAST SCAN</span>
+                <p style="color: var(--text-secondary); font-size: 12px; margin-top: 6px;">Generated: 2026-09-03 06:42:28 UTC</p>
+            </div>
+        </header>
+
+        <!-- Executive Metrics -->
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Overall Risk Score</div>
+                <div class="card-value score-val">33.4/100</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Critical Risks</div>
+                <div class="card-value crit-val">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">High Risks</div>
+                <div class="card-value high-val">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Medium Risks</div>
+                <div class="card-value med-val">3</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Total Findings</div>
+                <div class="card-value"></div>
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <h2 class="section-title">1. Executive Summary</h2>
+        <div class="card prose" style="margin-bottom: 36px;">
+            <p>**Security Assessment Executive Summary**<br>**Overall Posture:** MODERATE POSTURE<br>The assessment identified 14 security items, mostly of Medium, Low, or Informational severity with no critical remote exploit chains detected.<br><br>**Key Risk Highlights:**<br>- Total Discovered Findings: 14 (Critical: 0, High: 0, Medium: 3, Low: 11)<br>- Correlated Exploit Chains: 0<br>- Primary Concern Areas: Session Management<br><br>Leadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.</p>
+        </div>
+
+        <!-- Correlated Risks -->
+        
+
+        <!-- Findings Inventory -->
+        <h2 class="section-title">3. Comprehensive Findings Inventory</h2>
+        <table class="finding-table">
+            <thead>
+                <tr>
+                    <th style="width: 110px;">Severity</th>
+                    <th style="width: 90px;">Source</th>
+                    <th>Vulnerability / Location</th>
+                    <th>Evidence & Remediation</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">DAST</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">owasp-zap</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: / </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=BiUfPFAh/9VKmQ7XGPLoocflJSZovZO2nZ2Qk6awXv0twhsWMN0sCBpnQfxvAyi/K537f1lLf+KUszg5JvA3sRZ4+XFZPoGnveDjFmcV/D9lIDOi6NtogpyeIoN2; Expires=Thu, 10 Sep 2026 06:42:21 GMT; Path=/
+[owasp-zap]: Set-Cookie: AWSALBCORS=BiUfPFAh/9VKmQ7XGPLoocflJSZovZO2nZ2Qk6awXv0twhsWMN0sCBpnQfxvAyi/K537f1lLf+KUszg5JvA3sRZ4+XFZPoGnveDjFmcV/D9lIDOi6NtogpyeIoN2; Expires=Thu, 10 Sep 2026 06:42:21 GMT; Path=/; SameSite=None; Secure
+[owasp-zap]: Set-Cookie: AWSALB=5xWyfe01o7JwQ3KRYnyRmP8xHXjTvqtx0DpFAHJe/6t5/dnyXkT8/dzP/WFhsvsJqX2lIb40Wk4bPoGOHIx3iBAYFbdoAR5u9ajnNv2zowiTHdLPc6nk1GYFKUBN; Expires=Thu, 10 Sep 2026 06:42:22 GMT; Path=/
+[owasp-zap]: Set-Cookie: AWSALBCORS=5xWyfe01o7JwQ3KRYnyRmP8xHXjTvqtx0DpFAHJe/6t5/dnyXkT8/dzP/WFhsvsJqX2lIb40Wk4bPoGOHIx3iBAYFbdoAR5u9ajnNv2zowiTHdLPc6nk1GYFKUBN; Expires=Thu, 10 Sep 2026 06:42:22 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">DAST</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">owasp-zap</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /catalog </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=lWPuzVz4FNrLHNnsR7+QWgtOUXXTqe4qkW+m/HU+bmSBMpGDKHjYmuG2dUvRps71+alzH+DeZCYMiC7VK8pwbXnbxqe5ihXviWvSI2IjSXXZe+COHefKQ868yVMT; Expires=Thu, 10 Sep 2026 06:42:22 GMT; Path=/
+[owasp-zap]: Set-Cookie: AWSALBCORS=lWPuzVz4FNrLHNnsR7+QWgtOUXXTqe4qkW+m/HU+bmSBMpGDKHjYmuG2dUvRps71+alzH+DeZCYMiC7VK8pwbXnbxqe5ihXviWvSI2IjSXXZe+COHefKQ868yVMT; Expires=Thu, 10 Sep 2026 06:42:22 GMT; Path=/; SameSite=None; Secure
+[owasp-zap]: Set-Cookie: TrackingId=eyJ0eXBlIjoiY2xhc3MiLCJ2YWx1ZSI6IkY4Z1BjV21KZTNjbFRMSkYifQ==; Secure; HttpOnly</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">DAST</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">owasp-zap</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /blog </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=jdygb0mU7uY5ULLsG0fPy3nXsoRB0G90zOESaS77+8r0Xb8gCS3RBGOW3OcKTDhs1f1nRni2FdF5Xl2VghcbbxQ5L+tKClnVnLKXZiM6PGBRhbWpk5X+eOJMI0uH; Expires=Thu, 10 Sep 2026 06:42:22 GMT; Path=/
+[owasp-zap]: Set-Cookie: AWSALBCORS=jdygb0mU7uY5ULLsG0fPy3nXsoRB0G90zOESaS77+8r0Xb8gCS3RBGOW3OcKTDhs1f1nRni2FdF5Xl2VghcbbxQ5L+tKClnVnLKXZiM6PGBRhbWpk5X+eOJMI0uH; Expires=Thu, 10 Sep 2026 06:42:22 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">DAST</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">owasp-zap</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /about </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=dwE3Y/UU6/bZq0PQ7qrKguZ16RTxteWa8XNPUbLt24tm8+mesd3qDc2Ifw/kKC74tq0QoTExUNuB5PnMVQKu6AtLVxpcMjJBULzq9BqCxJXierfQXGBGufNetoGl; Expires=Thu, 10 Sep 2026 06:42:22 GMT; Path=/
+[owasp-zap]: Set-Cookie: AWSALBCORS=dwE3Y/UU6/bZq0PQ7qrKguZ16RTxteWa8XNPUbLt24tm8+mesd3qDc2Ifw/kKC74tq0QoTExUNuB5PnMVQKu6AtLVxpcMjJBULzq9BqCxJXierfQXGBGufNetoGl; Expires=Thu, 10 Sep 2026 06:42:22 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">DAST</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">owasp-zap</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /my-account </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=aZ9XPcp8McVMMnX53cWFs7RjLfQI3KW+f8o4pV4UxzAintJ74LhsNy/IJBL9cThEKNqpXqacja3sxidamP+zFFUJoro8Bkt3HykALJdH2fCpSb1i3ZaE24ntRdne; Expires=Thu, 10 Sep 2026 06:42:22 GMT; Path=/
+[owasp-zap]: Set-Cookie: AWSALBCORS=aZ9XPcp8McVMMnX53cWFs7RjLfQI3KW+f8o4pV4UxzAintJ74LhsNy/IJBL9cThEKNqpXqacja3sxidamP+zFFUJoro8Bkt3HykALJdH2fCpSb1i3ZaE24ntRdne; Expires=Thu, 10 Sep 2026 06:42:22 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">DAST</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">owasp-zap</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /login </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=vCjGQrKyRGcQhHVl7J3ZJ1zb0ckuh8MaSzhiTndSAKrE0uxtQmtaneyy/kUte1xueNYgM7e+BlF6//eopIrwatcMXXhu2tb9F4PIeeXFJHv0iCDMaLrBHlTiJT/s; Expires=Thu, 10 Sep 2026 06:42:23 GMT; Path=/
+[owasp-zap]: Set-Cookie: AWSALBCORS=vCjGQrKyRGcQhHVl7J3ZJ1zb0ckuh8MaSzhiTndSAKrE0uxtQmtaneyy/kUte1xueNYgM7e+BlF6//eopIrwatcMXXhu2tb9F4PIeeXFJHv0iCDMaLrBHlTiJT/s; Expires=Thu, 10 Sep 2026 06:42:23 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">DAST</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">owasp-zap</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /catalog/cart </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=k2b0ldM1goLdg3hvGIeewtRn7mmuyh7NCOnuiRL5yUUiHpOLMs7dlXpHhpsiGSIepp/geRNIAGWLmoBaTSKc5Cm/ItYOxBUx/PDpsNdvs9aWJBOhr+IJeIcQCZzZ; Expires=Thu, 10 Sep 2026 06:42:23 GMT; Path=/
+[owasp-zap]: Set-Cookie: AWSALBCORS=k2b0ldM1goLdg3hvGIeewtRn7mmuyh7NCOnuiRL5yUUiHpOLMs7dlXpHhpsiGSIepp/geRNIAGWLmoBaTSKc5Cm/ItYOxBUx/PDpsNdvs9aWJBOhr+IJeIcQCZzZ; Expires=Thu, 10 Sep 2026 06:42:23 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">DAST</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">owasp-zap</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /catalog/product </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=FEqWtouXm+7sgkZnQ8m04TIg8JdqLbOj6k2TEKuP8G33F3Qg6MVAIaEX6wG8V9lDPZTseARQvG3sCj2LAwxcTHi2UtHmeam377yWx8okSQRfNOGcv7ne2qOEqGfP; Expires=Thu, 10 Sep 2026 06:42:23 GMT; Path=/
+[owasp-zap]: Set-Cookie: AWSALBCORS=FEqWtouXm+7sgkZnQ8m04TIg8JdqLbOj6k2TEKuP8G33F3Qg6MVAIaEX6wG8V9lDPZTseARQvG3sCj2LAwxcTHi2UtHmeam377yWx8okSQRfNOGcv7ne2qOEqGfP; Expires=Thu, 10 Sep 2026 06:42:23 GMT; Path=/; SameSite=None; Secure
+[owasp-zap]: Set-Cookie: AWSALB=fZkMrPE2ATmoPZc70lcKb7a63S2PwzRcg6VXxglZamcEgH/2HWU6fyS/zI/cZ1fywjcHDFRMYm/rIByZv3X0TOf1iWK0bndj0DedOjykk7HCnOCYbw70qrllafEu; Expires=Thu, 10 Sep 2026 06:42:24 GMT; Path=/
+[owasp-zap]: Set-Cookie: AWSALBCORS=fZkMrPE2ATmoPZc70lcKb7a63S2PwzRcg6VXxglZamcEgH/2HWU6fyS/zI/cZ1fywjcHDFRMYm/rIByZv3X0TOf1iWK0bndj0DedOjykk7HCnOCYbw70qrllafEu; Expires=Thu, 10 Sep 2026 06:42:24 GMT; Path=/; SameSite=None; Secure
+[owasp-zap]: Set-Cookie: AWSALB=KJXXNRU9McMoJChd9tEyJqHOPMAvCRcqQVqH4lYupmuFlQpXshGVohTlbtEHiT3Q7zNDholxWD+fN4nMHefunHlmQpHTi9pW/Y7bsRGt6TfeiUEk6FbHQigBr2Aa; Expires=Thu, 10 Sep 2026 06:42:24 GMT; Path=/
+[owasp-zap]: Set-Cookie: AWSALBCORS=KJXXNRU9McMoJChd9tEyJqHOPMAvCRcqQVqH4lYupmuFlQpXshGVohTlbtEHiT3Q7zNDholxWD+fN4nMHefunHlmQpHTi9pW/Y7bsRGt6TfeiUEk6FbHQigBr2Aa; Expires=Thu, 10 Sep 2026 06:42:24 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">DAST</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">owasp-zap</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /catalog/product/stock </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-614, CWE-1004</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Set-Cookie: AWSALB=syY/NqRFoDHF1+YzAioguhQ+ARxkstQcjwwSvLlxsjNCXpugkJgLURcw5pQkEhHbJsM0tSu3zoDjq4Q7SOzvyeUiM2g1W1Jx/n4kIw8Z2cGxhsSjsXLN4VpSFCcN; Expires=Thu, 10 Sep 2026 06:42:23 GMT; Path=/
+[owasp-zap]: Set-Cookie: AWSALBCORS=syY/NqRFoDHF1+YzAioguhQ+ARxkstQcjwwSvLlxsjNCXpugkJgLURcw5pQkEhHbJsM0tSu3zoDjq4Q7SOzvyeUiM2g1W1Jx/n4kIw8Z2cGxhsSjsXLN4VpSFCcN; Expires=Thu, 10 Sep 2026 06:42:23 GMT; Path=/; SameSite=None; Secure</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">DAST</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">owasp-zap</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Missing Clickjacking Defense (X-Frame-Options / CSP frame-ancestors)</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">The target web page does not enforce frame embedding restrictions, leaving users vulnerable to UI redressing (Clickjacking).</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: /catalog/product/stock </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-1021</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> No 'X-Frame-Options' header or CSP 'frame-ancestors' directive detected in HTTP response.</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Set `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">WEB</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">sentinal-headers</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Missing HTTP Strict Transport Security (HSTS) Header</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">The HSTS header forces web browsers to communicate exclusively over encrypted HTTPS, mitigating SSL-stripping and man-in-the-middle attacks.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: / </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-319, CWE-523</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Header 'Strict-Transport-Security' was absent in response to https://ginandjuice.shop</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Add `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` header to all HTTPS responses.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-MEDIUM">MEDIUM</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">WEB</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">sentinal-headers</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Missing Content Security Policy (CSP) Header</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">A Content Security Policy restricts sources of executable scripts, stylesheets, and frames, preventing Cross-Site Scripting (XSS) and data injection attacks.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: / </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-1021, CWE-79</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Header 'Content-Security-Policy' was absent in response to https://ginandjuice.shop</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Implement a strong `Content-Security-Policy` header (e.g. `default-src 'self'; script-src 'self'; object-src 'none'`).</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">WEB</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">sentinal-headers</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Missing X-Content-Type-Options Header</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">Setting `X-Content-Type-Options: nosniff` prevents browsers from MIME-sniffing a response away from the declared content-type, mitigating drive-by downloads and script execution.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: / </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-16</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Header 'X-Content-Type-Options' was absent in response to https://ginandjuice.shop
+[sentinal-headers]: Header 'Permissions-Policy' was absent in response to https://ginandjuice.shop</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Configure `Permissions-Policy: camera=(), microphone=(), geolocation=()` to disable unused browser APIs.</div>
+                        
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <span class="sev-badge sev-LOW">LOW</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">HIGH Conf.</div>
+                    </td>
+                    <td>
+                        <span class="badge-tag" style="font-size: 11px; padding: 2px 6px;">WEB</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">sentinal-headers</div>
+                    </td>
+                    <td>
+                        <strong style="color: #f1f5f9; font-size: 15px;">Missing Referrer-Policy Header</strong>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">The Referrer-Policy header controls how much referrer information (sent via the Referer header) should be included with requests.</p>
+                        
+                        <div style="margin-top: 6px;"><code>Endpoint: / </code></div>
+                        
+                        
+                        <div style="margin-top: 6px; font-size: 12px; color: #38bdf8;">CWE: CWE-200</div>
+                        
+                    </td>
+                    <td>
+                        
+                        <div style="font-size: 13px; margin-bottom: 6px;"><strong>Evidence:</strong> Header 'Referrer-Policy' was absent in response to https://ginandjuice.shop</div>
+                        
+                        
+                        
+                        <div style="font-size: 13px; margin-top: 6px; color: #a7f3d0;"><strong>Fix:</strong> Configure `Referrer-Policy: strict-origin-when-cross-origin` or `no-referrer`.</div>
+                        
+                    </td>
+                </tr>
+                
+            </tbody>
+        </table>
+
+        <!-- Technical Remediation Playbook -->
+        <h2 class="section-title">4. Strategic Remediation Playbook</h2>
+        <div class="card prose">
+            <p>**Step-by-Step Remediation Actions:**<br>- **Broken Access Control:** Set `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`.<br>- **Cryptographic Failures:** Add `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` header to all HTTPS responses.<br>- **Security Misconfiguration:** Implement a strong `Content-Security-Policy` header (e.g. `default-src 'self'; script-src 'self'; object-src 'none'`).<br>- **Session Management:** Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.</p>
+        </div>
+
+        <footer>
+            <p>Sentinal Security Assessment Platform • Confidential Audit Report • Generated 2026-09-03 06:42:28 UTC</p>
+        </footer>
+    </div>
+</body>
+</html>

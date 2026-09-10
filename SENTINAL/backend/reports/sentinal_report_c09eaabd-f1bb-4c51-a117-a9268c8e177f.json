@@ -1,0 +1,70 @@
+{
+  "sentinal_version": "1.0.0",
+  "report_id": "c09eaabd-f1bb-4c51-a117-a9268c8e177f",
+  "generated_at": "2026-09-04T04:19:19.833615+00:00",
+  "assessment": {
+    "id": "c09eaabd-f1bb-4c51-a117-a9268c8e177f",
+    "project_name": "Scope: NodeGoat",
+    "assessment_type": "dast",
+    "scan_mode": "DEEP",
+    "repository": "None",
+    "target": "https://www.goindigo.in",
+    "authorization_status": "VERIFIED",
+    "overall_risk_score": 56.4,
+    "critical_count": 0,
+    "high_count": 1,
+    "medium_count": 0,
+    "low_count": 0,
+    "info_count": 0
+  },
+  "overall_risk_score": 56.4,
+  "summary": {
+    "critical": 0,
+    "high": 1,
+    "medium": 0,
+    "low": 0,
+    "info": 0,
+    "total_findings": 1,
+    "correlated_risks_count": 0
+  },
+  "ai_analysis": {
+    "executive_summary": "**Security Assessment Executive Summary**\n**Overall Posture:** ELEVATED RISK\nThe assessment revealed notable security weaknesses across https://www.goindigo.in, comprising 1 High and 0 Medium issues.\n\n**Key Risk Highlights:**\n- Total Discovered Findings: 1 (Critical: 0, High: 1, Medium: 0, Low: 0)\n- Correlated Exploit Chains: 0\n- Primary Concern Areas: Network Availability\n\nLeadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.",
+    "technical_summary": "### Technical Risk Breakdown for https://www.goindigo.in\nThe assessment executed multi-modal analysis across SAST, SCA, Secret Scanning, DAST, Web Exposure, and TLS configurations.\n\n**Top Significant Technical Findings:**\n- **[HIGH] Target Host Unreachable** on `https://www.goindigo.in`: Sentina Discovery Worker was unable to establish an HTTP connection with https://www.goindigo.in: ...",
+    "risk_prioritization": "**Vulnerability Prioritization Matrix:**\n1. **Tier 1 (Immediate / Blockers - Critical):** Address 0 Critical vulnerabilities and 0 correlated chains immediately. These represent verified remote execution, full database extraction, or leaked root cloud credentials.\n2. **Tier 2 (High Priority - Next Sprint):** Remediate 1 High-severity findings including unverified injection flaws, missing rate limiting, and vulnerable third-party dependencies.\n3. **Tier 3 (Medium/Low Defense-in-Depth):** Address missing security headers (CSP, HSTS), weak cipher configurations, and deprecated cookie attributes during standard release cycles.",
+    "remediation_playbook": "**Step-by-Step Remediation Actions:**\n- **Network Availability:** Verify target DNS, firewall ingress rules, and that the web service is actively running.",
+    "false_positive_analysis": "**False-Positive & Manual Verification Guidance:**\n- Findings identified by heuristic pattern matching (e.g. potential path traversal or generic SQL queries) should be manually cross-checked against internal data sanitization middleware before marking as resolved.\n- DAST alerts triggered by error messages should be confirmed in a staging environment to rule out custom application error handling false triggers.",
+    "provider_used": "sentinal-expert-engine"
+  },
+  "correlated_risks": [],
+  "findings": [
+    {
+      "id": null,
+      "source": "WEB",
+      "scanner": "DISCOVERY",
+      "all_scanners": [
+        "DISCOVERY"
+      ],
+      "title": "Target Host Unreachable",
+      "description": "Sentina Discovery Worker was unable to establish an HTTP connection with https://www.goindigo.in: ",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Network Availability",
+      "cwe": [
+        "CWE-693"
+      ],
+      "cves": [],
+      "owasp": [],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "https://www.goindigo.in",
+      "parameter": null,
+      "evidence": "",
+      "remediation": "Verify target DNS, firewall ingress rules, and that the web service is actively running.",
+      "references": [],
+      "fingerprint": "29acd5d6b952343936f983d26c668e19",
+      "risk_score": 75.0,
+      "raw_evidence": {}
+    }
+  ]
+}

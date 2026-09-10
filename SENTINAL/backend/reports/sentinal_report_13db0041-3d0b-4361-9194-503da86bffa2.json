@@ -1,0 +1,72 @@
+{
+  "sentinal_version": "1.0.0",
+  "report_id": "13db0041-3d0b-4361-9194-503da86bffa2",
+  "generated_at": "2026-09-03T09:28:23.587240+00:00",
+  "assessment": {
+    "id": "13db0041-3d0b-4361-9194-503da86bffa2",
+    "project_name": "Scope: NodeGoat",
+    "assessment_type": "combined",
+    "repository": "https://github.com/OWASP/NodeGoat",
+    "target": "http://localhost:4000",
+    "overall_risk_score": 24.2,
+    "critical_count": 0,
+    "high_count": 0,
+    "medium_count": 1,
+    "low_count": 0,
+    "info_count": 0
+  },
+  "overall_risk_score": 24.2,
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 1,
+    "low": 0,
+    "info": 0,
+    "total_findings": 1,
+    "correlated_risks_count": 0
+  },
+  "ai_analysis": {
+    "executive_summary": "**Security Assessment Executive Summary**\n**Overall Posture:** MODERATE POSTURE\nThe assessment identified 1 security items, mostly of Medium, Low, or Informational severity with no critical remote exploit chains detected.\n\n**Key Risk Highlights:**\n- Total Discovered Findings: 1 (Critical: 0, High: 0, Medium: 1, Low: 0)\n- Correlated Exploit Chains: 0\n- Primary Concern Areas: Cryptographic Failures\n\nLeadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.",
+    "technical_summary": "### Technical Risk Breakdown for http://localhost:4000\nThe assessment executed multi-modal analysis across SAST, SCA, Secret Scanning, DAST, Web Exposure, and TLS configurations.\n\n**Top Significant Technical Findings:**\n- **[MEDIUM] TLS Connection / Certificate Validation Error: localhost**: Failed to establish a valid TLS handshake with localhost: [WinError 10061] No connection could be made because the target machine actively r...",
+    "risk_prioritization": "**Vulnerability Prioritization Matrix:**\n1. **Tier 1 (Immediate / Blockers - Critical):** Address 0 Critical vulnerabilities and 0 correlated chains immediately. These represent verified remote execution, full database extraction, or leaked root cloud credentials.\n2. **Tier 2 (High Priority - Next Sprint):** Remediate 0 High-severity findings including unverified injection flaws, missing rate limiting, and vulnerable third-party dependencies.\n3. **Tier 3 (Medium/Low Defense-in-Depth):** Address missing security headers (CSP, HSTS), weak cipher configurations, and deprecated cookie attributes during standard release cycles.",
+    "remediation_playbook": "**Step-by-Step Remediation Actions:**\n- **Cryptographic Failures:** Ensure the host has a valid TLS certificate issued by a trusted Certificate Authority.",
+    "false_positive_analysis": "**False-Positive & Manual Verification Guidance:**\n- Findings identified by heuristic pattern matching (e.g. potential path traversal or generic SQL queries) should be manually cross-checked against internal data sanitization middleware before marking as resolved.\n- DAST alerts triggered by error messages should be confirmed in a staging environment to rule out custom application error handling false triggers.",
+    "provider_used": "sentinal-expert-engine"
+  },
+  "correlated_risks": [],
+  "findings": [
+    {
+      "id": null,
+      "source": "SSL",
+      "scanner": "testssl",
+      "all_scanners": [
+        "testssl"
+      ],
+      "title": "TLS Connection / Certificate Validation Error: localhost",
+      "description": "Failed to establish a valid TLS handshake with localhost: [WinError 10061] No connection could be made because the target machine actively refused it",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Cryptographic Failures",
+      "cwe": [
+        "CWE-295"
+      ],
+      "cves": [],
+      "owasp": [
+        "A02:2021-Cryptographic Failures"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "TLS handshake error: [WinError 10061] No connection could be made because the target machine actively refused it",
+      "remediation": "Ensure the host has a valid TLS certificate issued by a trusted Certificate Authority.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/295.html"
+      ],
+      "fingerprint": "c00d67d10a9088c892f3751fa913e2f6",
+      "risk_score": 45.0,
+      "raw_evidence": {}
+    }
+  ]
+}

@@ -1,0 +1,231 @@
+{
+  "sentinal_version": "1.0.0",
+  "report_id": "ba2b0953-0e14-4847-82f6-11488bea5ff7",
+  "generated_at": "2026-09-04T06:00:48.902906+00:00",
+  "assessment": {
+    "id": "ba2b0953-0e14-4847-82f6-11488bea5ff7",
+    "project_name": "Scope: NodeGoat",
+    "assessment_type": "dast",
+    "scan_mode": "DEEP",
+    "repository": "None",
+    "target": "https://www.goindigo.in",
+    "authorization_status": "VERIFIED",
+    "overall_risk_score": 24.2,
+    "dast_coverage_score": 40.0,
+    "coverage_status": "FAILED",
+    "finding_confidence": "FULL",
+    "critical_count": 0,
+    "high_count": 0,
+    "medium_count": 1,
+    "low_count": 0,
+    "info_count": 0,
+    "connectivity_diagnostics": {
+      "target_url": "https://www.goindigo.in",
+      "hostname": "www.goindigo.in",
+      "port": 443,
+      "scheme": "https",
+      "timestamp": 1788501419.815705,
+      "reachability": "UNREACHABLE",
+      "access_level": "BLOCKED",
+      "access_reasons": [
+        "Target is unreachable over network / DNS failure."
+      ],
+      "finding_confidence": "LIMITED",
+      "assessment_impact": "Active DAST coverage may be incomplete or restricted due to upstream security controls (WAF, Rate Limiting, CAPTCHA, or Authentication barriers).",
+      "diagnostic_recommendation": "Configure an authorized scanner IP allowlist or provide an approved authenticated scanning configuration to achieve complete assessment coverage.",
+      "checks": {
+        "1_dns_resolution": {
+          "status": "SUCCESS",
+          "resolved_ips": [
+            "104.90.6.184",
+            "104.90.6.168"
+          ],
+          "latency_ms": 3.1,
+          "ip_count": 2,
+          "error": null
+        },
+        "2_tcp_connectivity": {
+          "status": "CONNECTED",
+          "latency_ms": 102.37,
+          "port": 443,
+          "error": null
+        },
+        "3_tls_handshake": {
+          "status": "SUCCESS",
+          "protocol": "TLSv1.3",
+          "cipher": "TLS_AES_256_GCM_SHA384",
+          "cert_valid": true,
+          "issuer": "DigiCert Inc",
+          "san": [
+            "*.goindigo.in",
+            "goindigo.in"
+          ],
+          "expires": "Dec 31 23:59:59 2026 GMT",
+          "handshake_latency_ms": 286.84,
+          "error": null
+        },
+        "4_http_status": {
+          "initial_status_code": 0,
+          "status_text": "HTTP Connection Failed"
+        },
+        "5_redirect_chain": [],
+        "6_response_headers": {},
+        "7_response_time_ms": 12115.17,
+        "8_server_cdn_info": {
+          "server_header": "Unknown",
+          "cdn_provider": "None detected",
+          "edge_headers": {}
+        },
+        "9_waf_indicators": {
+          "detected": false,
+          "provider": "None",
+          "confidence": "NONE",
+          "evidence": [],
+          "score": 0.0
+        },
+        "10_rate_limit_responses": {
+          "rate_limited_on_probe": false,
+          "status_code": 0,
+          "retry_after": null,
+          "rate_limit_headers": {}
+        },
+        "11_authentication_requirement": {
+          "auth_required": false,
+          "status_code": 0,
+          "www_authenticate_header": null,
+          "login_redirect_detected": false,
+          "login_form_detected": false,
+          "auth_mechanism": "NONE"
+        },
+        "12_captcha_challenge_indicators": {
+          "detected": false,
+          "challenges": [],
+          "evidence": []
+        }
+      }
+    },
+    "coverage_telemetry": {
+      "requests_attempted": 21,
+      "requests_successful": 0,
+      "requests_blocked": 21,
+      "status_distribution": {
+        "403": 21
+      },
+      "count_2xx": 0,
+      "count_3xx": 0,
+      "count_4xx": 21,
+      "count_5xx": 0,
+      "count_401": 0,
+      "count_403": 21,
+      "count_429": 0,
+      "scanner_errors": [],
+      "crawlable_urls": 1,
+      "urls_scanned": 20,
+      "zap_alerts": 0,
+      "nuclei_matches": 0,
+      "wapiti_findings": 0,
+      "nikto_findings": 0,
+      "engine_breakdown": {
+        "HTTP-DISCOVERY": {
+          "status": "SUCCESS",
+          "duration_ms": 10267,
+          "findings_count": 1,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "ZAP": {
+          "status": "SUCCESS",
+          "duration_ms": 150187,
+          "findings_count": 0,
+          "requests_attempted": 1,
+          "requests_blocked": 1
+        },
+        "NUCLEI": {
+          "status": "SUCCESS",
+          "duration_ms": 40558,
+          "findings_count": 0,
+          "requests_attempted": 1,
+          "requests_blocked": 1
+        },
+        "WAPITI": {
+          "status": "SUCCESS",
+          "duration_ms": 15390,
+          "findings_count": 0,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "NIKTO": {
+          "status": "SUCCESS",
+          "duration_ms": 2092,
+          "findings_count": 0,
+          "requests_attempted": 19,
+          "requests_blocked": 19
+        },
+        "HEADER_ANALYZER": {
+          "status": "SUCCESS",
+          "duration_ms": 10047,
+          "findings_count": 0,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "TESTSSL": {
+          "status": "SUCCESS",
+          "duration_ms": 202,
+          "findings_count": 0,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        }
+      }
+    }
+  },
+  "overall_risk_score": 24.2,
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 1,
+    "low": 0,
+    "info": 0,
+    "total_findings": 1,
+    "correlated_risks_count": 0
+  },
+  "ai_analysis": {
+    "executive_summary": "**Security Assessment Executive Summary**\n**Overall Posture:** MODERATE POSTURE\nThe assessment identified 1 security items, mostly of Medium, Low, or Informational severity with no critical remote exploit chains detected.\n\n**Key Risk Highlights:**\n- Total Discovered Findings: 1 (Critical: 0, High: 0, Medium: 1, Low: 0)\n- Correlated Exploit Chains: 0\n- Primary Concern Areas: WAF / Anti-Automation Protection\n\nLeadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.",
+    "technical_summary": "### Technical Risk Breakdown for https://www.goindigo.in\nThe assessment executed multi-modal analysis across SAST, SCA, Secret Scanning, DAST, Web Exposure, and TLS configurations.\n\n**Top Significant Technical Findings:**\n- **[MEDIUM] WAF / Anti-Bot Mitigation Dropping Automated Probes (www.goindigo.in)** on `https://www.goindigo.in`: The target host completed the TLS handshake (Subject: '*.goindigo.in', Issuer: 'DigiCert Inc'), but subsequent automated HTTP requests were ...",
+    "risk_prioritization": "**Vulnerability Prioritization Matrix:**\n1. **Tier 1 (Immediate / Blockers - Critical):** Address 0 Critical vulnerabilities and 0 correlated chains immediately. These represent verified remote execution, full database extraction, or leaked root cloud credentials.\n2. **Tier 2 (High Priority - Next Sprint):** Remediate 0 High-severity findings including unverified injection flaws, missing rate limiting, and vulnerable third-party dependencies.\n3. **Tier 3 (Medium/Low Defense-in-Depth):** Address missing security headers (CSP, HSTS), weak cipher configurations, and deprecated cookie attributes during standard release cycles.",
+    "remediation_playbook": "**Step-by-Step Remediation Actions:**\n- **WAF / Anti-Automation Protection:** To assess applications behind WAF/Anti-Bot protection: (1) Provide authenticated session cookies/tokens via the Authenticated Scan options, (2) Allowlist the Sentina scanner IP in the WAF / CDN manage",
+    "false_positive_analysis": "**False-Positive & Manual Verification Guidance:**\n- Findings identified by heuristic pattern matching (e.g. potential path traversal or generic SQL queries) should be manually cross-checked against internal data sanitization middleware before marking as resolved.\n- DAST alerts triggered by error messages should be confirmed in a staging environment to rule out custom application error handling false triggers.",
+    "provider_used": "sentinal-expert-engine"
+  },
+  "correlated_risks": [],
+  "findings": [
+    {
+      "id": null,
+      "source": "WEB",
+      "scanner": "DISCOVERY",
+      "all_scanners": [
+        "DISCOVERY"
+      ],
+      "title": "WAF / Anti-Bot Mitigation Dropping Automated Probes (www.goindigo.in)",
+      "description": "The target host completed the TLS handshake (Subject: '*.goindigo.in', Issuer: 'DigiCert Inc'), but subsequent automated HTTP requests were dropped or timed out by an edge Web Application Firewall (WAF) or Bot Management system ().\n\nBecause the edge security layer blackholes/drops automated scanner traffic, dynamic scanners (ZAP, Nuclei, Wapiti, Nikto) were unable to receive HTTP response payloads from the web application.",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "WAF / Anti-Automation Protection",
+      "cwe": [
+        "CWE-693"
+      ],
+      "cves": [],
+      "owasp": [],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "https://www.goindigo.in",
+      "parameter": null,
+      "evidence": "TLS Connection: SUCCESS (DigiCert Inc)\nHTTP Stream Result: \nResolved IPs: 104.90.6.184, 104.90.6.168",
+      "remediation": "To assess applications behind WAF/Anti-Bot protection: (1) Provide authenticated session cookies/tokens via the Authenticated Scan options, (2) Allowlist the Sentina scanner IP in the WAF / CDN management console, or (3) Point the assessment to the direct origin/staging endpoint.",
+      "references": [],
+      "fingerprint": "29acd5d6b952343936f983d26c668e19",
+      "risk_score": 50.0,
+      "raw_evidence": {}
+    }
+  ]
+}

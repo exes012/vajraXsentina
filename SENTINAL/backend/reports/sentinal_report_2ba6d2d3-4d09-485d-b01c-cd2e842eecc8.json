@@ -1,0 +1,300 @@
+{
+  "sentinal_version": "1.0.0",
+  "report_id": "2ba6d2d3-4d09-485d-b01c-cd2e842eecc8",
+  "generated_at": "2026-09-04T08:44:45.134284+00:00",
+  "assessment": {
+    "id": "2ba6d2d3-4d09-485d-b01c-cd2e842eecc8",
+    "project_name": "Scope: NodeGoat",
+    "assessment_type": "dast",
+    "scan_mode": "STANDARD",
+    "repository": "None",
+    "target": "http://192.0.2.1:9999/test-unreachable",
+    "authorization_status": "DEV_MODE",
+    "overall_risk_score": 61.7,
+    "dast_coverage_score": 40.0,
+    "coverage_status": "FAILED",
+    "finding_confidence": "FULL",
+    "critical_count": 0,
+    "high_count": 1,
+    "medium_count": 1,
+    "low_count": 0,
+    "info_count": 0,
+    "connectivity_diagnostics": {
+      "target_url": "http://192.0.2.1:9999/test-unreachable",
+      "hostname": "192.0.2.1",
+      "port": 9999,
+      "scheme": "http",
+      "timestamp": 1788511124.5513806,
+      "reachability": "UNREACHABLE",
+      "access_level": "BLOCKED",
+      "access_reasons": [
+        "Target is unreachable over network / DNS failure."
+      ],
+      "finding_confidence": "LIMITED",
+      "assessment_impact": "Active DAST coverage may be incomplete or restricted due to upstream security controls (WAF, Rate Limiting, CAPTCHA, or Authentication barriers).",
+      "diagnostic_recommendation": "Configure an authorized scanner IP allowlist or provide an approved authenticated scanning configuration to achieve complete assessment coverage.",
+      "checks": {
+        "1_dns_resolution": {
+          "status": "SUCCESS",
+          "resolved_ips": [
+            "192.0.2.1"
+          ],
+          "latency_ms": 1.58,
+          "ip_count": 1,
+          "error": null
+        },
+        "2_tcp_connectivity": {
+          "status": "TIMED_OUT",
+          "latency_ms": 5016.46,
+          "port": 9999,
+          "error": "TCP connection timed out."
+        },
+        "3_tls_handshake": {
+          "status": "N/A",
+          "protocol": "HTTP (Unencrypted)",
+          "cipher": null,
+          "cert_valid": null,
+          "issuer": null,
+          "subject": null,
+          "san": [],
+          "expires": null,
+          "error": null
+        },
+        "4_http_status": {
+          "initial_status_code": 0,
+          "status_text": "HTTP Connection Failed"
+        },
+        "5_redirect_chain": [],
+        "6_response_headers": {},
+        "7_response_time_ms": 12010.5,
+        "8_server_cdn_info": {
+          "server_header": "Unknown",
+          "cdn_provider": "None detected",
+          "edge_headers": {}
+        },
+        "9_waf_indicators": {
+          "detected": false,
+          "provider": "None",
+          "confidence": "NONE",
+          "evidence": [],
+          "score": 0.0
+        },
+        "10_rate_limit_responses": {
+          "rate_limited_on_probe": false,
+          "status_code": 0,
+          "retry_after": null,
+          "rate_limit_headers": {}
+        },
+        "11_authentication_requirement": {
+          "auth_required": false,
+          "status_code": 0,
+          "www_authenticate_header": null,
+          "login_redirect_detected": false,
+          "login_form_detected": false,
+          "auth_mechanism": "NONE"
+        },
+        "12_captcha_challenge_indicators": {
+          "detected": false,
+          "challenges": [],
+          "evidence": []
+        }
+      }
+    },
+    "coverage_telemetry": {
+      "requests_attempted": 0,
+      "requests_successful": 0,
+      "requests_blocked": 0,
+      "status_distribution": {},
+      "count_2xx": 0,
+      "count_3xx": 0,
+      "count_4xx": 0,
+      "count_5xx": 0,
+      "count_401": 0,
+      "count_403": 0,
+      "count_429": 0,
+      "scanner_errors": [],
+      "crawlable_urls": 1,
+      "urls_scanned": 2,
+      "zap_alerts": 0,
+      "nuclei_matches": 0,
+      "wapiti_findings": 0,
+      "nikto_findings": 0,
+      "engine_breakdown": {
+        "HTTP-DISCOVERY": {
+          "status": "SUCCESS",
+          "duration_ms": 15159,
+          "findings_count": 1,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "ZAP": {
+          "status": "SUCCESS",
+          "duration_ms": 101372,
+          "findings_count": 0,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "NUCLEI": {
+          "status": "SUCCESS",
+          "duration_ms": 40073,
+          "findings_count": 0,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "WAPITI": {
+          "status": "SUCCESS",
+          "duration_ms": 15039,
+          "findings_count": 0,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "NIKTO": {
+          "status": "SUCCESS",
+          "duration_ms": 170228,
+          "findings_count": 0,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "HEADER_ANALYZER": {
+          "status": "SUCCESS",
+          "duration_ms": 10025,
+          "findings_count": 0,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "TESTSSL": {
+          "status": "SUCCESS",
+          "duration_ms": 8108,
+          "findings_count": 1,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        }
+      }
+    }
+  },
+  "overall_risk_score": 61.7,
+  "summary": {
+    "critical": 0,
+    "high": 1,
+    "medium": 1,
+    "low": 0,
+    "info": 0,
+    "total_findings": 2,
+    "correlated_risks_count": 0
+  },
+  "ai_analysis": {
+    "executive_summary": "**Security Assessment Executive Summary**\n**Overall Posture:** ELEVATED RISK\nThe assessment revealed notable security weaknesses across http://192.0.2.1:9999/test-unreachable, comprising 1 High and 1 Medium issues.\n\n**Key Risk Highlights:**\n- Total Discovered Findings: 2 (Critical: 0, High: 1, Medium: 1, Low: 0)\n- Correlated Exploit Chains: 0\n- Primary Concern Areas: Cryptographic Failures, Network Availability\n\nLeadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.",
+    "technical_summary": "### Technical Risk Breakdown for http://192.0.2.1:9999/test-unreachable\nThe assessment executed multi-modal analysis across SAST, SCA, Secret Scanning, DAST, Web Exposure, and TLS configurations.\n\n**Top Significant Technical Findings:**\n- **[HIGH] Target Host Unreachable** on `http://192.0.2.1:9999/test-unreachable`: Sentina Discovery Worker was unable to establish an HTTP connection with http://192.0.2.1:9999/test-unreachable: ...\n- **[MEDIUM] TLS Connection / Certificate Validation Error: 192.0.2.1** on `/`: Failed to establish a valid TLS handshake with 192.0.2.1: timed out...",
+    "risk_prioritization": "**Vulnerability Prioritization Matrix:**\n1. **Tier 1 (Immediate / Blockers - Critical):** Address 0 Critical vulnerabilities and 0 correlated chains immediately. These represent verified remote execution, full database extraction, or leaked root cloud credentials.\n2. **Tier 2 (High Priority - Next Sprint):** Remediate 1 High-severity findings including unverified injection flaws, missing rate limiting, and vulnerable third-party dependencies.\n3. **Tier 3 (Medium/Low Defense-in-Depth):** Address missing security headers (CSP, HSTS), weak cipher configurations, and deprecated cookie attributes during standard release cycles.",
+    "remediation_playbook": "**Step-by-Step Remediation Actions:**\n- **Network Availability:** Verify target DNS, firewall ingress rules, and that the web service is actively running.\n- **Cryptographic Failures:** Ensure the host has a valid TLS certificate issued by a trusted Certificate Authority.",
+    "false_positive_analysis": "**False-Positive & Manual Verification Guidance:**\n- Findings identified by heuristic pattern matching (e.g. potential path traversal or generic SQL queries) should be manually cross-checked against internal data sanitization middleware before marking as resolved.\n- DAST alerts triggered by error messages should be confirmed in a staging environment to rule out custom application error handling false triggers.",
+    "provider_used": "sentinal-expert-engine"
+  },
+  "correlated_risks": [],
+  "findings": [
+    {
+      "id": null,
+      "source": "WEB",
+      "scanner": "DISCOVERY",
+      "all_scanners": [
+        "DISCOVERY"
+      ],
+      "title": "Target Host Unreachable",
+      "description": "Sentina Discovery Worker was unable to establish an HTTP connection with http://192.0.2.1:9999/test-unreachable: ",
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "category": "Network Availability",
+      "cwe": [
+        "CWE-693"
+      ],
+      "cves": [],
+      "owasp": [],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "http://192.0.2.1:9999/test-unreachable",
+      "parameter": null,
+      "evidence": "",
+      "remediation": "Verify target DNS, firewall ingress rules, and that the web service is actively running.",
+      "references": [],
+      "fingerprint": "f3d5cd49b360d6f826a75ed5ad25f70e",
+      "risk_score": 86.2,
+      "threat_scenario": "The vulnerability exposes implementation details, internal software versions, or unhardened endpoints that assist attackers in reconnaissance and multi-stage attack chaining.",
+      "potential_impact": {
+        "confidentiality": "LOW-MEDIUM \u2014 Leakage of architecture details and configuration parameters",
+        "integrity": "LOW \u2014 Limited direct modification",
+        "availability": "LOW \u2014 No availability impact",
+        "business_impact": "Increased attack surface visibility for targeted external threat actors.",
+        "attack_vector": "Exposed diagnostic endpoints or permissive application configuration."
+      },
+      "blast_radius": "Information Disclosure & Security Misconfiguration",
+      "risk_factors": {
+        "base_severity_score": 70.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.12,
+        "exploitability_factor": 1.0,
+        "blast_radius_factor": 1.0,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 86.2,
+        "cvss_equivalent": 8.6,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {}
+    },
+    {
+      "id": null,
+      "source": "SSL",
+      "scanner": "TESTSSL",
+      "all_scanners": [
+        "TESTSSL"
+      ],
+      "title": "TLS Connection / Certificate Validation Error: 192.0.2.1",
+      "description": "Failed to establish a valid TLS handshake with 192.0.2.1: timed out",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Cryptographic Failures",
+      "cwe": [
+        "CWE-295"
+      ],
+      "cves": [],
+      "owasp": [
+        "A02:2021-Cryptographic Failures"
+      ],
+      "file": null,
+      "line": null,
+      "code_snippet": null,
+      "endpoint": "/",
+      "parameter": null,
+      "evidence": "TLS handshake error: timed out",
+      "remediation": "Ensure the host has a valid TLS certificate issued by a trusted Certificate Authority.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/295.html"
+      ],
+      "fingerprint": "6b1c1aec840463a87e24192b27aed8e4",
+      "risk_score": 49.9,
+      "threat_scenario": "Missing transport or browser security controls allow adversaries on adjacent networks or untrusted origins to intercept cleartext communications, frame the application in Clickjacking attacks, or extract cookies.",
+      "potential_impact": {
+        "confidentiality": "MEDIUM \u2014 Potential plaintext traffic inspection, cookie leakage",
+        "integrity": "MEDIUM \u2014 Clickjacking UI deception, MIME-sniffing execution",
+        "availability": "LOW \u2014 No direct availability impact",
+        "business_impact": "Failure of PCI-DSS and security posture audits, increased susceptibility to social engineering.",
+        "attack_vector": "Absence of hardening headers (HSTS, CSP, X-Frame-Options) or weak TLS cipher negotiation."
+      },
+      "blast_radius": "Defense Degradation & Traffic Interception",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.12,
+        "exploitability_factor": 0.9,
+        "blast_radius_factor": 0.9,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 49.9,
+        "cvss_equivalent": 5.0,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {}
+    }
+  ]
+}

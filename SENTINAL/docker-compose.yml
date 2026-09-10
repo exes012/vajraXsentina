@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: sentinal-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./sentinal.db
+      - SECRET_KEY=sentinal-super-secure-production-key-change-me-32chars!
+      - AI_PROVIDER=expert
+      - SCAN_TIMEOUT_SECONDS=300
+    volumes:
+      - sentinal-data:/app/workspaces
+      - sentinal-reports:/app/reports
+    networks:
+      - sentinal-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: sentinal-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - sentinal-network
+
+volumes:
+  sentinal-data:
+  sentinal-reports:
+
+networks:
+  sentinal-network:
+    driver: bridge

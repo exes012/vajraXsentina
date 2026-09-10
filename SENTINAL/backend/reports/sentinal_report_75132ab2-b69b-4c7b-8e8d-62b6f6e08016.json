@@ -1,0 +1,202 @@
+{
+  "sentinal_version": "1.0.0",
+  "report_id": "75132ab2-b69b-4c7b-8e8d-62b6f6e08016",
+  "generated_at": "2026-09-04T08:08:45.475903+00:00",
+  "assessment": {
+    "id": "75132ab2-b69b-4c7b-8e8d-62b6f6e08016",
+    "project_name": "Repo Only Project Scope",
+    "assessment_type": "repo",
+    "scan_mode": "STANDARD",
+    "repository": "Source Code Archive",
+    "target": "None",
+    "authorization_status": "DEV_MODE",
+    "overall_risk_score": 79.9,
+    "dast_coverage_score": 100.0,
+    "coverage_status": "NOT_APPLICABLE",
+    "finding_confidence": "FULL",
+    "critical_count": 1,
+    "high_count": 0,
+    "medium_count": 1,
+    "low_count": 0,
+    "info_count": 0,
+    "connectivity_diagnostics": {},
+    "coverage_telemetry": {
+      "requests_attempted": 0,
+      "requests_successful": 0,
+      "requests_blocked": 0,
+      "status_distribution": {},
+      "count_2xx": 0,
+      "count_3xx": 0,
+      "count_4xx": 0,
+      "count_5xx": 0,
+      "count_401": 0,
+      "count_403": 0,
+      "count_429": 0,
+      "scanner_errors": [],
+      "crawlable_urls": 0,
+      "urls_scanned": 0,
+      "zap_alerts": 0,
+      "nuclei_matches": 0,
+      "wapiti_findings": 0,
+      "nikto_findings": 0,
+      "engine_breakdown": {
+        "SEMGREP": {
+          "status": "SUCCESS",
+          "duration_ms": 3,
+          "findings_count": 0,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "OSV-SCANNER": {
+          "status": "SUCCESS",
+          "duration_ms": 562,
+          "findings_count": 6,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        },
+        "GITLEAKS": {
+          "status": "SUCCESS",
+          "duration_ms": 5,
+          "findings_count": 1,
+          "requests_attempted": 0,
+          "requests_blocked": 0
+        }
+      }
+    }
+  },
+  "overall_risk_score": 79.9,
+  "summary": {
+    "critical": 1,
+    "high": 0,
+    "medium": 1,
+    "low": 0,
+    "info": 0,
+    "total_findings": 2,
+    "correlated_risks_count": 0
+  },
+  "ai_analysis": {
+    "executive_summary": "**Security Assessment Executive Summary**\n**Overall Posture:** CRITICAL POSTURE\nThe automated assessment of None identified immediate critical exposures requiring urgent remediation. A total of 2 findings were recorded, including 1 Critical and 0 High severity vulnerabilities.\n\n**Key Risk Highlights:**\n- Total Discovered Findings: 2 (Critical: 1, High: 0, Medium: 1, Low: 0)\n- Correlated Exploit Chains: 0\n- Primary Concern Areas: Version Control Token, Vulnerable Dependency\n\nLeadership is advised to authorize immediate sprint allocation for remediation of critical issues and enforce automated security gating in CI/CD pipelines.",
+    "technical_summary": "### Technical Risk Breakdown for None\nThe assessment executed multi-modal analysis across SAST, SCA, Secret Scanning, DAST, Web Exposure, and TLS configurations.\n\n**Top Significant Technical Findings:**\n- **[CRITICAL] Exposed Secret: GitHub Personal Access Token** in `app.py:1`: Hardcoded secret token or credential (GitHub Personal Access Token) found in source code repository....\n- **[MEDIUM] Vulnerable Dependency: lodash (4.17.15) - GHSA-29mw-wpgm-hmr9** in `package.json:None`: Vulnerability in lodash...",
+    "risk_prioritization": "**Vulnerability Prioritization Matrix:**\n1. **Tier 1 (Immediate / Blockers - Critical):** Address 1 Critical vulnerabilities and 0 correlated chains immediately. These represent verified remote execution, full database extraction, or leaked root cloud credentials.\n2. **Tier 2 (High Priority - Next Sprint):** Remediate 0 High-severity findings including unverified injection flaws, missing rate limiting, and vulnerable third-party dependencies.\n3. **Tier 3 (Medium/Low Defense-in-Depth):** Address missing security headers (CSP, HSTS), weak cipher configurations, and deprecated cookie attributes during standard release cycles.",
+    "remediation_playbook": "**Step-by-Step Remediation Actions:**\n- **Version Control Token:** Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.\n- **Vulnerable Dependency:** Upgrade lodash to a secure version. Upgrade to latest version.",
+    "false_positive_analysis": "**False-Positive & Manual Verification Guidance:**\n- Findings identified by heuristic pattern matching (e.g. potential path traversal or generic SQL queries) should be manually cross-checked against internal data sanitization middleware before marking as resolved.\n- DAST alerts triggered by error messages should be confirmed in a staging environment to rule out custom application error handling false triggers.",
+    "provider_used": "sentinal-expert-engine"
+  },
+  "correlated_risks": [],
+  "findings": [
+    {
+      "id": null,
+      "source": "SCA",
+      "scanner": "osv-scanner",
+      "all_scanners": [
+        "osv-scanner"
+      ],
+      "title": "Vulnerable Dependency: lodash (4.17.15) - GHSA-29mw-wpgm-hmr9",
+      "description": "Vulnerability in lodash",
+      "severity": "MEDIUM",
+      "confidence": "HIGH",
+      "category": "Vulnerable Dependency",
+      "cwe": [
+        "CWE-1395"
+      ],
+      "cves": [],
+      "owasp": [
+        "A06:2021-Vulnerable and Outdated Components"
+      ],
+      "file": "package.json",
+      "line": null,
+      "code_snippet": null,
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Package 'lodash' version '4.17.15' detected in package.json. Upgrade to latest version.",
+      "remediation": "Upgrade lodash to a secure version. Upgrade to latest version.",
+      "references": [],
+      "fingerprint": "15f697c099396cb43fe548ebf0176f2f",
+      "risk_score": 54.5,
+      "threat_scenario": "An outdated third-party dependency contains known, publicly documented CVEs with available exploit payloads, allowing automated scanners and threat actors to target known flaws in the software supply chain.",
+      "potential_impact": {
+        "confidentiality": "MEDIUM-HIGH \u2014 Depends on specific CVE impact profile",
+        "integrity": "MEDIUM-HIGH \u2014 Potential component tampering",
+        "availability": "MEDIUM \u2014 Denial of service or crash vulnerabilities",
+        "business_impact": "Software supply chain vulnerabilities, loss of SOC2/ISO-27001 compliance certification.",
+        "attack_vector": "Execution of public weaponized exploits against unpatched open-source libraries."
+      },
+      "blast_radius": "Third-Party Component Exploitation",
+      "risk_factors": {
+        "base_severity_score": 45.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.1,
+        "blast_radius_factor": 1.1,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 54.5,
+        "cvss_equivalent": 5.5,
+        "calculated_rating": "MEDIUM"
+      },
+      "raw_evidence": {
+        "id": "GHSA-29mw-wpgm-hmr9",
+        "modified": "2025-09-29T21:12:31.102523Z"
+      }
+    },
+    {
+      "id": null,
+      "source": "SECRETS",
+      "scanner": "gitleaks",
+      "all_scanners": [
+        "gitleaks"
+      ],
+      "title": "Exposed Secret: GitHub Personal Access Token",
+      "description": "Hardcoded secret token or credential (GitHub Personal Access Token) found in source code repository.",
+      "severity": "CRITICAL",
+      "confidence": "HIGH",
+      "category": "Version Control Token",
+      "cwe": [
+        "CWE-798",
+        "CWE-312"
+      ],
+      "cves": [],
+      "owasp": [
+        "A07:2021-Identification and Authentication Failures"
+      ],
+      "file": "app.py",
+      "line": 1,
+      "code_snippet": "1: API_TOKEN = 'ghp_****************************7890'\n2: import os\n3: os.system('ls')",
+      "endpoint": null,
+      "parameter": null,
+      "evidence": "Detected pattern for GitHub Personal Access Token matching 'ghp_****************************7890'",
+      "remediation": "Immediately revoke/rotate the leaked credential, remove it from git history using git-filter-repo or BFG, and store secrets in environment variables or a Secret Vault.",
+      "references": [
+        "https://cwe.mitre.org/data/definitions/798.html",
+        "https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/"
+      ],
+      "fingerprint": "56796f75150e0f3585523806f2bc55ea",
+      "risk_score": 100.0,
+      "threat_scenario": "Hardcoded credentials, API keys, or private cryptographic keys exposed in code or public responses allow adversaries to authenticate directly to third-party SaaS services, cloud accounts, or payment gateways.",
+      "potential_impact": {
+        "confidentiality": "HIGH \u2014 Unauthorized access to cloud APIs, databases, and third-party SaaS platforms",
+        "integrity": "HIGH \u2014 Direct API mutations, cloud asset provisioning",
+        "availability": "HIGH \u2014 Resource exhaustion, cloud account suspension",
+        "business_impact": "Cloud financial theft (e.g. crypto-mining abuse), service hijacking, and API data compromise.",
+        "attack_vector": "Hardcoded high-entropy tokens or keys committed in repositories or response bodies."
+      },
+      "blast_radius": "Cloud & Third-Party Service Credential Compromise",
+      "risk_factors": {
+        "base_severity_score": 90.0,
+        "confidence_multiplier": 1.0,
+        "exposure_multiplier": 1.0,
+        "exploitability_factor": 1.25,
+        "blast_radius_factor": 1.2,
+        "asset_criticality_factor": 1.1,
+        "correlation_bonus": 0.0,
+        "intermediate_risk_score": 100.0,
+        "cvss_equivalent": 10.0,
+        "calculated_rating": "CRITICAL"
+      },
+      "raw_evidence": {
+        "rule_id": "github-pat",
+        "masked_match": "ghp_****************************7890"
+      }
+    }
+  ]
+}
