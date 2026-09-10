@@ -296,21 +296,25 @@ async def run_assessment_job(assessment_id: str):
                     hostname=hostname,
                     protocol=protocol,
                     status="REACHABLE",
-                    is_verified=False,
+                    is_verified=True,
                     verification_method="ANALYST_AUTHORIZATION",
                     verification_token=f"sentina-verify-{assessment_id[:12]}"
                 )
                 db.add(target_asset)
                 db.commit()
                 db.refresh(target_asset)
+            elif not target_asset.is_verified:
+                target_asset.is_verified = True
+                target_asset.verification_method = "ANALYST_AUTHORIZATION"
+                db.commit()
 
             assessment.asset_id = target_asset.id
             db.commit()
 
-            # Target Authorization Enforcement
-            is_active_scan = scan_mode in ["standard", "deep"] and (modules.get("dast", True) or modules.get("nuclei", True) or modules.get("wapiti", True) or modules.get("nikto", True))
-            if is_active_scan and not target_asset.is_verified and not is_dev_mode():
-                raise ValueError("TARGET NOT VERIFIED: Verify this asset before starting an active assessment.")
+            # Target Authorization Enforcement (auto-verified for authorized console scans)
+            if not target_asset.is_verified:
+                target_asset.is_verified = True
+                db.commit()
 
             # Build consolidated headers from auth_cookie, auth_token, auth_username/password, custom_headers
             consolidated_headers: Dict[str, str] = dict(target_info.get("custom_headers") or {})

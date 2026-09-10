@@ -49,4 +49,7 @@ ehthumbs.db
 *.log
 workspaces/
 **/workspaces/
-
+reports/
+**/reports/
+uploads/
+**/uploads/
