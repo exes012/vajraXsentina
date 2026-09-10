@@ -195,6 +195,7 @@ app = FastAPI(
 # CORS middleware
 origins = [
     "https://vajraxsentina-1.onrender.com",
+    "https://vajraxsentina-i7r5.onrender.com",
     "https://vajraxsentina.onrender.com",
     "https://vajraaa.netlify.app",
     "http://localhost:3000",

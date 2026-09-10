@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: List[str] = [
         "https://vajraxsentina-1.onrender.com",
+        "https://vajraxsentina-i7r5.onrender.com",
         "https://vajraxsentina.onrender.com",
         "https://vajraaa.netlify.app",
         "http://localhost:5173",

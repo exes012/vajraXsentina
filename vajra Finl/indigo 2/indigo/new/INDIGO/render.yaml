@@ -48,5 +48,5 @@ services:
       - key: NODE_VERSION
         value: 20
       - key: NEXT_PUBLIC_API_URL
-        value: https://vajraxsentina.onrender.com
+        value: https://vajraxsentina-i7r5.onrender.com
     healthCheckPath: /

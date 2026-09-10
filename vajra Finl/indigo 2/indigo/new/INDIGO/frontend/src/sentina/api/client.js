@@ -1,7 +1,7 @@
 'use client'
-const RAW_API_URL = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_URL) ? process.env.NEXT_PUBLIC_API_URL : 'https://vajraxsentina.onrender.com';
+const RAW_API_URL = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_URL) ? process.env.NEXT_PUBLIC_API_URL : 'https://vajraxsentina-i7r5.onrender.com';
 const API_BASE = RAW_API_URL.replace(/\/+$/, '').replace(/\/api$/, '') + '/api';
-const BACKEND_FALLBACK = 'https://vajraxsentina.onrender.com/api';
+const BACKEND_FALLBACK = 'https://vajraxsentina-i7r5.onrender.com/api';
 
 export const apiClient = {
   getToken() {
