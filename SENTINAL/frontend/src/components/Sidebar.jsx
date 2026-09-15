@@ -1,4 +1,5 @@
-import React from 'react';
+'use client'
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   Target,
@@ -15,8 +16,51 @@ import {
   Settings,
   ChevronDown
 } from 'lucide-react';
+import { dashboardService } from '../services/dashboardService';
+import { calculateModuleScores, getScorePosture } from '../utils/securityScore';
 
 export function Sidebar({ currentTab, onTabChange, isCollapsed }) {
+  const [moduleScores, setModuleScores] = useState({
+    sast: { score: 100, findings: 0, posture: getScorePosture(100) },
+    dast: { score: 100, findings: 0, posture: getScorePosture(100) },
+    sca: { score: 100, findings: 0, posture: getScorePosture(100) },
+    secrets: { score: 100, findings: 0, posture: getScorePosture(100) },
+    threat_intel: { score: 100, findings: 0, posture: getScorePosture(100) },
+    ai_correlation: { score: 100, findings: 0, posture: getScorePosture(100) }
+  });
+  const [totalFindingsCount, setTotalFindingsCount] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadTelemetry() {
+      try {
+        const [findings, correlated] = await Promise.all([
+          dashboardService.getFindings({ all: true }).catch(() => []),
+          dashboardService.getCorrelatedRisks().catch(() => [])
+        ]);
+
+        if (isMounted) {
+          const findingsList = Array.isArray(findings) ? findings : [];
+          const corrList = Array.isArray(correlated) ? correlated : [];
+          const computed = calculateModuleScores(findingsList, corrList);
+          setModuleScores(computed);
+          setTotalFindingsCount(findingsList.length);
+        }
+      } catch (e) {
+        // Safe fallback
+      }
+    }
+
+    loadTelemetry();
+    const unsubscribe = dashboardService.subscribe(loadTelemetry);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
+
   const navSections = [
     {
       label: 'COMMAND',
@@ -24,7 +68,7 @@ export function Sidebar({ currentTab, onTabChange, isCollapsed }) {
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'assessments', label: 'Assessments', icon: Target },
         { id: 'assets', label: 'Assets', icon: Server },
-        { id: 'findings', label: 'Findings', icon: AlertTriangle }
+        { id: 'findings', label: 'Findings', icon: AlertTriangle, badge: totalFindingsCount > 0 ? totalFindingsCount : null }
       ]
     },
     {
@@ -48,7 +92,7 @@ export function Sidebar({ currentTab, onTabChange, isCollapsed }) {
   return (
     <aside
       style={{
-        width: isCollapsed ? '64px' : '228px',
+        width: isCollapsed ? '64px' : '236px',
         backgroundColor: '#040005',
         borderRight: '2.5px solid #360a25',
         display: 'flex',
@@ -58,19 +102,21 @@ export function Sidebar({ currentTab, onTabChange, isCollapsed }) {
         height: '100vh',
         zIndex: 50,
         userSelect: 'none',
-        boxShadow: '4px 0 24px rgba(0, 0, 0, 0.8)'
+        boxShadow: '4px 0 24px rgba(0, 0, 0, 0.8)',
+        transition: 'width 0.2s ease'
       }}
     >
       {/* Brand Header */}
       <div
         onClick={() => onTabChange('dashboard')}
         style={{
-          padding: isCollapsed ? '14px 0' : '14px 16px',
-          borderBottom: '2px solid #28081c',
+          height: '46px',
+          padding: isCollapsed ? '0' : '0 12px',
+          borderBottom: '2px solid #360a25',
           display: 'flex',
           alignItems: 'center',
           justifyContent: isCollapsed ? 'center' : 'flex-start',
-          gap: '12px',
+          gap: '10px',
           cursor: 'pointer',
           background: '#040005',
           flexShrink: 0
@@ -78,12 +124,12 @@ export function Sidebar({ currentTab, onTabChange, isCollapsed }) {
       >
         <div
           style={{
-            width: '34px',
-            height: '34px',
-            borderRadius: '8px',
+            width: '28px',
+            height: '28px',
+            borderRadius: '7px',
             overflow: 'hidden',
-            border: '1.8px solid #ff1744',
-            boxShadow: '0 0 14px rgba(255, 23, 68, 0.55)',
+            border: '1.5px solid #ff1744',
+            boxShadow: '0 0 10px rgba(255, 23, 68, 0.55)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -104,17 +150,17 @@ export function Sidebar({ currentTab, onTabChange, isCollapsed }) {
 
         {!isCollapsed && (
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: '14px', fontWeight: 900, letterSpacing: '1px', color: '#ffffff', lineHeight: 1.1 }}>
+            <div style={{ fontSize: '13px', fontWeight: 900, letterSpacing: '1px', color: '#ffffff', lineHeight: 1.1 }}>
               SENTINA
             </div>
-            <div style={{ fontSize: '8.5px', fontWeight: 800, color: '#ff1744', marginTop: '2px', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '7.5px', fontWeight: 800, color: '#ff1744', marginTop: '1px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
               SECURE • ANALYZE • PREDICT
             </div>
           </div>
         )}
       </div>
 
-      {/* Navigation Groups — Aligned in Single Vertical Grid */}
+      {/* Navigation Groups */}
       <nav
         style={{
           flex: 1,
@@ -147,20 +193,22 @@ export function Sidebar({ currentTab, onTabChange, isCollapsed }) {
               const Icon = item.icon;
               const isActive = currentTab === item.id;
               const iconAccent = item.color || (isActive ? '#ff1744' : '#71717a');
+              const engineMeta = moduleScores[item.id];
+              const hasScore = Boolean(engineMeta && typeof engineMeta.score === 'number');
 
               return (
                 <button
                   key={item.id}
                   onClick={() => onTabChange(item.id)}
-                  title={isCollapsed ? item.label : undefined}
+                  title={isCollapsed ? `${item.label} ${hasScore ? `(Score: ${engineMeta.score}/100 - ${engineMeta.findings} findings)` : ''}` : undefined}
                   style={{
                     width: '100%',
-                    height: '34px',
+                    minHeight: '34px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: isCollapsed ? 'center' : 'flex-start',
-                    gap: '10px',
-                    padding: isCollapsed ? '0' : '0 10px',
+                    justifyContent: isCollapsed ? 'center' : 'space-between',
+                    gap: '8px',
+                    padding: isCollapsed ? '0' : '0 8px',
                     borderRadius: '6px',
                     background: isActive
                       ? 'linear-gradient(90deg, rgba(255, 23, 68, 0.22) 0%, rgba(136, 8, 21, 0.08) 100%)'
@@ -205,39 +253,126 @@ export function Sidebar({ currentTab, onTabChange, isCollapsed }) {
                     />
                   )}
 
-                  {/* Icon with fixed width container for perfect left vertical alignment */}
-                  <div
-                    style={{
-                      width: '18px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}
-                  >
-                    <Icon
-                      size={15}
-                      color={isActive ? '#ff1744' : iconAccent}
-                      strokeWidth={isActive ? 2.5 : 2}
+                  {/* Icon & Label */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
+                    <div
                       style={{
-                        filter: isActive ? 'drop-shadow(0 0 6px #ff1744)' : 'none'
-                      }}
-                    />
-                  </div>
-
-                  {!isCollapsed && (
-                    <span
-                      style={{
-                        fontSize: '11.5px',
-                        fontWeight: isActive ? 800 : 600,
-                        letterSpacing: '0.3px',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
+                        width: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
                       }}
                     >
-                      {item.label}
-                    </span>
+                      <Icon
+                        size={15}
+                        color={isActive ? '#ff1744' : iconAccent}
+                        strokeWidth={isActive ? 2.5 : 2}
+                        style={{
+                          filter: isActive ? 'drop-shadow(0 0 6px #ff1744)' : 'none'
+                        }}
+                      />
+                    </div>
+
+                    {!isCollapsed && (
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: isActive ? 800 : 600,
+                          letterSpacing: '0.2px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {item.label}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Right Score & Findings Badge Integration */}
+                  {!isCollapsed && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                      {hasScore ? (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px'
+                          }}
+                        >
+                          {/* Findings Count (if any) */}
+                          {engineMeta.findings > 0 && (
+                            <span
+                              style={{
+                                fontSize: '8.5px',
+                                fontFamily: 'var(--font-mono)',
+                                fontWeight: 800,
+                                color: '#f87171',
+                                background: 'rgba(239, 68, 68, 0.15)',
+                                border: '1px solid rgba(239, 68, 68, 0.35)',
+                                padding: '1px 4px',
+                                borderRadius: '3px'
+                              }}
+                              title={`${engineMeta.findings} findings detected`}
+                            >
+                              {engineMeta.findings}
+                            </span>
+                          )}
+
+                          {/* Dynamic Security Score Badge */}
+                          <span
+                            style={{
+                              fontSize: '9.5px',
+                              fontFamily: 'var(--font-mono)',
+                              fontWeight: 900,
+                              color: engineMeta.posture.color,
+                              background: engineMeta.posture.badgeBg || 'rgba(0, 242, 254, 0.1)',
+                              border: `1px solid ${engineMeta.posture.color}50`,
+                              padding: '1px 5px',
+                              borderRadius: '4px',
+                              minWidth: '24px',
+                              textAlign: 'center',
+                              boxShadow: `0 0 6px ${engineMeta.posture.color}30`
+                            }}
+                            title={`Security Score: ${engineMeta.score}/100 (${engineMeta.posture.label})`}
+                          >
+                            {engineMeta.score}
+                          </span>
+                        </div>
+                      ) : item.badge ? (
+                        <span
+                          style={{
+                            fontSize: '9px',
+                            fontFamily: 'var(--font-mono)',
+                            fontWeight: 800,
+                            color: '#ff1744',
+                            background: 'rgba(255, 23, 68, 0.15)',
+                            border: '1px solid rgba(255, 23, 68, 0.35)',
+                            padding: '1px 5px',
+                            borderRadius: '4px'
+                          }}
+                        >
+                          {item.badge}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
+
+                  {/* Collapsed Status Dot */}
+                  {isCollapsed && hasScore && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '4px',
+                        right: '4px',
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        backgroundColor: engineMeta.posture.color,
+                        boxShadow: `0 0 6px ${engineMeta.posture.color}`
+                      }}
+                    />
                   )}
                 </button>
               );
