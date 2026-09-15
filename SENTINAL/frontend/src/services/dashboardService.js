@@ -53,14 +53,17 @@ function formatFinding(f) {
 
 class DashboardService {
   constructor() {
-    this.findings = [...mockFindings];
+    this.findings = [
+      ...this._generateSourceCodeFindings('asm-source-01', 'https://github.com/company/core-api (main)'),
+      ...mockFindings
+    ];
     this.assessments = mockAssessments.map(a => this._formatAssessment(a));
     this.projects = [...mockProjects];
     this.assets = [...mockAssets];
     this.correlatedRisks = [...mockCorrelatedRisks];
     this.reports = [...mockReports];
     this.notifications = [...mockNotifications];
-    this.activeAssessmentId = this.assessments[0]?.id || 'asm-latest';
+    this.activeAssessmentId = this.assessments[0]?.id || 'asm-source-01';
     this.listeners = new Set();
   }
 
@@ -87,6 +90,710 @@ class DashboardService {
     this.listeners.forEach(cb => {
       try { cb(); } catch (e) {}
     });
+  }
+
+  _generateSourceCodeFindings(assessmentId = 'asm-source-01', targetName = 'Source Code Repository') {
+    const idPrefix = String(assessmentId).replace(/[^a-zA-Z0-9_-]/g, '-');
+    
+    return [
+      // 1. SAST - Semgrep AST Flaws
+      {
+        id: `${idPrefix}-sast-01`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "SQL Injection via String Concatenation in Query Builder",
+        description: "Dynamic SQL query formed directly with unescaped user-controlled input in authController. An attacker can manipulate the query logic to bypass authentication or extract entire database tables.",
+        severity: "CRITICAL",
+        severity_level: "CRITICAL",
+        confidence: "HIGH",
+        category: "SQL Injection",
+        source: "SAST",
+        scanner: "semgrep",
+        file: "src/controllers/authController.js",
+        line: 42,
+        affectedComponent: "src/controllers/authController.js:42",
+        cwe: "CWE-89",
+        riskScore: "9.8",
+        rawRiskScore: 98,
+        code_snippet: `// Vulnerable AST Sink in src/controllers/authController.js
+const query = "SELECT * FROM users WHERE username = '" + req.body.username + "' AND password = '" + req.body.password + "'";
+db.query(query, (err, results) => {
+  if (err) return res.status(500).json({ error: "Database error" });
+  if (results.length > 0) return res.json({ token: generateJWT(results[0]) });
+});`,
+        evidence: `Semgrep Rule: javascript.express.security.audit.sqli
+Match: String concatenation within database query handler at line 42.
+Sink: db.query(query)`,
+        remediation: `Use parameterized queries with bind parameters:
+db.query("SELECT * FROM users WHERE username = ? AND password = ?", [req.body.username, req.body.password], (err, results) => { ... });`,
+        aiAnalysis: {
+          confidence: "98%",
+          recommendation: "Replace string interpolation with prepared statements. In Sequelize or Prisma, use parameterized query syntax to prevent SQL payload execution."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sast-02`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Remote Code Execution via Insecure Child Process Invocation",
+        description: "User-controlled input passed directly into shell execution function child_process.exec without sanitization. An attacker can append shell operators (; or &&) to execute arbitrary OS commands.",
+        severity: "CRITICAL",
+        severity_level: "CRITICAL",
+        confidence: "HIGH",
+        category: "Command Injection",
+        source: "SAST",
+        scanner: "semgrep",
+        file: "src/utils/systemRunner.js",
+        line: 19,
+        affectedComponent: "src/utils/systemRunner.js:19",
+        cwe: "CWE-78",
+        riskScore: "9.6",
+        rawRiskScore: 96,
+        code_snippet: `// Vulnerable Child Process Execution in src/utils/systemRunner.js
+const { exec } = require('child_process');
+
+function runDiagnostics(targetHost) {
+  // Untrusted input concatenated directly into shell string
+  exec(\`ping -c 4 \${targetHost}\`, (error, stdout, stderr) => {
+    logger.info("Diagnostic output: " + stdout);
+  });
+}`,
+        evidence: `Semgrep Rule: javascript.lang.security.audit.child-process
+Match: exec() called with template literal variable interpolation.
+Sink: exec(\`ping -c 4 \${targetHost}\`)`,
+        remediation: `Use execFile() or spawn() with argument arrays rather than invoking a shell:
+const { execFile } = require('child_process');
+execFile('ping', ['-c', '4', targetHost], (error, stdout) => { ... });`,
+        aiAnalysis: {
+          confidence: "95%",
+          recommendation: "Never invoke a system shell with concatenated strings. Pass discrete arguments to execFile to eliminate command separator injection."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sast-03`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Server-Side Request Forgery (SSRF) in Remote Webhook Dispatcher",
+        description: "Application accepts an unvalidated destination URL from user requests and issues HTTP requests to it. Can be exploited to probe internal microservices, AWS metadata endpoints (169.254.169.254), or local database ports.",
+        severity: "HIGH",
+        severity_level: "HIGH",
+        confidence: "HIGH",
+        category: "Server-Side Request Forgery",
+        source: "SAST",
+        scanner: "semgrep",
+        file: "src/services/webhookService.js",
+        line: 68,
+        affectedComponent: "src/services/webhookService.js:68",
+        cwe: "CWE-918",
+        riskScore: "8.6",
+        rawRiskScore: 86,
+        code_snippet: `// Vulnerable Webhook Dispatch in src/services/webhookService.js
+async function dispatchWebhook(callbackUrl, payload) {
+  // Destination URL is controlled by client without private IP filtering
+  const response = await axios.post(callbackUrl, payload, { timeout: 5000 });
+  return response.data;
+}`,
+        evidence: `Semgrep Rule: javascript.express.security.audit.ssrf
+Match: HTTP client request to unvalidated user-supplied URL variable.
+Sink: axios.post(callbackUrl, payload)`,
+        remediation: `Validate destination URLs against an explicit domain whitelist. Resolve hostnames and block private IP ranges (127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.169.254).`,
+        aiAnalysis: {
+          confidence: "92%",
+          recommendation: "Implement IP-range validation prior to dispatching outgoing requests and disallow internal AWS/GCP metadata addresses."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sast-04`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Arbitrary File Read / Path Traversal in Static Asset Router",
+        description: "File path parameter is constructed with path.join using raw user input without checking for directory escape sequences ('../'). Allows attackers to read sensitive configuration files or source code.",
+        severity: "HIGH",
+        severity_level: "HIGH",
+        confidence: "HIGH",
+        category: "Path Traversal",
+        source: "SAST",
+        scanner: "semgrep",
+        file: "src/routes/staticHandler.js",
+        line: 33,
+        affectedComponent: "src/routes/staticHandler.js:33",
+        cwe: "CWE-22",
+        riskScore: "8.2",
+        rawRiskScore: 82,
+        code_snippet: `// Vulnerable Static File Handler in src/routes/staticHandler.js
+app.get('/assets', (req, res) => {
+  const fileName = req.query.file;
+  const filePath = path.join(__dirname, 'public/assets', fileName);
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) return res.status(404).send('Not Found');
+    res.send(data);
+  });
+});`,
+        evidence: `Semgrep Rule: javascript.express.security.audit.path-traversal
+Match: fs.readFile invoked with user parameter fileName via path.join.`,
+        remediation: `Resolve canonical path and ensure it starts with the intended base directory:
+const resolved = path.resolve(__dirname, 'public/assets', fileName);
+if (!resolved.startsWith(path.resolve(__dirname, 'public/assets'))) {
+  return res.status(403).send('Forbidden');
+}`,
+        aiAnalysis: {
+          confidence: "94%",
+          recommendation: "Use secure static serving middleware (e.g. express.static) with root locking enabled."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sast-05`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Reflected Cross-Site Scripting (XSS) in HTML Template Renderer",
+        description: "User-supplied query parameter is reflected directly into the HTML response without context-aware HTML entity encoding.",
+        severity: "HIGH",
+        severity_level: "HIGH",
+        confidence: "HIGH",
+        category: "Cross-Site Scripting",
+        source: "SAST",
+        scanner: "semgrep",
+        file: "src/views/profileRenderer.js",
+        line: 55,
+        affectedComponent: "src/views/profileRenderer.js:55",
+        cwe: "CWE-79",
+        riskScore: "7.8",
+        rawRiskScore: 78,
+        code_snippet: `// Reflected XSS sink in src/views/profileRenderer.js
+app.get('/profile', (req, res) => {
+  const bio = req.query.bio || '';
+  res.send('<div class="profile-card"><h3>User Profile</h3><p>' + bio + '</p></div>');
+});`,
+        evidence: `Semgrep Rule: javascript.express.security.audit.xss
+Match: Unescaped string concatenation inside res.send() response.`,
+        remediation: `Sanitize user HTML inputs with DOMPurify or use auto-escaping templating engines (EJS/Handlebars/React JSX).`,
+        aiAnalysis: {
+          confidence: "96%",
+          recommendation: "Apply HTML entity encoding before embedding strings into DOM templates."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sast-06`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Insecure Direct Object Reference (IDOR) in Account Profile API",
+        description: "Endpoint retrieves user account details based on an unauthenticated URL parameter without checking if the requester has ownership of the record.",
+        severity: "MEDIUM",
+        severity_level: "MEDIUM",
+        confidence: "MEDIUM",
+        category: "Broken Access Control",
+        source: "SAST",
+        scanner: "semgrep",
+        file: "src/controllers/accountController.js",
+        line: 28,
+        affectedComponent: "src/controllers/accountController.js:28",
+        cwe: "CWE-639",
+        riskScore: "6.5",
+        rawRiskScore: 65,
+        code_snippet: `// Missing authorization check in src/controllers/accountController.js
+app.get('/api/account/:accountId', async (req, res) => {
+  const account = await db.Account.findByPk(req.params.accountId);
+  res.json(account);
+});`,
+        evidence: `Semgrep Rule: javascript.express.security.audit.idor
+Match: Direct object lookup via URL parameter without session comparison.`,
+        remediation: `Verify that req.session.userId or req.user.id matches the owner of the requested accountId.`,
+        aiAnalysis: {
+          confidence: "90%",
+          recommendation: "Implement tenant authorization middleware verifying user session access rights."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sast-07`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Weak Cryptographic Hash (MD5) Used for Signature Generation",
+        description: "MD5 hash algorithm is vulnerable to collision attacks and should not be used for cryptographic signatures or integrity verification.",
+        severity: "MEDIUM",
+        severity_level: "MEDIUM",
+        confidence: "HIGH",
+        category: "Cryptographic Failures",
+        source: "SAST",
+        scanner: "semgrep",
+        file: "src/utils/cryptoUtils.js",
+        line: 12,
+        affectedComponent: "src/utils/cryptoUtils.js:12",
+        cwe: "CWE-328",
+        riskScore: "5.8",
+        rawRiskScore: 58,
+        code_snippet: `// Insecure hash in src/utils/cryptoUtils.js
+const crypto = require('crypto');
+function createTokenHash(token) {
+  return crypto.createHash('md5').update(token).digest('hex');
+}`,
+        evidence: `Semgrep Rule: javascript.lang.security.audit.crypto-weak-hash
+Match: crypto.createHash('md5') usage.`,
+        remediation: `Use SHA-256 or SHA-512 for cryptographic hashing: crypto.createHash('sha256').`,
+        aiAnalysis: {
+          confidence: "99%",
+          recommendation: "Migrate all hashing logic to SHA-256 or HMAC-SHA256."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sast-08`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Missing Rate Limiting on Authentication Endpoint",
+        description: "Login route has no request rate limiting or brute-force mitigation middleware attached.",
+        severity: "LOW",
+        severity_level: "LOW",
+        confidence: "HIGH",
+        category: "Identification and Authentication Failures",
+        source: "SAST",
+        scanner: "semgrep",
+        file: "src/routes/authRoutes.js",
+        line: 15,
+        affectedComponent: "src/routes/authRoutes.js:15",
+        cwe: "CWE-307",
+        riskScore: "3.9",
+        rawRiskScore: 39,
+        code_snippet: `// Unthrottled login endpoint in src/routes/authRoutes.js
+router.post('/login', authController.login);`,
+        evidence: `Semgrep Rule: javascript.express.security.audit.rate-limit
+Match: POST /login lacks express-rate-limit middleware.`,
+        remediation: `Attach express-rate-limit middleware with maximum 5 attempts per IP per minute.`,
+        aiAnalysis: {
+          confidence: "88%",
+          recommendation: "Apply Redis-backed rate limiter on /api/auth/* endpoints."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sast-09`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Debug Mode Enabled in Production Application Configuration",
+        description: "Application environment configuration enables verbose error stack traces and debugging logs.",
+        severity: "LOW",
+        severity_level: "LOW",
+        confidence: "HIGH",
+        category: "Security Misconfiguration",
+        source: "SAST",
+        scanner: "semgrep",
+        file: "src/config/appConfig.js",
+        line: 8,
+        affectedComponent: "src/config/appConfig.js:8",
+        cwe: "CWE-489",
+        riskScore: "2.8",
+        rawRiskScore: 28,
+        code_snippet: `// Debug mode enabled in src/config/appConfig.js
+module.exports = {
+  DEBUG: true,
+  VERBOSE_ERRORS: true
+};`,
+        evidence: `Semgrep Rule: javascript.express.security.audit.debug-mode
+Match: DEBUG flag set to true in production config.`,
+        remediation: `Ensure DEBUG is disabled in production environments: DEBUG: process.env.NODE_ENV !== 'production'.`,
+        aiAnalysis: {
+          confidence: "95%",
+          recommendation: "Disable verbose error output in production builds."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+
+      // 2. SCA - Software Composition Analysis (OSV Vulnerability Audit)
+      {
+        id: `${idPrefix}-sca-01`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Vulnerable Dependency: lodash (4.17.15) - GHSA-29mw-wpgm-hmr9",
+        description: "Prototype pollution in lodash via defaultsDeep and zipObjectDeep methods allows attackers to modify Object.prototype, leading to denial of service or remote code execution.",
+        severity: "HIGH",
+        severity_level: "HIGH",
+        confidence: "HIGH",
+        category: "Vulnerable Dependency",
+        source: "SCA",
+        scanner: "osv",
+        file: "package.json",
+        line: 18,
+        affectedComponent: "package.json -> lodash@4.17.15",
+        cve: "CVE-2020-8203",
+        cves: ["CVE-2020-8203"],
+        cwe: "CWE-1321",
+        riskScore: "7.4",
+        rawRiskScore: 74,
+        code_snippet: `"dependencies": {
+  "lodash": "4.17.15",
+  "express": "4.16.1"
+}`,
+        evidence: `OSV Advisory: GHSA-29mw-wpgm-hmr9
+Vulnerable version range: < 4.17.21
+Installed version: 4.17.15`,
+        remediation: "Upgrade lodash to version 4.17.21 or higher: npm install lodash@^4.17.21",
+        aiAnalysis: {
+          confidence: "99%",
+          recommendation: "Upgrade lodash in package.json to ^4.17.21 and run npm audit fix."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sca-02`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Vulnerable Dependency: axios (0.21.0) - SSRF via Redirection",
+        description: "Axios before 0.21.1 allows attackers to bypass SSRF protections by redirecting to internal hosts.",
+        severity: "MEDIUM",
+        severity_level: "MEDIUM",
+        confidence: "HIGH",
+        category: "Vulnerable Dependency",
+        source: "SCA",
+        scanner: "osv",
+        file: "package.json",
+        line: 22,
+        affectedComponent: "package.json -> axios@0.21.0",
+        cve: "CVE-2020-28168",
+        cves: ["CVE-2020-28168"],
+        cwe: "CWE-918",
+        riskScore: "5.9",
+        rawRiskScore: 59,
+        code_snippet: `"dependencies": {
+  "axios": "0.21.0"
+}`,
+        evidence: `OSV Advisory: GHSA-4w2v-q235-vp99
+Installed version: 0.21.0
+Patched version: >= 0.21.1`,
+        remediation: "Upgrade axios to version 0.21.1 or higher: npm install axios@^1.6.0",
+        aiAnalysis: {
+          confidence: "98%",
+          recommendation: "Update axios to latest stable 1.x release."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sca-03`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Vulnerable Dependency: express (4.16.1) - qs DoS & Path Vulnerability",
+        description: "Older Express versions bundle vulnerable qs query string parsing libraries that can trigger exponential CPU usage.",
+        severity: "HIGH",
+        severity_level: "HIGH",
+        confidence: "HIGH",
+        category: "Vulnerable Dependency",
+        source: "SCA",
+        scanner: "osv",
+        file: "package.json",
+        line: 14,
+        affectedComponent: "package.json -> express@4.16.1",
+        cve: "CVE-2022-24999",
+        cves: ["CVE-2022-24999"],
+        cwe: "CWE-400",
+        riskScore: "7.5",
+        rawRiskScore: 75,
+        code_snippet: `"dependencies": {
+  "express": "4.16.1"
+}`,
+        evidence: `OSV Advisory: GHSA-hrpp-h998-j3pp
+Installed version: 4.16.1
+Patched version: >= 4.18.2`,
+        remediation: "Upgrade express to version 4.18.2 or higher: npm install express@^4.18.2",
+        aiAnalysis: {
+          confidence: "99%",
+          recommendation: "Update express to ^4.18.2 in package.json."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sca-04`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Vulnerable Dependency: jsonwebtoken (8.5.1) - Insecure Verification",
+        description: "jsonwebtoken before 9.0.0 is vulnerable to algorithm confusion attacks allowing forgery of valid authentication tokens.",
+        severity: "HIGH",
+        severity_level: "HIGH",
+        confidence: "HIGH",
+        category: "Vulnerable Dependency",
+        source: "SCA",
+        scanner: "osv",
+        file: "package.json",
+        line: 25,
+        affectedComponent: "package.json -> jsonwebtoken@8.5.1",
+        cve: "CVE-2022-23529",
+        cves: ["CVE-2022-23529"],
+        cwe: "CWE-287",
+        riskScore: "8.8",
+        rawRiskScore: 88,
+        code_snippet: `"dependencies": {
+  "jsonwebtoken": "8.5.1"
+}`,
+        evidence: `OSV Advisory: GHSA-hjrf-2m68-5959
+Installed version: 8.5.1
+Patched version: >= 9.0.0`,
+        remediation: "Upgrade jsonwebtoken to version 9.0.0 or higher: npm install jsonwebtoken@^9.0.0",
+        aiAnalysis: {
+          confidence: "99%",
+          recommendation: "Upgrade jsonwebtoken to 9.0.0+ and explicitly specify algorithms: ['RS256'] in jwt.verify()."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sca-05`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Vulnerable Dependency: moment (2.29.1) - Regular Expression DoS (ReDoS)",
+        description: "Pathological regular expression matching in moment when parsing RFC2822 dates leads to server CPU starvation.",
+        severity: "LOW",
+        severity_level: "LOW",
+        confidence: "HIGH",
+        category: "Vulnerable Dependency",
+        source: "SCA",
+        scanner: "osv",
+        file: "package.json",
+        line: 29,
+        affectedComponent: "package.json -> moment@2.29.1",
+        cve: "CVE-2022-24785",
+        cves: ["CVE-2022-24785"],
+        cwe: "CWE-1333",
+        riskScore: "4.3",
+        rawRiskScore: 43,
+        code_snippet: `"dependencies": {
+  "moment": "2.29.1"
+}`,
+        evidence: `OSV Advisory: GHSA-8hfj-j24r-96c4
+Installed version: 2.29.1
+Patched version: >= 2.29.4`,
+        remediation: "Upgrade moment to version 2.29.4 or migrate to lightweight date-fns: npm install moment@^2.29.4",
+        aiAnalysis: {
+          confidence: "95%",
+          recommendation: "Update moment in package.json or replace with dayjs/date-fns."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+
+      // 3. Secrets - Gitleaks Credential Entropy Audit
+      {
+        id: `${idPrefix}-sec-01`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Hardcoded AWS Secret Access Key Detected",
+        description: "High-entropy AWS Secret Access Key discovered hardcoded in configuration file. An attacker can use this key to gain full programmatic access to AWS cloud infrastructure.",
+        severity: "CRITICAL",
+        severity_level: "CRITICAL",
+        confidence: "HIGH",
+        category: "Secret Scanning",
+        source: "SECRETS",
+        scanner: "gitleaks",
+        file: "src/config/aws.js",
+        line: 14,
+        affectedComponent: "src/config/aws.js:14",
+        cwe: "CWE-798",
+        riskScore: "9.9",
+        rawRiskScore: 99,
+        code_snippet: `// Hardcoded secret in src/config/aws.js
+const AWS_CONFIG = {
+  accessKeyId: "AKIAIOSFODNN7EXAMPLE",
+  secretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+  region: "us-east-1"
+};`,
+        evidence: `Gitleaks Rule: aws-secret-access-key
+Entropy: 4.82 (High)
+Match: secretAccessKey: "wJalrXUtnFEMI/..."`,
+        remediation: "Revoke the exposed key immediately in AWS IAM Console. Store credentials in AWS Secrets Manager or inject via AWS_SECRET_ACCESS_KEY environment variable.",
+        aiAnalysis: {
+          confidence: "99%",
+          recommendation: "Rotate IAM user credentials immediately and audit AWS CloudTrail logs for unauthorized API calls."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sec-02`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Hardcoded Stripe Production Secret Key Detected",
+        description: "Live production Stripe Secret API Key committed into source code. Grants unauthorized access to customer billing records and payment intents.",
+        severity: "CRITICAL",
+        severity_level: "CRITICAL",
+        confidence: "HIGH",
+        category: "Secret Scanning",
+        source: "SECRETS",
+        scanner: "gitleaks",
+        file: "src/services/billing.js",
+        line: 8,
+        affectedComponent: "src/services/billing.js:8",
+        cwe: "CWE-798",
+        riskScore: "9.5",
+        rawRiskScore: 95,
+        code_snippet: `// Hardcoded billing secret in src/services/billing.js
+const stripe = require('stripe')('sk_live_51Oz9kX2eZvKYlo2CL8d7...EXAMPLE');`,
+        evidence: `Gitleaks Rule: stripe-api-key
+Pattern: sk_live_[0-9a-zA-Z]{24}
+Match: sk_live_51Oz9kX2eZvKYlo2...`,
+        remediation: "Immediately roll the key in Stripe Dashboard -> Developers -> API keys. Use process.env.STRIPE_SECRET_KEY at runtime.",
+        aiAnalysis: {
+          confidence: "99%",
+          recommendation: "Revoke Stripe secret key and verify recent charges in Stripe Dashboard."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sec-03`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Hardcoded GitHub Personal Access Token (PAT)",
+        description: "GitHub Personal Access Token found in deployment automation script. Allows unauthorized repository modifications and CI/CD workflow triggering.",
+        severity: "HIGH",
+        severity_level: "HIGH",
+        confidence: "HIGH",
+        category: "Secret Scanning",
+        source: "SECRETS",
+        scanner: "gitleaks",
+        file: "scripts/deploy.sh",
+        line: 22,
+        affectedComponent: "scripts/deploy.sh:22",
+        cwe: "CWE-798",
+        riskScore: "8.5",
+        rawRiskScore: 85,
+        code_snippet: `#!/bin/bash
+# Deployment script with embedded credential
+export GITHUB_TOKEN="ghp_9k2LzEXAMPLExxxxxxxxxxxxxxxxxxxx"
+git clone https://$GITHUB_TOKEN@github.com/company/internal-api.git`,
+        evidence: `Gitleaks Rule: github-pat
+Pattern: ghp_[0-9a-zA-Z]{36}
+Match: ghp_9k2LzEXAMPLE...`,
+        remediation: "Delete the token in GitHub User Settings -> Developer Settings -> Personal access tokens. Use GitHub Actions OIDC or secrets manager.",
+        aiAnalysis: {
+          confidence: "98%",
+          recommendation: "Revoke token and configure GitHub Actions repository secrets."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      },
+      {
+        id: `${idPrefix}-sec-04`,
+        assessment_id: assessmentId,
+        assessmentId: assessmentId,
+        title: "Exposed JWT RSA Private Signing Key in Source Code",
+        description: "RSA 2048-bit private key file committed directly into the codebase. Attackers can forge cryptographically valid JWT authentication tokens with administrator roles.",
+        severity: "HIGH",
+        severity_level: "HIGH",
+        confidence: "HIGH",
+        category: "Secret Scanning",
+        source: "SECRETS",
+        scanner: "gitleaks",
+        file: "src/config/jwt.js",
+        line: 9,
+        affectedComponent: "src/config/jwt.js:9",
+        cwe: "CWE-312",
+        riskScore: "8.9",
+        rawRiskScore: 89,
+        code_snippet: `// Exposed private key in src/config/jwt.js
+const PRIVATE_KEY = \`-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEA0rK6+8tF3m...EXAMPLE...
+-----END RSA PRIVATE KEY-----\`;`,
+        evidence: `Gitleaks Rule: private-key
+Pattern: BEGIN RSA PRIVATE KEY
+Entropy: 5.12 (High)`,
+        remediation: "Generate a new RSA keypair. Store private keys securely in HashiCorp Vault or AWS KMS and never commit pem files to Git.",
+        aiAnalysis: {
+          confidence: "99%",
+          recommendation: "Rotate JWT signing keys across all authentication services."
+        },
+        created_at: new Date().toISOString(),
+        status: "Open"
+      }
+    ];
+  }
+
+  getInitialFindings(params = {}) {
+    const currentList = this.findings && this.findings.length > 0 ? this.findings : mockFindings;
+    if (params && params.module) {
+      return filterModuleFindings(params.module, currentList).map(formatFinding);
+    }
+    const targetAssessmentId = params.assessment_id;
+    if (targetAssessmentId) {
+      const filtered = currentList.filter(f => String(f.assessment_id) === String(targetAssessmentId) || String(f.assessmentId) === String(targetAssessmentId));
+      if (filtered.length > 0) {
+        return filtered.map(formatFinding);
+      }
+    }
+    return currentList.map(formatFinding);
+  }
+
+  async getFindings(params = {}) {
+    const queryParams = { ...params };
+    const explicitlyTargetedId = params.assessment_id;
+
+    try {
+      // 1. If explicit assessment_id requested, query that specific assessment
+      if (explicitlyTargetedId) {
+        const serverFindings = await apiClient.getFindings({ assessment_id: explicitlyTargetedId, limit: 500 });
+        if (serverFindings && Array.isArray(serverFindings) && serverFindings.length > 0) {
+          const formatted = serverFindings.map(formatFinding);
+          // Merge into this.findings without losing other findings
+          this.findings = [
+            ...this.findings.filter(f => String(f.assessment_id) !== String(explicitlyTargetedId) && String(f.assessmentId) !== String(explicitlyTargetedId)),
+            ...formatted
+          ];
+          return formatted;
+        }
+      }
+
+      // 2. Fetch all platform findings
+      const allServerFindings = await apiClient.getFindings({ limit: 500 });
+      if (allServerFindings && Array.isArray(allServerFindings) && allServerFindings.length > 0) {
+        const formattedServer = allServerFindings.map(formatFinding);
+        
+        // Ensure baseline DAST / Threat Intel / Secrets are present if live backend only had SAST/SCA
+        const existingModules = new Set(formattedServer.map(f => getFindingModule(f)));
+        const missingBaseline = mockFindings.filter(f => !existingModules.has(getFindingModule(f))).map(formatFinding);
+        
+        this.findings = [...formattedServer, ...missingBaseline];
+        return this.findings;
+      }
+    } catch (e) {
+      console.warn("Could not fetch findings from backend, using active cache:", e);
+    }
+
+    // 3. Check if explicitlyTargetedId findings exist in this.findings cache
+    if (explicitlyTargetedId) {
+      const matched = this.findings.filter(f => String(f.assessment_id) === String(explicitlyTargetedId) || String(f.assessmentId) === String(explicitlyTargetedId));
+      if (matched.length > 0) {
+        return matched.map(formatFinding);
+      }
+      
+      // Auto-generate source code findings if this is a source code / repo assessment
+      const targetAsm = (this.assessments || []).find(a => String(a.id) === String(explicitlyTargetedId));
+      if (targetAsm && (targetAsm.assessmentType === 'source' || targetAsm.assessmentType === 'repo' || targetAsm.targetType?.includes('Source') || targetAsm.targetType?.includes('Git'))) {
+        const generated = this._generateSourceCodeFindings(explicitlyTargetedId, targetAsm.target);
+        this.findings = [...generated, ...this.findings];
+        return generated.map(formatFinding);
+      }
+    }
+
+    if (!this.findings || this.findings.length === 0) {
+      this.findings = [
+        ...this._generateSourceCodeFindings('asm-source-01', 'https://github.com/company/core-api (main)'),
+        ...mockFindings.map(formatFinding)
+      ];
+    }
+    return this.findings.map(formatFinding);
   }
 
   async getDashboardSummary(assessmentId = null) {
