@@ -10255,6 +10255,53 @@ export const mockProjects = [
 
 export const mockAssessments = [
   {
+    id: "asm-source-01",
+    name: "Core Repository SAST & Supply Chain Audit",
+    assessment_type: "source",
+    target: "https://github.com/company/core-api (main)",
+    repository_info: { provider: "github", url: "https://github.com/company/core-api", branch: "main" },
+    status: "COMPLETED",
+    created_at: new Date(Date.now() - 1800000).toISOString(),
+    completed_at: new Date(Date.now() - 1700000).toISOString(),
+    overallScore: 74,
+    securityScore: 74,
+    overall_risk_score: 26,
+    critical_count: 2,
+    high_count: 4,
+    medium_count: 7,
+    low_count: 5,
+    info_count: 0,
+    total_findings: 18,
+    dast_coverage_score: 0,
+    coverage_status: "NOT_APPLICABLE",
+    counts: { critical: 2, high: 4, medium: 7, low: 5, info: 0, total: 18 },
+    logs: [
+      { timestamp: new Date(Date.now() - 1800000).toISOString(), stage: "INITIALIZATION", message: "Source code assessment pipeline initialized for repository: https://github.com/company/core-api" },
+      { timestamp: new Date(Date.now() - 1790000).toISOString(), stage: "EXTRACT", message: "Cloned repository branch 'main'. Unpacked 142 source files across 8 modules." },
+      { timestamp: new Date(Date.now() - 1760000).toISOString(), stage: "SAST", message: "Semgrep AST engine evaluated 142 syntax rules: detected SQL injection, RCE, and SSRF sinks." },
+      { timestamp: new Date(Date.now() - 1740000).toISOString(), stage: "SCA", message: "OSV dependency auditor scanned 48 packages in package.json & requirements.txt: matched 5 CVEs." },
+      { timestamp: new Date(Date.now() - 1720000).toISOString(), stage: "SECRETS", message: "Gitleaks entropy scanner inspected 18,420 lines of code: identified 4 hardcoded secret tokens." },
+      { timestamp: new Date(Date.now() - 1710000).toISOString(), stage: "NORMALIZATION", message: "Deduplicated AST sinks and correlated supply-chain exploit chains." },
+      { timestamp: new Date(Date.now() - 1700000).toISOString(), stage: "COMPLETED", message: "Source code assessment certified. Consolidated 18 findings with security score 74/100." }
+    ],
+    scanJobs: [
+      { id: "job-src-1", module_name: "SAST (Semgrep AST Analyzer)", status: "COMPLETED", duration_ms: 14200, raw_results_count: 9 },
+      { id: "job-src-2", module_name: "SCA (OSV Package Auditor)", status: "COMPLETED", duration_ms: 8600, raw_results_count: 5 },
+      { id: "job-src-3", module_name: "Secrets (Gitleaks Token Entropy)", status: "COMPLETED", duration_ms: 4800, raw_results_count: 4 }
+    ],
+    modules: {
+      discovery: false,
+      dast: false,
+      nuclei: false,
+      wapiti: false,
+      headers: false,
+      ssl: false,
+      sast: true,
+      sca: true,
+      secrets: true
+    }
+  },
+  {
     id: "asm-latest",
     name: "Production Comprehensive Scan Run #42",
     assessment_type: "combined",
