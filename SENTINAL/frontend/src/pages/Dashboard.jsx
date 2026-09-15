@@ -34,7 +34,7 @@ export function Dashboard({
   const [activeFinding, setActiveFinding] = useState(null);
   const [activeReport, setActiveReport] = useState(null);
   const [headerSearch, setHeaderSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
