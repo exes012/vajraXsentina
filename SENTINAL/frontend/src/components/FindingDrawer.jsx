@@ -325,29 +325,38 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
                     <div style={{ fontSize: '12.5px', color: '#e2e8f0', marginTop: '6px', lineHeight: 1.5 }}>
                       {potentialImpact.confidentiality || 'Unauthorized data extraction or information leakage.'}
                     </div>
-                  </div>
+                  {potentialImpact.mitre_tactic && (
+                    <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(168, 85, 247, 0.2)', color: '#d8b4fe', fontWeight: 700, border: '1px solid rgba(168, 85, 247, 0.4)' }}>
+                      MITRE: {potentialImpact.mitre_tactic}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-                  {/* Integrity */}
+              {/* Exploit Chain & Impact Flow */}
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Target size={14} color="#f87171" /> Threat & Exploit Progression Vector
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
                   <div style={{ padding: '14px', borderRadius: '8px', background: '#0a1024', border: '1px solid #162244' }}>
                     <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Database size={12} color="#f59e0b" /> Integrity Impact
+                      <Lock size={12} color="#00f2fe" /> Initial Foothold / Access
                     </div>
                     <div style={{ fontSize: '12.5px', color: '#e2e8f0', marginTop: '6px', lineHeight: 1.5 }}>
-                      {potentialImpact.integrity || 'Unauthorized data modification, state manipulation, or record alteration.'}
+                      {potentialImpact.initial_access || 'Attacker sends crafted payload via vulnerable interface.'}
                     </div>
                   </div>
 
-                  {/* Availability */}
                   <div style={{ padding: '14px', borderRadius: '8px', background: '#0a1024', border: '1px solid #162244' }}>
                     <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Server size={12} color="#a855f7" /> Availability Impact
+                      <Server size={12} color="#fbbf24" /> Lateral Movement / Impact
                     </div>
                     <div style={{ fontSize: '12.5px', color: '#e2e8f0', marginTop: '6px', lineHeight: 1.5 }}>
-                      {potentialImpact.availability || 'Resource exhaustion, denial of service, or process disruption.'}
+                      {potentialImpact.technical_impact || 'Execution of arbitrary backend commands or unauthenticated database reads.'}
                     </div>
                   </div>
 
-                  {/* Business Impact */}
                   <div style={{ padding: '14px', borderRadius: '8px', background: '#0a1024', border: '1px solid #162244' }}>
                     <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Activity size={12} color="#ef4444" /> Business & Compliance Impact
@@ -367,7 +376,7 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
                 <div style={{ background: '#050914', border: '1px solid #162242', borderRadius: '8px', padding: '16px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '14px' }}>
                     <div style={{ padding: '10px', borderRadius: '6px', background: '#0a1024', border: '1px solid #162244' }}>
-                      <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Base Severity Score</div>
+                      <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Base Threat Rating Score</div>
                       <div style={{ fontSize: '15px', fontWeight: 800, color: '#ff3366', fontFamily: 'var(--font-mono)' }}>
                         {riskFactors.base_severity_score || (finding.severity === 'CRITICAL' ? 90.0 : finding.severity === 'HIGH' ? 70.0 : 45.0)} / 100
                       </div>
@@ -553,7 +562,7 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
                   overflowX: 'auto'
                 }}
               >
-                {finding.evidence || '// No raw payload trace recorded for this finding.'}
+                {finding.evidence || getFindingCodeSnippet(finding)}
               </div>
 
               {finding.parameter && (
@@ -584,15 +593,15 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
                     whiteSpace: 'pre-wrap'
                   }}
                 >
-                  {finding.remediation}
+                  {finding.remediation || getFindingRemediation(finding)}
                 </div>
               </div>
 
               {/* Code Patch Diff */}
-              {finding.patchDiff && (
+              {(finding.patchDiff || getFindingCodeSnippet(finding)) && (
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 800, color: '#10b981', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <FileCode size={14} /> Suggested Code Patch Diff
+                    <FileCode size={14} /> Vulnerable AST Sink & Code Context
                   </div>
                   <div
                     style={{
@@ -607,7 +616,7 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
                       color: '#f8fafc'
                     }}
                   >
-                    {finding.patchDiff.split('\n').map((line, idx) => {
+                    {(finding.patchDiff || getFindingCodeSnippet(finding)).split('\n').map((line, idx) => {
                       const isAdd = line.startsWith('+');
                       const isDel = line.startsWith('-');
                       return (
