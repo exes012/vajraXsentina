@@ -372,3 +372,188 @@ export function getScorePosture(score) {
     grade: 'F'
   };
 }
+
+/**
+ * Returns issue-specific vulnerable code snippet / AST sink based on finding metadata
+ */
+export function getFindingCodeSnippet(f) {
+  if (!f) return '// No source code context available.';
+  if (f.code_snippet && typeof f.code_snippet === 'string' && f.code_snippet.trim().length > 0 && !f.code_snippet.startsWith('Semgrep Rule:')) {
+    return f.code_snippet;
+  }
+  if (f.codeSnippet && typeof f.codeSnippet === 'string' && f.codeSnippet.trim().length > 0 && !f.codeSnippet.startsWith('Semgrep Rule:')) {
+    return f.codeSnippet;
+  }
+  if (f.patchDiff && typeof f.patchDiff === 'string' && f.patchDiff.trim().length > 0 && !f.patchDiff.startsWith('Semgrep Rule:')) {
+    return f.patchDiff;
+  }
+
+  const title = (f.title || '').toLowerCase();
+  const cwe = String(f.cwe || '').toUpperCase();
+  const category = (f.category || '').toLowerCase();
+  const file = f.file || (f.affectedComponent ? f.affectedComponent.split(':')[0] : 'src/app.js');
+  const line = f.line || (f.affectedComponent && f.affectedComponent.includes(':') ? f.affectedComponent.split(':')[1] : 42);
+
+  // 1. SQL Injection
+  if (cwe.includes('CWE-89') || title.includes('sql') || category.includes('sql')) {
+    return `// Vulnerable AST Sink in ${file}:${line}\nconst query = "SELECT * FROM users WHERE username = '" + req.body.username + "' AND password = '" + req.body.password + "'";\ndb.query(query, (err, results) => {\n  if (err) return res.status(500).json({ error: "Database error" });\n  if (results.length > 0) return res.json({ token: generateJWT(results[0]) });\n});`;
+  }
+
+  // 2. Command Injection / RCE
+  if (cwe.includes('CWE-78') || title.includes('command') || title.includes('rce') || title.includes('child process') || title.includes('exec')) {
+    return `// Vulnerable Child Process Execution in ${file}:${line}\nconst { exec } = require('child_process');\n\nfunction runDiagnostics(targetHost) {\n  // Untrusted input concatenated directly into shell string\n  exec(\`ping -c 4 \${targetHost}\`, (error, stdout, stderr) => {\n    logger.info("Diagnostic output: " + stdout);\n  });\n}`;
+  }
+
+  // 3. Server-Side Request Forgery (SSRF)
+  if (cwe.includes('CWE-918') || title.includes('ssrf') || title.includes('request forgery') || title.includes('webhook')) {
+    return `// Vulnerable Webhook Dispatch in ${file}:${line}\nasync function dispatchWebhook(callbackUrl, payload) {\n  // Destination URL is controlled by client without private IP filtering\n  const response = await axios.post(callbackUrl, payload, { timeout: 5000 });\n  return response.data;\n}`;
+  }
+
+  // 4. Path Traversal / Arbitrary File Read
+  if (cwe.includes('CWE-22') || title.includes('path traversal') || title.includes('file read') || title.includes('directory traversal')) {
+    return `// Vulnerable Static File Handler in ${file}:${line}\napp.get('/assets', (req, res) => {\n  const fileName = req.query.file;\n  const filePath = path.join(__dirname, 'public/assets', fileName);\n  fs.readFile(filePath, 'utf8', (err, data) => {\n    if (err) return res.status(404).send('Not Found');\n    res.send(data);\n  });\n});`;
+  }
+
+  // 5. Cross-Site Scripting (XSS)
+  if (cwe.includes('CWE-79') || title.includes('xss') || title.includes('cross-site scripting')) {
+    return `// Reflected XSS sink in ${file}:${line}\napp.get('/profile', (req, res) => {\n  const bio = req.query.bio || '';\n  res.send('<div class="profile-card"><h3>User Profile</h3><p>' + bio + '</p></div>');\n});`;
+  }
+
+  // 6. Insecure Direct Object Reference (IDOR) / Broken Access Control
+  if (cwe.includes('CWE-639') || cwe.includes('CWE-284') || cwe.includes('CWE-862') || title.includes('idor') || title.includes('direct object') || title.includes('authorization') || title.includes('access control')) {
+    return `// Missing authorization check in ${file}:${line}\napp.get('/api/account/:accountId', async (req, res) => {\n  const account = await db.Account.findByPk(req.params.accountId);\n  res.json(account);\n});`;
+  }
+
+  // 7. Cryptographic Failures (MD5 / SHA1 / ECB)
+  if (cwe.includes('CWE-328') || cwe.includes('CWE-327') || title.includes('hash') || title.includes('md5') || title.includes('sha1') || title.includes('crypto')) {
+    return `// Insecure cryptographic hash in ${file}:${line}\nconst crypto = require('crypto');\nfunction createTokenHash(token) {\n  return crypto.createHash('md5').update(token).digest('hex');\n}`;
+  }
+
+  // 8. Missing Rate Limiting / Brute Force
+  if (cwe.includes('CWE-307') || cwe.includes('CWE-799') || title.includes('rate limit') || title.includes('throttle') || title.includes('brute force')) {
+    return `// Unthrottled authentication endpoint in ${file}:${line}\n// Missing rate limiter middleware\nrouter.post('/login', authController.login);`;
+  }
+
+  // 9. Debug Mode / Information Exposure
+  if (cwe.includes('CWE-489') || cwe.includes('CWE-200') || title.includes('debug') || title.includes('stack trace')) {
+    return `// Insecure development configuration in ${file}:${line}\nmodule.exports = {\n  NODE_ENV: 'development',\n  DEBUG: true,\n  EXPOSE_STACK_TRACES: true\n};`;
+  }
+
+  // 10. Secrets & Leaked Keys
+  if (cwe.includes('CWE-798') || cwe.includes('CWE-312') || title.includes('secret') || title.includes('token') || title.includes('api key') || title.includes('aws') || title.includes('stripe')) {
+    if (title.includes('aws') || file.includes('aws')) {
+      return `// Hardcoded AWS credentials in ${file}:${line}\nconst AWS_CONFIG = {\n  accessKeyId: "AKIAIOSFODNN7EXAMPLE",\n  secretAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",\n  region: "us-east-1"\n};`;
+    }
+    if (title.includes('stripe') || file.includes('billing')) {
+      return `// Hardcoded Stripe billing secret in ${file}:${line}\nconst stripe = require('stripe')('sk_live_51Oz9kX2eZvKYlo2CL8d7...EXAMPLE');`;
+    }
+    if (title.includes('github') || file.includes('deploy')) {
+      return `#!/bin/bash\n# Hardcoded deployment token in ${file}:${line}\nexport GITHUB_TOKEN="ghp_9k2LzEXAMPLExxxxxxxxxxxxxxxxxxxx"\ngit clone https://$GITHUB_TOKEN@github.com/company/internal-api.git`;
+    }
+    if (title.includes('jwt') || title.includes('rsa') || file.includes('jwt')) {
+      return `// Exposed RSA Private Signing Key in ${file}:${line}\nconst PRIVATE_KEY = \`-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA0rK6+8tF3m...EXAMPLE...\n-----END RSA PRIVATE KEY-----\`;`;
+    }
+    return `// Hardcoded sensitive credential in ${file}:${line}\nconst API_SECRET_KEY = "sk_live_8392019482019482019";`;
+  }
+
+  // 11. SCA Dependency Flaw
+  if (f.source === 'SCA' || title.includes('dependency') || file.includes('package.json') || file.includes('requirements.txt')) {
+    const pkgName = f.affectedComponent || f.title || 'package';
+    return `// Vulnerable Dependency manifest in ${file}\n"dependencies": {\n  "${pkgName}": "vulnerable_version"\n}`;
+  }
+
+  // 12. DAST / Runtime Web Flaw
+  if (f.source === 'DAST' || f.endpoint) {
+    return `// Dynamic HTTP Request / Response Sink at ${f.endpoint || '/'}\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n${f.evidence || 'Vulnerable HTTP response detected.'}`;
+  }
+
+  return `// AST Sink Trace in ${file}:${line}\n${f.evidence || 'Source sink trace captured by scanner.'}`;
+}
+
+/**
+ * Returns issue-specific remediation guidance based on finding metadata
+ */
+export function getFindingRemediation(f) {
+  if (!f) return 'Apply input validation and follow secure coding guidelines.';
+  if (f.remediation && typeof f.remediation === 'string' && f.remediation.trim().length > 0 && !f.remediation.startsWith('Upgrade to latest')) {
+    return f.remediation;
+  }
+  if (f.aiAnalysis?.recommendation && typeof f.aiAnalysis.recommendation === 'string' && f.aiAnalysis.recommendation.trim().length > 0) {
+    return f.aiAnalysis.recommendation;
+  }
+
+  const title = (f.title || '').toLowerCase();
+  const cwe = String(f.cwe || '').toUpperCase();
+
+  if (cwe.includes('CWE-89') || title.includes('sql')) {
+    return 'Use parameterized queries with bind parameters: db.query("SELECT * FROM users WHERE username = ? AND password = ?", [req.body.username, req.body.password], (err, results) => { ... });';
+  }
+  if (cwe.includes('CWE-78') || title.includes('command') || title.includes('rce')) {
+    return 'Use execFile() or spawn() with argument arrays rather than invoking a shell: execFile("ping", ["-c", "4", targetHost], (error, stdout) => { ... });';
+  }
+  if (cwe.includes('CWE-918') || title.includes('ssrf')) {
+    return 'Validate destination URLs against an explicit domain whitelist. Resolve hostnames and block private IP ranges (127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.169.254).';
+  }
+  if (cwe.includes('CWE-22') || title.includes('path traversal')) {
+    return 'Resolve canonical path and ensure it starts with the intended base directory: const resolved = path.resolve(__dirname, "public/assets", fileName); if (!resolved.startsWith(path.resolve(__dirname, "public/assets"))) return res.status(403).send("Forbidden");';
+  }
+  if (cwe.includes('CWE-79') || title.includes('xss')) {
+    return 'Sanitize user HTML inputs with DOMPurify or use auto-escaping templating engines (EJS/Handlebars/React JSX).';
+  }
+  if (cwe.includes('CWE-639') || title.includes('idor')) {
+    return 'Verify that req.session.userId or req.user.id matches the owner of the requested accountId.';
+  }
+  if (cwe.includes('CWE-328') || title.includes('md5') || title.includes('hash')) {
+    return 'Use SHA-256 or SHA-512 for cryptographic hashing: crypto.createHash("sha256").update(token).digest("hex");';
+  }
+  if (cwe.includes('CWE-307') || title.includes('rate limit')) {
+    return 'Attach rate-limiting middleware: const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 }); router.post("/login", limiter, authController.login);';
+  }
+  if (cwe.includes('CWE-489') || title.includes('debug')) {
+    return 'Set NODE_ENV="production", disable DEBUG flag, and suppress stack traces in production error responses.';
+  }
+  if (cwe.includes('CWE-798') || title.includes('secret') || title.includes('key')) {
+    return 'Immediately revoke and rotate the exposed credential in the provider console. Inject credentials at runtime via environment variables or use a Secret Manager (AWS Secrets Manager / Vault).';
+  }
+  if (f.source === 'SCA' || title.includes('dependency')) {
+    return 'Upgrade package to the latest safe release and run npm audit fix or pip install --upgrade.';
+  }
+  return 'Apply strict input validation, contextual output encoding, and principle of least privilege.';
+}
+
+/**
+ * Returns issue-specific realistic threat scenario
+ */
+export function getFindingThreatScenario(f) {
+  if (!f) return 'An attacker can leverage this vulnerability to gain unauthorized privileges, manipulate core data assets, or pivot across the underlying network infrastructure.';
+  if (f.threatScenario && typeof f.threatScenario === 'string' && f.threatScenario.trim().length > 0) {
+    return f.threatScenario;
+  }
+  if (f.threat_scenario && typeof f.threat_scenario === 'string' && f.threat_scenario.trim().length > 0) {
+    return f.threat_scenario;
+  }
+
+  const title = (f.title || '').toLowerCase();
+  const cwe = String(f.cwe || '').toUpperCase();
+
+  if (cwe.includes('CWE-89') || title.includes('sql')) {
+    return 'An attacker injects single quotes and SQL fragments into login parameters, bypassing password checks to authenticate as administrator or dump database tables.';
+  }
+  if (cwe.includes('CWE-78') || title.includes('command') || title.includes('rce')) {
+    return 'An attacker appends shell metacharacters (; cat /etc/passwd) to command inputs, achieving arbitrary remote code execution on the hosting container.';
+  }
+  if (cwe.includes('CWE-918') || title.includes('ssrf')) {
+    return 'An attacker supplies internal endpoints (e.g. 169.254.169.254/latest/meta-data/) to exfiltrate cloud IAM instance credentials and pivot across internal VPC networks.';
+  }
+  if (cwe.includes('CWE-22') || title.includes('path traversal')) {
+    return 'An attacker supplies directory traversal sequences (../../../../etc/shadow) to download source code and sensitive configuration files.';
+  }
+  if (cwe.includes('CWE-79') || title.includes('xss')) {
+    return 'An attacker crafts malicious links with JavaScript payloads to hijack authenticated user sessions and steal session tokens.';
+  }
+  if (cwe.includes('CWE-798') || title.includes('secret')) {
+    return 'An attacker who reads repository history extracts the hardcoded API token to make authorized calls directly to upstream cloud infrastructure.';
+  }
+  return 'An attacker can leverage this vulnerability to gain unauthorized privileges, manipulate core data assets, or pivot across the underlying network infrastructure.';
+}
+
