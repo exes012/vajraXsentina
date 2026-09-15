@@ -20,15 +20,14 @@ import { dashboardService } from '../services/dashboardService';
 import { calculateModuleScores, getScorePosture } from '../utils/securityScore';
 
 export function Sidebar({ currentTab, onTabChange, isCollapsed }) {
-  const [moduleScores, setModuleScores] = useState({
-    sast: { score: 100, findings: 0, posture: getScorePosture(100) },
-    dast: { score: 100, findings: 0, posture: getScorePosture(100) },
-    sca: { score: 100, findings: 0, posture: getScorePosture(100) },
-    secrets: { score: 100, findings: 0, posture: getScorePosture(100) },
-    threat_intel: { score: 100, findings: 0, posture: getScorePosture(100) },
-    ai_correlation: { score: 100, findings: 0, posture: getScorePosture(100) }
+  const [moduleScores, setModuleScores] = useState(() => {
+    const initFindings = dashboardService.getInitialFindings();
+    const initCorr = dashboardService.correlatedRisks || [];
+    return calculateModuleScores(initFindings, initCorr);
   });
-  const [totalFindingsCount, setTotalFindingsCount] = useState(0);
+  const [totalFindingsCount, setTotalFindingsCount] = useState(() => {
+    return dashboardService.getInitialFindings().length;
+  });
 
   useEffect(() => {
     let isMounted = true;
