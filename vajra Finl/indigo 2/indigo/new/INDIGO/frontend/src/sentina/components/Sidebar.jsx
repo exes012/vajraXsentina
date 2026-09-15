@@ -289,56 +289,32 @@ export function Sidebar({ currentTab, onTabChange, isCollapsed }) {
                     )}
                   </div>
 
-                  {/* Right Score & Findings Badge Integration */}
+                  {/* Right Findings Count Badge */}
                   {!isCollapsed && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
                       {hasScore ? (
-                        <div
+                        <span
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '3px'
+                            fontSize: '9.5px',
+                            fontFamily: 'var(--font-mono)',
+                            fontWeight: 900,
+                            color: engineMeta.findings > 0
+                              ? (engineMeta.findings >= 50 ? '#ff1744' : engineMeta.findings >= 10 ? '#f97316' : '#fbbf24')
+                              : '#00ff88',
+                            background: engineMeta.findings > 0
+                              ? (engineMeta.findings >= 50 ? 'rgba(255, 23, 68, 0.15)' : engineMeta.findings >= 10 ? 'rgba(249, 115, 22, 0.15)' : 'rgba(251, 191, 36, 0.15)')
+                              : 'rgba(0, 255, 136, 0.12)',
+                            border: `1.2px solid ${engineMeta.findings > 0 ? (engineMeta.findings >= 50 ? '#ff1744' : engineMeta.findings >= 10 ? '#f97316' : '#fbbf24') : '#00ff88'}60`,
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            minWidth: '22px',
+                            textAlign: 'center',
+                            boxShadow: `0 0 6px ${engineMeta.findings > 0 ? '#ff174430' : '#00ff8830'}`
                           }}
+                          title={`${engineMeta.findings} vulnerabilities detected (Security Score: ${engineMeta.score}/100 - ${engineMeta.posture.label})`}
                         >
-                          {/* Findings Count (if any) */}
-                          {engineMeta.findings > 0 && (
-                            <span
-                              style={{
-                                fontSize: '8.5px',
-                                fontFamily: 'var(--font-mono)',
-                                fontWeight: 800,
-                                color: '#f87171',
-                                background: 'rgba(239, 68, 68, 0.15)',
-                                border: '1px solid rgba(239, 68, 68, 0.35)',
-                                padding: '1px 4px',
-                                borderRadius: '3px'
-                              }}
-                              title={`${engineMeta.findings} findings detected`}
-                            >
-                              {engineMeta.findings}
-                            </span>
-                          )}
-
-                          {/* Dynamic Security Score Badge */}
-                          <span
-                            style={{
-                              fontSize: '9.5px',
-                              fontFamily: 'var(--font-mono)',
-                              fontWeight: 900,
-                              color: engineMeta.posture.color,
-                              background: engineMeta.posture.badgeBg || 'rgba(0, 242, 254, 0.1)',
-                              border: `1px solid ${engineMeta.posture.color}50`,
-                              padding: '1px 5px',
-                              borderRadius: '4px',
-                              minWidth: '24px',
-                              textAlign: 'center',
-                              boxShadow: `0 0 6px ${engineMeta.posture.color}30`
-                            }}
-                            title={`Security Score: ${engineMeta.score}/100 (${engineMeta.posture.label})`}
-                          >
-                            {engineMeta.score}
-                          </span>
-                        </div>
+                          {engineMeta.findings}
+                        </span>
                       ) : item.badge ? (
                         <span
                           style={{
