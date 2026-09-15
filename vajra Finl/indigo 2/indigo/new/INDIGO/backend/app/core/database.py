@@ -36,11 +36,12 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 def run_db_migrations():
-    """Apply safe schema migrations for SQLite and PostgreSQL databases."""
+    """Apply safe schema migrations for SQLite and relational databases."""
     try:
-        # Import models so they register on Base.metadata
         import app.models as _models
-
+        Base.metadata.create_all(bind=engine)
+        if not is_sqlite:
+            return
         with engine.connect() as conn:
             if not is_sqlite:
                 # PostgreSQL schema enhancements

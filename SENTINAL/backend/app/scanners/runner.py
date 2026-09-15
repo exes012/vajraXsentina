@@ -36,13 +36,13 @@ class ScannerOrchestrator:
                 error_message=f"Scanner adapter '{adapter_key}' not found."
             )
         try:
-            return await asyncio.wait_for(adapter.run(target), timeout=20.0)
+            return await asyncio.wait_for(adapter.run(target), timeout=60.0)
         except asyncio.TimeoutError:
             return ScannerResult(
                 scanner_name=adapter.name,
                 source=adapter.source,
                 status="FAILED",
-                error_message=f"Scanner {adapter.name} timed out after 20s watchdog limit.",
+                error_message=f"Scanner {adapter.name} timed out after 60s watchdog limit.",
                 metadata={"telemetry": dict(getattr(adapter, "telemetry", {}))}
             )
         except Exception as e:

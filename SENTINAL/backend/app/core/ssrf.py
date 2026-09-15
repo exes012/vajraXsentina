@@ -150,8 +150,8 @@ def validate_ssrf_safety(hostname: str, port: int) -> Tuple[bool, Optional[str],
             return False, f"Resolved IP '{ip}' is a restricted cloud metadata service.", resolved_ips
 
         if is_ip_private_or_restricted(ip):
-            if is_dev_mode():
-                # Allow in development mode for explicit local testing
+            if is_dev_mode() or hostname in ["localhost", "127.0.0.1", "::1"] or ip in ["127.0.0.1", "::1"]:
+                # Allow in development mode or explicit local target testing
                 continue
             else:
                 return False, f"Target host '{hostname}' resolved to private/internal IP '{ip}'. Direct scanning of internal infrastructure is prohibited in production mode.", resolved_ips

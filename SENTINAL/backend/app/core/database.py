@@ -39,6 +39,8 @@ def run_db_migrations():
     """Apply safe schema migrations for SQLite and relational databases."""
     try:
         Base.metadata.create_all(bind=engine)
+        if not is_sqlite:
+            return
         with engine.connect() as conn:
             # Check and add missing columns to assessments table
             try:

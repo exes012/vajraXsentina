@@ -104,7 +104,7 @@ class ZAPAdapter(ScannerAdapter):
     async def _try_live_zap_daemon(self, target_url: str, headers: Dict[str, str], scan_mode: str) -> Optional[List[RawFinding]]:
         """Attempt to run against an active OWASP ZAP REST API daemon if reachable."""
         try:
-            async with httpx.AsyncClient(timeout=4.0) as client:
+            async with httpx.AsyncClient(timeout=1.0) as client:
                 ver_resp = await client.get(f"{self.zap_daemon_url}/JSON/core/view/version/")
                 if ver_resp.status_code == 200:
                     # Trigger ZAP spider
