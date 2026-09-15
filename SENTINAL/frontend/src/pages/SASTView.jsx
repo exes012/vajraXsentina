@@ -18,20 +18,27 @@ import { FindingDrawer } from '../components/FindingDrawer';
 import { calculateFindingsScore, filterModuleFindings, getScorePosture } from '../utils/securityScore';
 
 export function SASTView() {
-  const [findings, setFindings] = useState([]);
+  const [findings, setFindings] = useState(() => filterModuleFindings('sast', dashboardService.getInitialFindings({ module: 'sast' })));
   const [selectedSeverity, setSelectedSeverity] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFinding, setSelectedFinding] = useState(null);
+  const [selectedFinding, setSelectedFinding] = useState(() => {
+    const init = filterModuleFindings('sast', dashboardService.getInitialFindings({ module: 'sast' }));
+    return init.length > 0 ? init[0] : null;
+  });
   const [activeDrawerFinding, setActiveDrawerFinding] = useState(null);
 
   useEffect(() => {
     async function loadSAST() {
-      const all = await dashboardService.getFindings({ source: 'SAST' });
+      const all = await dashboardService.getFindings({ all: true });
       const sastFindings = filterModuleFindings('sast', all || []);
       setFindings(sastFindings);
-      if (sastFindings.length > 0) setSelectedFinding(sastFindings[0]);
+      if (sastFindings.length > 0) {
+        setSelectedFinding(prev => (prev && sastFindings.some(f => f.id === prev.id) ? prev : sastFindings[0]));
+      }
     }
     loadSAST();
+    const unsubscribe = dashboardService.subscribe(loadSAST);
+    return () => unsubscribe();
   }, []);
 
   const sastScore = calculateFindingsScore(findings);
