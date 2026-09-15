@@ -554,7 +554,7 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
                   overflowX: 'auto'
                 }}
               >
-                {finding.evidence || '// No raw payload trace recorded for this finding.'}
+                {finding.evidence || getFindingCodeSnippet(finding)}
               </div>
 
               {finding.parameter && (
@@ -585,15 +585,15 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
                     whiteSpace: 'pre-wrap'
                   }}
                 >
-                  {finding.remediation}
+                  {finding.remediation || getFindingRemediation(finding)}
                 </div>
               </div>
 
               {/* Code Patch Diff */}
-              {finding.patchDiff && (
+              {(finding.patchDiff || getFindingCodeSnippet(finding)) && (
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 800, color: '#10b981', textTransform: 'uppercase', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <FileCode size={14} /> Suggested Code Patch Diff
+                    <FileCode size={14} /> Vulnerable AST Sink & Code Context
                   </div>
                   <div
                     style={{
@@ -608,7 +608,7 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
                       color: '#f8fafc'
                     }}
                   >
-                    {finding.patchDiff.split('\n').map((line, idx) => {
+                    {(finding.patchDiff || getFindingCodeSnippet(finding)).split('\n').map((line, idx) => {
                       const isAdd = line.startsWith('+');
                       const isDel = line.startsWith('-');
                       return (
