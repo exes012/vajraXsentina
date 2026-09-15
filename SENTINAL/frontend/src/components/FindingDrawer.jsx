@@ -93,7 +93,7 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
         >
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-              <SeverityBadge severity={finding.severity || 'CRITICAL'} size="md" />
+              <SeverityBadge severity={finding.severity || finding.rating || 'CRITICAL'} size="md" />
               <span
                 style={{
                   fontSize: '11px',
@@ -109,7 +109,7 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
                   gap: '4px'
                 }}
               >
-                SEVERITY: {(finding.severity || 'CRITICAL').toUpperCase()}
+                THREAT RATING: {(finding.severity || finding.rating || 'CRITICAL').toUpperCase() === 'CRITICAL' ? 'CRITICAL RISK' : (finding.severity || finding.rating || 'HIGH').toUpperCase() === 'HIGH' ? 'ELEVATED RISK' : (finding.severity || finding.rating || 'MEDIUM').toUpperCase() === 'MEDIUM' ? 'MODERATE RISK' : (finding.severity || finding.rating || 'LOW').toUpperCase() === 'LOW' ? 'LOW RISK' : 'INFORMATIONAL'}
               </span>
               {finding.blastRadius && (
                 <span
@@ -297,7 +297,7 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
                   <Flame size={16} /> Realistic Threat Scenario
                 </div>
                 <div style={{ fontSize: '13.5px', color: '#f1f5f9', lineHeight: 1.6 }}>
-                  {finding.threatScenario || 'An attacker can leverage this vulnerability to gain unauthorized privileges, manipulate core data assets, or pivot across the underlying network infrastructure.'}
+                  {finding.threatScenario || getFindingThreatScenario(finding)}
                 </div>
                 <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', fontWeight: 700, border: '1px solid rgba(239, 68, 68, 0.4)' }}>
@@ -325,38 +325,29 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
                     <div style={{ fontSize: '12.5px', color: '#e2e8f0', marginTop: '6px', lineHeight: 1.5 }}>
                       {potentialImpact.confidentiality || 'Unauthorized data extraction or information leakage.'}
                     </div>
-                  {potentialImpact.mitre_tactic && (
-                    <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(168, 85, 247, 0.2)', color: '#d8b4fe', fontWeight: 700, border: '1px solid rgba(168, 85, 247, 0.4)' }}>
-                      MITRE: {potentialImpact.mitre_tactic}
-                    </span>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              {/* Exploit Chain & Impact Flow */}
-              <div>
-                <div style={{ fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Target size={14} color="#f87171" /> Threat & Exploit Progression Vector
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                  {/* Integrity */}
                   <div style={{ padding: '14px', borderRadius: '8px', background: '#0a1024', border: '1px solid #162244' }}>
                     <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Lock size={12} color="#00f2fe" /> Initial Foothold / Access
+                      <Database size={12} color="#f59e0b" /> Integrity Impact
                     </div>
                     <div style={{ fontSize: '12.5px', color: '#e2e8f0', marginTop: '6px', lineHeight: 1.5 }}>
-                      {potentialImpact.initial_access || 'Attacker sends crafted payload via vulnerable interface.'}
+                      {potentialImpact.integrity || 'Unauthorized data modification, state manipulation, or record alteration.'}
                     </div>
                   </div>
 
+                  {/* Availability */}
                   <div style={{ padding: '14px', borderRadius: '8px', background: '#0a1024', border: '1px solid #162244' }}>
                     <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Server size={12} color="#fbbf24" /> Lateral Movement / Impact
+                      <Server size={12} color="#a855f7" /> Availability Impact
                     </div>
                     <div style={{ fontSize: '12.5px', color: '#e2e8f0', marginTop: '6px', lineHeight: 1.5 }}>
-                      {potentialImpact.technical_impact || 'Execution of arbitrary backend commands or unauthenticated database reads.'}
+                      {potentialImpact.availability || 'Resource exhaustion, denial of service, or process disruption.'}
                     </div>
                   </div>
 
+                  {/* Business Impact */}
                   <div style={{ padding: '14px', borderRadius: '8px', background: '#0a1024', border: '1px solid #162244' }}>
                     <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Activity size={12} color="#ef4444" /> Business & Compliance Impact
