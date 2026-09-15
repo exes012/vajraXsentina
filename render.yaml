@@ -1,0 +1,32 @@
+services:
+  # Sentinal Backend Service (FastAPI)
+  - type: web
+    name: vajra-sentina-backend
+    runtime: python
+    rootDir: SENTINAL/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_WzCOhSJ0dn6f@ep-nameless-bird-ay266zed-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+    healthCheckPath: /api/health
+
+  # Sentinal Frontend Service (Vite Static / SPA)
+  - type: web
+    name: vajra-sentina-frontend
+    runtime: static
+    rootDir: SENTINAL/frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
