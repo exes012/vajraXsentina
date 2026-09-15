@@ -45,9 +45,13 @@ export function App() {
   };
 
   const handleStartAssessment = async (config) => {
+    setIsNewAssessmentOpen(false);
     setCurrentTab('assessments');
     try {
-      await dashboardService.triggerNewScan(config);
+      const newAsm = await dashboardService.triggerNewScan(config);
+      if (newAsm) {
+        dashboardService.setActiveAssessmentId(newAsm.id);
+      }
     } catch (e) {
       console.error('Failed to trigger scan from navigation:', e);
     }
