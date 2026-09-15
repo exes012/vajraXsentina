@@ -42,8 +42,9 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
   if (!isOpen || !finding) return null;
 
   const handleCopyEvidence = () => {
-    if (finding.evidence) {
-      navigator.clipboard.writeText(finding.evidence);
+    const text = finding.evidence || getFindingCodeSnippet(finding);
+    if (text) {
+      navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -297,7 +298,7 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
                   <Flame size={16} /> Realistic Threat Scenario
                 </div>
                 <div style={{ fontSize: '13.5px', color: '#f1f5f9', lineHeight: 1.6 }}>
-                  {finding.threatScenario || 'An attacker can leverage this vulnerability to gain unauthorized privileges, manipulate core data assets, or pivot across the underlying network infrastructure.'}
+                  {finding.threatScenario || getFindingThreatScenario(finding)}
                 </div>
                 <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', fontWeight: 700, border: '1px solid rgba(239, 68, 68, 0.4)' }}>
