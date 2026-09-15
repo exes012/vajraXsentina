@@ -455,7 +455,7 @@ class DashboardService {
     } catch (e) {
       console.warn("Could not fetch assessments from backend:", e);
     }
-    return (this.assessments || []).map(a => (a.counts && a.targetType) ? a : this._formatAssessment(a));
+    return (this.assessments || []).map(a => this._formatAssessment(a));
   }
 
   _formatAssessment(a) {
@@ -478,14 +478,21 @@ class DashboardService {
     const targetType = a.assessment_type === 'repo' ? 'Git Repository (SAST/SCA)' : (a.assessment_type === 'source' ? 'Source Code Archive (SAST/SCA)' : (a.assessment_type === 'dast' ? 'Web Application (DAST)' : 'Combined (Unified SAST+DAST)'));
     
     // Accurate dynamic Security Score (0-100, 100=Safest)
-    const crit = a.critical_count || 0;
-    const high = a.high_count || 0;
-    const med = a.medium_count || 0;
-    const low = a.low_count || 0;
+    const crit = a.critical_count || a.counts?.critical || 0;
+    const high = a.high_count || a.counts?.high || 0;
+    const med = a.medium_count || a.counts?.medium || 0;
+    const low = a.low_count || a.counts?.low || 0;
+    const total = a.total_findings || a.counts?.total || (crit + high + med + low);
     const penalty = (crit * 20) + (high * 12) + (med * 5) + (low * 2);
-    const calculatedSecScore = (crit + high + med + low > 0)
-      ? Math.max(10, Math.min(100, 100 - penalty))
-      : (typeof a.overall_risk_score === 'number' && a.overall_risk_score > 0 ? Math.max(0, Math.min(100, Math.round(100 - a.overall_risk_score))) : 100);
+    
+    let calculatedSecScore = 100;
+    if (crit + high + med + low > 0) {
+      calculatedSecScore = Math.max(10, Math.min(100, 100 - penalty));
+    } else if (typeof a.overall_risk_score === 'number' && a.overall_risk_score > 0) {
+      calculatedSecScore = Math.max(10, Math.min(100, Math.round(100 - a.overall_risk_score)));
+    } else if (a.status === 'COMPLETED') {
+      calculatedSecScore = 100;
+    }
 
     // Accurate progress computation
     let progress = 100;
@@ -530,8 +537,8 @@ class DashboardService {
         high: high,
         medium: med,
         low: low,
-        info: a.info_count || 0,
-        total: a.total_findings || (crit + high + med + low)
+        info: a.info_count || a.counts?.info || 0,
+        total: total
       },
       dastCoverageScore: typeof a.dast_coverage_score === 'number' ? a.dast_coverage_score : 0,
       coverageStatus: a.coverage_status || 'NOT_APPLICABLE',
