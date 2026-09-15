@@ -318,7 +318,7 @@ export function DASTView() {
                 </div>
               ) : (
                 filteredFindings.map((f, idx) => {
-                  const isSelected = selectedFinding?.id === f.id || (selectedFinding == null && idx === 0);
+                  const isSelected = String(selectedFinding?.id) === String(f.id) || (!selectedFinding && idx === 0);
 
                   return (
                     <div
@@ -327,8 +327,9 @@ export function DASTView() {
                       style={{
                         padding: '10px 12px',
                         borderRadius: '6px',
-                        background: isSelected ? 'rgba(249, 115, 22, 0.15)' : '#040005',
+                        background: isSelected ? 'rgba(249, 115, 22, 0.18)' : '#040005',
                         border: isSelected ? '1.5px solid #f97316' : '1.5px solid #28081c',
+                        boxShadow: isSelected ? '0 0 12px rgba(249, 115, 22, 0.25)' : 'none',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease'
                       }}
@@ -404,14 +405,14 @@ export function DASTView() {
                     overflowX: 'auto'
                   }}
                 >
-                  {selectedFinding.evidence || selectedFinding.rawEvidenceSnippet || 'Target HTTP response headers and body analysis matched vulnerability signatures.'}
+                  {selectedFinding.evidence || selectedFinding.rawEvidenceSnippet || getFindingCodeSnippet(selectedFinding)}
                 </div>
               </div>
 
               {/* Remediation */}
               <div style={{ padding: '10px 14px', borderRadius: '6px', background: 'rgba(0, 255, 136, 0.08)', border: '1.5px solid #00ff88', fontSize: '11.5px', color: '#f8fafc' }}>
                 <strong style={{ color: '#00ff88' }}>OWASP ZAP Remediation Guidance: </strong>
-                {selectedFinding.remediation || selectedFinding.aiAnalysis?.recommendation || 'Apply context-aware input validation and configure security response headers.'}
+                {selectedFinding.remediation || selectedFinding.aiAnalysis?.recommendation || getFindingRemediation(selectedFinding)}
               </div>
             </div>
           )}
