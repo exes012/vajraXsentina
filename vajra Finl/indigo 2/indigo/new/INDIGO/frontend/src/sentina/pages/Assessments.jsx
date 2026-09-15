@@ -73,7 +73,9 @@ export function Assessments({ onSelectFinding }) {
             for (const asm of data) {
               const prevStatus = prevStatusesRef.current.get(asm.id);
               if ((prevStatus === 'RUNNING' || prevStatus === 'QUEUED' || prevStatus?.includes('RUNNING')) && asm.status === 'FAILED') {
-                setFailedAssessmentForModal(asm);
+                if (!String(asm.id).startsWith('temp-') && !String(asm.id).startsWith('scan-temp-')) {
+                  setFailedAssessmentForModal(asm);
+                }
                 break;
               }
             }
