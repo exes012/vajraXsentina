@@ -49,7 +49,6 @@ export const apiClient = {
     const urlsToTry = [
       `${API_BASE}${endpoint}`,
       `${BACKEND_FALLBACK}${endpoint}`,
-      `/api${endpoint}`,
       ...(isLocalhost ? [
         `http://127.0.0.1:8000/api${endpoint}`,
         `http://localhost:8000/api${endpoint}`
@@ -59,6 +58,9 @@ export const apiClient = {
     let lastError = null;
 
     for (const url of urlsToTry) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+
       try {
         const res = await fetch(url, {
           ...options,
@@ -73,7 +75,7 @@ export const apiClient = {
             const authRes = await fetch(`${API_BASE}/auth/login`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: 'admin@indigo.com', username: 'admin', password: 'admin123' })
+              body: JSON.stringify({ email: 'admin@sentinal.security', username: 'admin', password: 'admin123' })
             });
             if (authRes.ok) {
               const authData = await authRes.json();
@@ -99,11 +101,11 @@ export const apiClient = {
         const data = await res.json().catch(() => ({ detail: `Request failed with status ${res.status}` }));
         throw new Error(data.detail || `Request failed with status ${res.status}`);
       } catch (err) {
+        clearTimeout(timeoutId);
         lastError = err;
       }
     }
 
-    clearTimeout(timeoutId);
     console.warn(`API fallback exhausted on [${options.method || 'GET'} ${endpoint}]:`, lastError?.message || lastError);
     throw lastError;
   },
