@@ -324,33 +324,33 @@ export function SASTView() {
                   No SAST findings match {selectedSeverity} severity.
                 </div>
               ) : (
-                filteredFindings.map(f => {
-                  const isSelected = selectedFinding?.id === f.id;
+                filteredFindings.map((f, idx) => {
+                  const isSelected = String(selectedFinding?.id) === String(f.id);
 
                   return (
                     <div
-                      key={f.id}
+                      key={f.id || idx}
                       onClick={() => setSelectedFinding(f)}
                       style={{
-                        padding: '12px',
-                        borderRadius: '8px',
-                        background: isSelected ? '#101a36' : '#080d1c',
-                        border: isSelected ? '1.5px solid #00f2fe' : '1px solid #141f38',
+                        padding: '10px 12px',
+                        borderRadius: '6px',
+                        background: isSelected ? 'rgba(0, 242, 254, 0.15)' : '#040005',
+                        border: isSelected ? '1.5px solid #00f2fe' : '1.5px solid #28081c',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <SeverityBadge severity={f.severity} size="sm" />
-                        <span style={{ fontSize: '10.5px', color: '#64748b', fontFamily: 'var(--font-mono)' }}>{f.id}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <SeverityBadge severity={f.severity || f.rating} size="sm" />
+                        <span style={{ fontSize: '10px', color: '#71717a', fontFamily: 'var(--font-mono)' }}>{f.id}</span>
                       </div>
 
-                      <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#f8fafc', lineHeight: 1.3 }}>
+                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc', lineHeight: 1.3 }}>
                         {f.title}
                       </div>
 
-                      <div style={{ fontSize: '10.5px', color: '#00f2fe', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
-                        {f.affectedComponent || f.endpoint}
+                      <div style={{ fontSize: '10.5px', color: '#00f2fe', marginTop: '3px', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>
+                        {f.affectedComponent || (f.file ? (f.line ? `${f.file}:${f.line}` : f.file) : 'Source Code')}
                       </div>
                     </div>
                   );
@@ -359,79 +359,72 @@ export function SASTView() {
             </div>
           </div>
 
-          {/* Right: Code & AST Context */}
+          {/* Right: Code Inspector */}
           {selectedFinding && (
-            <div className="cyber-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <div className="cyber-card" style={{ padding: '20px', background: '#060108', border: '3px solid #360a25', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <SeverityBadge severity={selectedFinding.severity} size="sm" />
-                    <span style={{ fontSize: '11.5px', color: '#64748b' }}>{selectedFinding.cwe}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                    <SeverityBadge severity={selectedFinding.severity || selectedFinding.rating} size="sm" />
+                    <span style={{ fontSize: '11px', color: '#c084fc', fontFamily: 'var(--font-mono)' }}>
+                      {selectedFinding.cwe || 'CWE Flaw'}
+                    </span>
+                    {selectedFinding.cve && (
+                      <span style={{ fontSize: '11px', color: '#fbbf24', fontFamily: 'var(--font-mono)' }}>
+                        {selectedFinding.cve}
+                      </span>
+                    )}
                   </div>
-                  <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#f8fafc' }}>
+                  <h2 style={{ fontSize: '16px', fontWeight: 900, color: '#f8fafc', margin: '4px 0' }}>
                     {selectedFinding.title}
                   </h2>
-                  <div style={{ fontSize: '12px', color: '#38bdf8', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
-                    File: {selectedFinding.affectedComponent}
+                  <div style={{ fontSize: '11.5px', color: '#00f2fe', fontFamily: 'var(--font-mono)' }}>
+                    File: {selectedFinding.affectedComponent || (selectedFinding.file ? (selectedFinding.line ? `${selectedFinding.file}:${selectedFinding.line}` : selectedFinding.file) : 'src/app.js')}
                   </div>
                 </div>
 
                 <button
                   onClick={() => setActiveDrawerFinding(selectedFinding)}
                   className="btn btn-primary btn-sm"
+                  style={{ fontSize: '11px', height: '28px', gap: '5px' }}
                 >
                   <span>Full Triage View</span>
-                  <ExternalLink size={13} />
+                  <ExternalLink size={12} />
                 </button>
               </div>
 
               {/* Description */}
-              <div style={{ padding: '12px', borderRadius: '8px', background: '#090e1f', border: '1px solid #141f38', fontSize: '13px', color: '#cbd5e1', lineHeight: 1.5 }}>
-                {selectedFinding.description}
+              <div style={{ padding: '10px 14px', borderRadius: '6px', background: '#040005', border: '1.5px solid #28081c', fontSize: '12px', color: '#cbd5e1', lineHeight: 1.5 }}>
+                {selectedFinding.description || 'Static code analysis engine identified a high-risk tainted variable flow reaching a critical execution sink.'}
               </div>
 
-              {/* Code Patch Diff */}
+              {/* Code Snippet */}
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 800, color: '#10b981', textTransform: 'uppercase', marginBottom: '8px' }}>
-                  Automated Patch Proposal
+                <div style={{ fontSize: '11px', fontWeight: 900, color: '#00f2fe', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '6px' }}>
+                  VULNERABLE AST SINK / CODE SNIPPET
                 </div>
                 <div
                   style={{
-                    background: '#040711',
-                    border: '1px solid #162242',
-                    borderRadius: '8px',
-                    padding: '16px',
+                    background: '#020003',
+                    border: '1.5px solid #28081c',
+                    borderRadius: '6px',
+                    padding: '14px',
                     fontFamily: 'var(--font-mono)',
-                    fontSize: '12.5px',
-                    lineHeight: 1.6
+                    fontSize: '11.5px',
+                    lineHeight: 1.6,
+                    color: '#38bdf8',
+                    whiteSpace: 'pre-wrap',
+                    overflowX: 'auto'
                   }}
                 >
-                  {selectedFinding.patchDiff ? (
-                    selectedFinding.patchDiff.split('\n').map((line, idx) => {
-                      const isAdd = line.startsWith('+');
-                      const isDel = line.startsWith('-');
-                      return (
-                        <div
-                          key={idx}
-                          style={{
-                            color: isAdd ? '#10b981' : isDel ? '#ff3366' : '#64748b',
-                            background: isAdd ? 'rgba(16, 185, 129, 0.1)' : isDel ? 'rgba(255, 51, 102, 0.1)' : 'transparent'
-                          }}
-                        >
-                          {line}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div style={{ color: '#64748b' }}>No automated diff available.</div>
-                  )}
+                  {getFindingCodeSnippet(selectedFinding)}
                 </div>
               </div>
 
-              {/* AI Recommendation */}
-              <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(0, 242, 254, 0.05)', border: '1px solid rgba(0, 242, 254, 0.2)', fontSize: '12px', color: '#e2e8f0' }}>
-                <strong style={{ color: '#00f2fe' }}>AI Rule Fix: </strong>
-                {selectedFinding.aiAnalysis?.recommendation || selectedFinding.remediation}
+              {/* Remediation */}
+              <div style={{ padding: '10px 14px', borderRadius: '6px', background: 'rgba(0, 255, 136, 0.08)', border: '1.5px solid #00ff88', fontSize: '11.5px', color: '#f8fafc' }}>
+                <strong style={{ color: '#00ff88' }}>Remediation Guidance: </strong>
+                {getFindingRemediation(selectedFinding)}
               </div>
             </div>
           )}
