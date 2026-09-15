@@ -284,6 +284,15 @@ export function Assessments({ onSelectFinding }) {
   const secretsCount = scanFindings.filter(f => (f.source?.toUpperCase() === 'SECRETS' || f.scanner?.includes('gitleaks'))).length;
   const intelCount = scanFindings.filter(f => (f.source?.toUpperCase().includes('INTEL') || f.scanner?.includes('headers') || f.scanner?.includes('nuclei'))).length;
 
+  const displayScore = scanFindings.length > 0
+    ? calculateFindingsScore(scanFindings)
+    : (selectedAssessment?.overallScore !== undefined
+        ? selectedAssessment.overallScore
+        : (typeof selectedAssessment?.overall_risk_score === 'number' && selectedAssessment.overall_risk_score > 0
+            ? Math.max(10, Math.round(100 - selectedAssessment.overall_risk_score))
+            : (typeof selectedAssessment?.riskScore === 'number' && selectedAssessment.riskScore > 0 ? Math.max(10, Math.round(100 - selectedAssessment.riskScore)) : 85)));
+  const displayPosture = getScorePosture(displayScore);
+
   return (
     <div className="page-container" style={{ maxWidth: '1600px' }}>
       {/* Top Banner */}
