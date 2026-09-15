@@ -10,7 +10,10 @@ import {
   calculateIntegratedOverallScore,
   getScorePosture,
   getFindingModule,
-  filterModuleFindings
+  filterModuleFindings,
+  getFindingCodeSnippet,
+  getFindingRemediation,
+  getFindingThreatScenario
 } from '../utils/securityScore';
 import {
   mockDashboardSummary,
@@ -31,23 +34,38 @@ function formatFinding(f) {
     ? String(f.severity).toUpperCase() 
     : (f.severity_level ? String(f.severity_level).toUpperCase() : (rawRisk >= 85 ? 'CRITICAL' : rawRisk >= 65 ? 'HIGH' : rawRisk >= 35 ? 'MEDIUM' : 'LOW'));
 
+  const fileStr = f.file || (f.affectedComponent ? f.affectedComponent.split(':')[0] : null);
+  const lineNum = f.line || (f.affectedComponent && f.affectedComponent.includes(':') ? parseInt(f.affectedComponent.split(':')[1]) : null);
+  const cweStr = (f.cwe && Array.isArray(f.cwe) && f.cwe.length > 0) ? f.cwe[0] : (f.cwe || null);
+  const cveStr = (f.cves && Array.isArray(f.cves) && f.cves.length > 0) ? f.cves[0] : (f.cve || null);
+
+  const codeSnippet = getFindingCodeSnippet(f);
+  const remediationText = getFindingRemediation(f);
+  const threatScenarioText = getFindingThreatScenario(f);
+
   return {
     ...f,
     severity: computedSeverity,
-    affectedComponent: f.file ? (f.line ? `${f.file}:${f.line}` : f.file) : (f.endpoint || 'Global Target Scope'),
-    asset: f.file ? f.file.split('/')[0] : (f.endpoint || 'Main Ingress'),
+    file: fileStr,
+    line: lineNum,
+    affectedComponent: fileStr ? (lineNum ? `${fileStr}:${lineNum}` : fileStr) : (f.endpoint || 'Global Target Scope'),
+    asset: fileStr ? fileStr.split('/')[0] : (f.endpoint || 'Main Ingress'),
     riskScore: cvssScore,
     rawRiskScore: rawRisk,
-    threatScenario: f.threat_scenario || f.threatScenario || null,
+    threatScenario: threatScenarioText,
+    threat_scenario: threatScenarioText,
     potentialImpact: f.potential_impact || f.potentialImpact || {},
     blastRadius: f.blast_radius || f.blastRadius || 'Information Disclosure',
     riskFactors: f.risk_factors || f.riskFactors || {},
-    cve: (f.cves && f.cves.length > 0) ? f.cves[0] : (f.cve || null),
-    cwe: (f.cwe && Array.isArray(f.cwe) && f.cwe.length > 0) ? f.cwe[0] : (f.cwe || null),
+    cve: cveStr,
+    cwe: cweStr,
     detected: f.created_at ? new Date(f.created_at).toLocaleDateString() : 'Just now',
     status: f.status ? (f.status.charAt(0).toUpperCase() + f.status.slice(1)) : 'Open',
-    patchDiff: f.code_snippet,
-    rawEvidenceSnippet: f.evidence
+    code_snippet: codeSnippet,
+    codeSnippet: codeSnippet,
+    patchDiff: codeSnippet,
+    remediation: remediationText,
+    rawEvidenceSnippet: f.evidence || codeSnippet
   };
 }
 
