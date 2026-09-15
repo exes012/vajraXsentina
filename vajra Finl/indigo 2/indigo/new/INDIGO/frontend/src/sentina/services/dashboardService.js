@@ -8,7 +8,9 @@ import {
   calculateCorrelationScore,
   calculateModuleScores,
   calculateIntegratedOverallScore,
-  getScorePosture
+  getScorePosture,
+  getFindingModule,
+  filterModuleFindings
 } from '../utils/securityScore';
 import {
   mockDashboardSummary,
