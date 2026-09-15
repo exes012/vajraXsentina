@@ -302,13 +302,19 @@ export function Assessments({ onSelectFinding }) {
   const secretsCount = scanFindings.filter(f => (f.source?.toUpperCase() === 'SECRETS' || f.scanner?.includes('gitleaks'))).length;
   const intelCount = scanFindings.filter(f => (f.source?.toUpperCase().includes('INTEL') || f.scanner?.includes('headers') || f.scanner?.includes('nuclei'))).length;
 
+  const totalDisplayCount = scanFindings.length > 0 
+    ? scanFindings.length 
+    : (selectedAssessment?.counts?.total || selectedAssessment?.total_findings || 0);
+
   const displayScore = scanFindings.length > 0
     ? calculateFindingsScore(scanFindings)
-    : (selectedAssessment?.overallScore !== undefined
+    : (selectedAssessment?.overallScore !== undefined && selectedAssessment?.overallScore !== 100
         ? selectedAssessment.overallScore
         : (typeof selectedAssessment?.overall_risk_score === 'number' && selectedAssessment.overall_risk_score > 0
             ? Math.max(10, Math.round(100 - selectedAssessment.overall_risk_score))
-            : (typeof selectedAssessment?.riskScore === 'number' && selectedAssessment.riskScore > 0 ? Math.max(10, Math.round(100 - selectedAssessment.riskScore)) : 85)));
+            : (selectedAssessment?.counts?.critical || selectedAssessment?.counts?.high || selectedAssessment?.counts?.medium
+                ? Math.max(10, Math.round(100 - ((selectedAssessment.counts.critical || 0) * 20 + (selectedAssessment.counts.high || 0) * 12 + (selectedAssessment.counts.medium || 0) * 5)))
+                : (selectedAssessment?.overallScore || 85))));
   const displayPosture = getScorePosture(displayScore);
 
   return (
