@@ -316,6 +316,29 @@ export function SCAView() {
                 {selectedFinding.description}
               </div>
 
+              {/* Manifest Snippet */}
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 900, color: '#00ff88', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '6px' }}>
+                  PACKAGE MANIFEST CONTEXT
+                </div>
+                <div
+                  style={{
+                    background: '#040711',
+                    border: '1px solid #162242',
+                    borderRadius: '8px',
+                    padding: '14px',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11.5px',
+                    lineHeight: 1.6,
+                    color: '#38bdf8',
+                    whiteSpace: 'pre-wrap',
+                    overflowX: 'auto'
+                  }}
+                >
+                  {getFindingCodeSnippet(selectedFinding)}
+                </div>
+              </div>
+
               {/* Version Upgrade Banner */}
               <div
                 style={{
@@ -351,14 +374,14 @@ export function SCAView() {
                     background: 'rgba(16, 185, 129, 0.15)'
                   }}
                 >
-                  {selectedFinding.remediation || 'Upgrade package'}
+                  {getFindingRemediation(selectedFinding)}
                 </span>
               </div>
 
               {/* AI Recommendation */}
               <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(0, 242, 254, 0.05)', border: '1px solid rgba(0, 242, 254, 0.2)', fontSize: '12px', color: '#e2e8f0' }}>
-                <strong style={{ color: '#00f2fe' }}>AI Supply Chain Note: </strong>
-                {selectedFinding.aiAnalysis?.recommendation || selectedFinding.remediation}
+                <strong style={{ color: '#00f2fe' }}>Remediation Guidance: </strong>
+                {getFindingRemediation(selectedFinding)}
               </div>
             </div>
           )}
