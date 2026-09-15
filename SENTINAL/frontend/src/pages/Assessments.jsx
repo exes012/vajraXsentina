@@ -799,8 +799,8 @@ export function Assessments({ onSelectFinding }) {
 
                   <div style={{ padding: '6px 8px', borderRadius: '4px', background: '#040005', border: '1.2px solid #28081c' }}>
                     <div style={{ fontSize: '9px', color: '#71717a' }}>Verified Target Flaws</div>
-                    <div style={{ fontSize: '14px', fontWeight: 900, fontFamily: 'var(--font-mono)', color: scanFindings.length > 0 ? '#ff1744' : '#00ff88', marginTop: '1px' }}>
-                      {scanFindings.length} Findings
+                    <div style={{ fontSize: '14px', fontWeight: 900, fontFamily: 'var(--font-mono)', color: totalDisplayCount > 0 ? '#ff1744' : '#00ff88', marginTop: '1px' }}>
+                      {totalDisplayCount} Findings
                     </div>
                   </div>
                 </div>
