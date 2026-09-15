@@ -54,13 +54,13 @@ function formatFinding(f) {
 class DashboardService {
   constructor() {
     this.findings = [...mockFindings];
-    this.assessments = [...mockAssessments];
+    this.assessments = mockAssessments.map(a => this._formatAssessment(a));
     this.projects = [...mockProjects];
     this.assets = [...mockAssets];
     this.correlatedRisks = [...mockCorrelatedRisks];
     this.reports = [...mockReports];
     this.notifications = [...mockNotifications];
-    this.activeAssessmentId = null;
+    this.activeAssessmentId = this.assessments[0]?.id || 'asm-latest';
     this.listeners = new Set();
   }
 
