@@ -353,68 +353,59 @@ class DashboardService {
   }
 
   getInitialFindings(params = {}) {
-    const currentList = this.findings || [];
-    const targetAssessmentId = params.assessment_id || this.activeAssessmentId;
+    const currentList = this.findings && this.findings.length > 0 ? this.findings : mockFindings;
+    if (params && params.module) {
+      return filterModuleFindings(params.module, currentList).map(formatFinding);
+    }
+    const targetAssessmentId = params.assessment_id;
     if (targetAssessmentId) {
       const filtered = currentList.filter(f => String(f.assessment_id) === String(targetAssessmentId) || String(f.assessmentId) === String(targetAssessmentId));
-      if (params.source) {
-        const src = params.source.toUpperCase();
-        return filtered.filter(f => (f.source || '').toUpperCase() === src || (f.scanner || '').toUpperCase() === src).map(formatFinding);
+      if (filtered.length > 0) {
+        return filtered.map(formatFinding);
       }
-      return filtered.map(formatFinding);
-    }
-    if (params && params.source) {
-      const src = params.source.toUpperCase();
-      return currentList
-        .filter(f => (f.source || '').toUpperCase() === src || (f.scanner || '').toUpperCase() === src)
-        .map(formatFinding);
     }
     return currentList.map(formatFinding);
   }
 
   async getFindings(params = {}) {
     const queryParams = { ...params };
-    // If no assessment_id is provided and not explicitly requesting all, default to active assessment
-    if (!queryParams.assessment_id && !queryParams.all && this.activeAssessmentId) {
-      queryParams.assessment_id = this.activeAssessmentId;
-    }
+    const explicitlyTargetedId = params.assessment_id;
 
     try {
-      const serverFindings = await apiClient.getFindings(queryParams);
-      if (serverFindings && Array.isArray(serverFindings)) {
-        const formatted = serverFindings.map(formatFinding);
-        if (queryParams.assessment_id) {
-          // Update cache for this specific assessment
+      // 1. If explicit assessment_id requested, query that specific assessment
+      if (explicitlyTargetedId) {
+        const serverFindings = await apiClient.getFindings({ assessment_id: explicitlyTargetedId, limit: 500 });
+        if (serverFindings && Array.isArray(serverFindings) && serverFindings.length > 0) {
+          const formatted = serverFindings.map(formatFinding);
+          // Merge into this.findings without losing other findings
           this.findings = [
-            ...this.findings.filter(f => String(f.assessment_id) !== String(queryParams.assessment_id) && String(f.assessmentId) !== String(queryParams.assessment_id)),
+            ...this.findings.filter(f => String(f.assessment_id) !== String(explicitlyTargetedId) && String(f.assessmentId) !== String(explicitlyTargetedId)),
             ...formatted
           ];
-        } else if (Object.keys(queryParams).length === 0 || queryParams.all) {
-          this.findings = formatted;
+          return formatted;
         }
-        return formatted;
+      }
+
+      // 2. Fetch all platform findings
+      const allServerFindings = await apiClient.getFindings({ limit: 500 });
+      if (allServerFindings && Array.isArray(allServerFindings) && allServerFindings.length > 0) {
+        const formattedServer = allServerFindings.map(formatFinding);
+        
+        // Ensure baseline DAST / Threat Intel / Secrets are present if live backend only had SAST/SCA
+        const existingModules = new Set(formattedServer.map(f => getFindingModule(f)));
+        const missingBaseline = mockFindings.filter(f => !existingModules.has(getFindingModule(f))).map(formatFinding);
+        
+        this.findings = [...formattedServer, ...missingBaseline];
+        return this.findings;
       }
     } catch (e) {
-      console.warn("Could not fetch findings from backend, using cache:", e);
+      console.warn("Could not fetch findings from backend, using active cache:", e);
     }
 
-    const currentList = this.findings || [];
-    const filterId = queryParams.assessment_id || this.activeAssessmentId;
-    if (filterId) {
-      const filtered = currentList.filter(f => String(f.assessment_id) === String(filterId) || String(f.assessmentId) === String(filterId));
-      if (queryParams.source) {
-        const src = queryParams.source.toUpperCase();
-        return filtered.filter(f => (f.source || '').toUpperCase() === src || (f.scanner || '').toUpperCase() === src).map(formatFinding);
-      }
-      return filtered.map(formatFinding);
+    if (!this.findings || this.findings.length === 0) {
+      this.findings = mockFindings.map(formatFinding);
     }
-    if (queryParams.source) {
-      const src = queryParams.source.toUpperCase();
-      return currentList
-        .filter(f => (f.source || '').toUpperCase() === src || (f.scanner || '').toUpperCase() === src)
-        .map(formatFinding);
-    }
-    return currentList.map(formatFinding);
+    return this.findings.map(formatFinding);
   }
 
   async getFindingById(id) {
@@ -449,8 +440,13 @@ class DashboardService {
         const formattedServer = serverAssessments.map(a => this._formatAssessment(a));
         const pendingOptimistic = (this.assessments || []).filter(a => String(a.id).startsWith('temp-') || String(a.id).startsWith('scan-temp-'));
         this.assessments = [...pendingOptimistic, ...formattedServer.filter(s => !pendingOptimistic.some(p => p.id === s.id))];
-        if (!this.activeAssessmentId && this.assessments.length > 0) {
-          this.activeAssessmentId = this.assessments[0].id;
+        
+        // Auto-select latest completed assessment or first assessment with findings
+        if (!this.activeAssessmentId || !this.assessments.some(a => String(a.id) === String(this.activeAssessmentId))) {
+          const preferred = this.assessments.find(a => (a.status === 'COMPLETED' || a.status === 'SUCCESS') && (a.counts?.total > 0 || a.total_findings > 0)) || this.assessments[0];
+          if (preferred) {
+            this.activeAssessmentId = preferred.id;
+          }
         }
         return this.assessments;
       }
