@@ -137,6 +137,18 @@ export function Assessments({ onSelectFinding }) {
     }
 
     loadScanFindings();
+
+    // Periodic refresh for active assessments
+    const findingsInterval = setInterval(() => {
+      if (selectedAssessment?.id && !String(selectedAssessment.id).startsWith('temp-') && !String(selectedAssessment.id).startsWith('scan-temp-')) {
+        loadScanFindings();
+      }
+    }, 2000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(findingsInterval);
+    };
   }, [selectedAssessment?.id, selectedAssessment?.status, selectedAssessment?.counts?.total]);
 
   const handleStartNewScan = async (config) => {
@@ -232,7 +244,12 @@ export function Assessments({ onSelectFinding }) {
       }))
     : [];
 
-  const isRunning = selectedAssessment && selectedAssessment.status !== 'COMPLETED' && selectedAssessment.status !== 'FAILED' && selectedAssessment.status !== 'CANCELLED';
+  const asmStatus = String(selectedAssessment?.status || '').toUpperCase();
+  const isRunning = Boolean(selectedAssessment) && 
+    asmStatus !== 'COMPLETED' && 
+    asmStatus !== 'SUCCESS' && 
+    asmStatus !== 'FAILED' && 
+    asmStatus !== 'CANCELLED';
 
   // Filter scan findings by module
   const filteredFindings = scanFindings.filter((f) => {
