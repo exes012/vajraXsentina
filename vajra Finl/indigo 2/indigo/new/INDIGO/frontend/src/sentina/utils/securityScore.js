@@ -36,48 +36,152 @@ export function calculateCorrelationScore(correlatedRisks = []) {
 }
 
 /**
+ * Identify specific module category for any finding
+ */
+export function getFindingModule(f) {
+  if (!f) return 'sast';
+  const source = (f.source || '').toUpperCase();
+  const scanner = (f.scanner || '').toLowerCase();
+  const category = (f.category || '').toLowerCase();
+  const title = (f.title || '').toLowerCase();
+  const detectedBy = Array.isArray(f.detected_by)
+    ? f.detected_by.join(' ').toLowerCase()
+    : (f.detected_by || '').toLowerCase();
+
+  // 1. Secrets & Credentials
+  if (
+    source === 'SECRETS' ||
+    source === 'SECRET' ||
+    scanner.includes('gitleaks') ||
+    scanner.includes('secret') ||
+    detectedBy.includes('gitleaks') ||
+    detectedBy.includes('secret') ||
+    category.includes('secret') ||
+    category.includes('credential') ||
+    category.includes('private key') ||
+    category.includes('token') ||
+    Boolean(f.secret_type) ||
+    title.includes('secret') ||
+    title.includes('token') ||
+    title.includes('credential') ||
+    title.includes('private key') ||
+    title.includes('api key') ||
+    title.includes('aws access key') ||
+    title.includes('exposed secret')
+  ) {
+    return 'secrets';
+  }
+
+  // 2. SCA (Software Composition Analysis / Dependencies)
+  if (
+    source === 'SCA' ||
+    source === 'DEPS' ||
+    source === 'DEPENDENCY' ||
+    source === 'DEPENDENCIES' ||
+    scanner.includes('osv') ||
+    scanner.includes('dependency') ||
+    scanner.includes('safety') ||
+    detectedBy.includes('osv') ||
+    detectedBy.includes('dependency') ||
+    category.includes('dependency') ||
+    category.includes('vulnerable dependency') ||
+    category.includes('supply chain') ||
+    Boolean(f.package) ||
+    Boolean(f.package_name) ||
+    Boolean(f.packageName) ||
+    title.toLowerCase().startsWith('vulnerable dependency') ||
+    (f.file && (
+      f.file.endsWith('package.json') ||
+      f.file.endsWith('package-lock.json') ||
+      f.file.endsWith('requirements.txt') ||
+      f.file.endsWith('yarn.lock') ||
+      f.file.endsWith('pnpm-lock.yaml') ||
+      f.file.endsWith('pom.xml') ||
+      f.file.endsWith('go.mod') ||
+      f.file.endsWith('go.sum') ||
+      f.file.endsWith('Gemfile')
+    ))
+  ) {
+    return 'sca';
+  }
+
+  // 3. Threat Intel / SSL / Nuclei / Security Headers
+  if (
+    source === 'INTEL' ||
+    source === 'THREAT_INTEL' ||
+    source === 'THREAT_INTELLIGENCE' ||
+    source === 'SSL' ||
+    source === 'TLS' ||
+    source === 'NUCLEI' ||
+    scanner.includes('nuclei') ||
+    scanner.includes('ssl') ||
+    scanner.includes('tls') ||
+    scanner.includes('header') ||
+    scanner.includes('testssl') ||
+    detectedBy.includes('nuclei') ||
+    detectedBy.includes('ssl') ||
+    detectedBy.includes('header') ||
+    category.includes('ssl') ||
+    category.includes('tls') ||
+    category.includes('certificate') ||
+    category.includes('infrastructure') ||
+    title.includes('ssl') ||
+    title.includes('tls') ||
+    title.includes('cipher') ||
+    title.includes('hsts') ||
+    title.includes('strict-transport-security') ||
+    title.includes('content security policy') ||
+    title.includes('x-content-type-options') ||
+    title.includes('referrer-policy') ||
+    title.includes('permissions-policy')
+  ) {
+    return 'threat_intel';
+  }
+
+  // 4. DAST (Dynamic Application Security Testing / Runtime Web)
+  if (
+    source === 'DAST' ||
+    source === 'DYNAMIC' ||
+    source === 'WEB' ||
+    scanner.includes('zap') ||
+    scanner.includes('wapiti') ||
+    scanner.includes('nikto') ||
+    scanner.includes('fuzzer') ||
+    detectedBy.includes('zap') ||
+    detectedBy.includes('wapiti') ||
+    detectedBy.includes('nikto') ||
+    Boolean(f.endpoint) ||
+    category.includes('session management') ||
+    category.includes('cookie') ||
+    category.includes('runtime') ||
+    category.includes('clickjacking') ||
+    title.includes('cookie') ||
+    title.includes('clickjacking') ||
+    title.includes('fuzzing') ||
+    title.includes('x-frame-options')
+  ) {
+    return 'dast';
+  }
+
+  // 5. SAST (Static Application Security Testing / Code Analysis)
+  return 'sast';
+}
+
+/**
  * Extract findings specifically belonging to a module category
  */
 export function filterModuleFindings(moduleType, allFindings = []) {
   if (!Array.isArray(allFindings)) return [];
   const type = (moduleType || '').toLowerCase();
+  if (type === 'all') return allFindings;
 
-  switch (type) {
-    case 'sast':
-      return allFindings.filter(f => {
-        const src = (f.source || f.scanner || f.category || '').toUpperCase();
-        return src === 'SAST' || src === 'SEMGREP' || (Boolean(f.file) && !f.endpoint && !f.package);
-      });
-
-    case 'dast':
-      return allFindings.filter(f => {
-        const src = (f.source || f.scanner || f.category || '').toUpperCase();
-        return src === 'DAST' || src === 'ZAP' || src === 'WAPITI' || src === 'WEB' || Boolean(f.endpoint);
-      });
-
-    case 'sca':
-      return allFindings.filter(f => {
-        const src = (f.source || f.scanner || f.category || '').toUpperCase();
-        return src === 'SCA' || src === 'DEPENDENCY' || src === 'OSV' || Boolean(f.package) || (f.cve && !f.file && !f.endpoint);
-      });
-
-    case 'secrets':
-      return allFindings.filter(f => {
-        const src = (f.source || f.scanner || f.category || '').toUpperCase();
-        return src.includes('SECRET') || src === 'GITLEAKS' || Boolean(f.secret_type) || (f.title || '').toLowerCase().includes('secret') || (f.title || '').toLowerCase().includes('token');
-      });
-
-    case 'threat_intel':
-    case 'threatintel':
-    case 'ssl':
-      return allFindings.filter(f => {
-        const src = (f.source || f.scanner || f.category || '').toUpperCase();
-        return src.includes('THREAT') || src === 'SSL' || src === 'TLS' || src === 'NUCLEI' || src === 'TESTSSL' || (f.title || '').toLowerCase().includes('ssl') || (f.title || '').toLowerCase().includes('cipher');
-      });
-
-    default:
-      return allFindings;
-  }
+  return allFindings.filter(f => {
+    const mod = getFindingModule(f);
+    if (type === 'threatintel' || type === 'ssl' || type === 'nuclei') {
+      return mod === 'threat_intel';
+    }
+    return mod === type;
+  });
 }
 
 /**
