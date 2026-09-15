@@ -110,9 +110,11 @@ export const apiClient = {
 
   // Auth
   login(username, password) {
+    const userStr = username || 'admin';
+    const emailStr = userStr.includes('@') ? userStr : `${userStr}@sentinal.security`;
     return this.request('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username: userStr, email: emailStr, password })
     });
   },
 
