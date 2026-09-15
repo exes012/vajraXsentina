@@ -36,8 +36,23 @@ import { ScanFailureModal } from '../components/ScanFailureModal';
 import { getScorePosture, calculateFindingsScore } from '../utils/securityScore';
 
 export function Assessments({ onSelectFinding }) {
-  const [assessments, setAssessments] = useState([]);
-  const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [assessments, setAssessments] = useState(() => {
+    const list = dashboardService.assessments;
+    if (list && list.length > 0) return list;
+    return mockAssessments.map(a => dashboardService._formatAssessment(a));
+  });
+
+  const [selectedAssessment, setSelectedAssessment] = useState(() => {
+    const list = (dashboardService.assessments && dashboardService.assessments.length > 0)
+      ? dashboardService.assessments
+      : mockAssessments.map(a => dashboardService._formatAssessment(a));
+    const activeId = dashboardService.getActiveAssessmentId();
+    if (activeId) {
+      const found = list.find(a => String(a.id) === String(activeId));
+      if (found) return found;
+    }
+    return list.find(a => (a.status === 'COMPLETED' || a.status === 'SUCCESS') && a.counts?.total > 0) || list[0] || null;
+  });
   const [scanFindings, setScanFindings] = useState([]);
   const [selectedModuleFilter, setSelectedModuleFilter] = useState('ALL');
   const [activeFinding, setActiveFinding] = useState(null);
@@ -55,22 +70,25 @@ export function Assessments({ onSelectFinding }) {
     async function loadAssessments() {
       const data = await dashboardService.getAssessments();
       if (isMounted) {
-        setAssessments(data || []);
-        if (data && data.length > 0) {
+        const asms = (data && data.length > 0) ? data : (dashboardService.assessments && dashboardService.assessments.length > 0 ? dashboardService.assessments : mockAssessments.map(a => dashboardService._formatAssessment(a)));
+        setAssessments(asms);
+        if (asms && asms.length > 0) {
           setSelectedAssessment(prev => {
             const activeId = dashboardService.getActiveAssessmentId();
             if (activeId) {
-              const matched = data.find(a => String(a.id) === String(activeId));
+              const matched = asms.find(a => String(a.id) === String(activeId));
               if (matched) return matched;
             }
-            if (!prev) return data[0];
-            const updated = data.find(a => String(a.id) === String(prev.id));
-            return updated || data[0];
+            if (!prev) {
+              return asms.find(a => (a.status === 'COMPLETED' || a.status === 'SUCCESS') && a.counts?.total > 0) || asms[0];
+            }
+            const updated = asms.find(a => String(a.id) === String(prev.id));
+            return updated || asms[0];
           });
 
           // Check if any in-flight scan transitioned from RUNNING/QUEUED to FAILED
           if (!isInitialLoadRef.current) {
-            for (const asm of data) {
+            for (const asm of asms) {
               const prevStatus = prevStatusesRef.current.get(asm.id);
               if ((prevStatus === 'RUNNING' || prevStatus === 'QUEUED' || prevStatus?.includes('RUNNING')) && asm.status === 'FAILED') {
                 if (!String(asm.id).startsWith('temp-') && !String(asm.id).startsWith('scan-temp-')) {
@@ -83,7 +101,7 @@ export function Assessments({ onSelectFinding }) {
 
           // Record current statuses
           const newMap = new Map();
-          for (const asm of data) {
+          for (const asm of asms) {
             newMap.set(asm.id, asm.status);
           }
           prevStatusesRef.current = newMap;
@@ -153,6 +171,7 @@ export function Assessments({ onSelectFinding }) {
   }, [selectedAssessment?.id, selectedAssessment?.status, selectedAssessment?.counts?.total]);
 
   const handleStartNewScan = async (config) => {
+    setShowNewModal(false);
     // 1. Instantly reset findings for the hit target URL / repo
     setScanFindings([]);
     // 2. Scroll to top so user sees the active cockpit, banner and live terminal stream
@@ -163,15 +182,14 @@ export function Assessments({ onSelectFinding }) {
       if (newAsm) {
         dashboardService.setActiveAssessmentId(newAsm.id);
         setSelectedAssessment(newAsm);
-        const data = await dashboardService.getAssessments();
-        setAssessments(data || []);
+        setAssessments([...dashboardService.assessments]);
       }
     } catch (err) {
       console.error('Failed to trigger scan:', err);
       const data = await dashboardService.getAssessments();
-      setAssessments(data || []);
-      if (data && data.length > 0) {
-        setSelectedAssessment(data[0]);
+      setAssessments([...(data || dashboardService.assessments || [])]);
+      if (dashboardService.assessments.length > 0) {
+        setSelectedAssessment(dashboardService.assessments[0]);
       }
     }
   };
