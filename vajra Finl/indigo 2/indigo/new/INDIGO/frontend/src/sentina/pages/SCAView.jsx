@@ -369,6 +369,29 @@ export function SCAView() {
                 {selectedFinding.description}
               </div>
 
+              {/* Manifest Snippet */}
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 900, color: '#00ff88', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '6px' }}>
+                  PACKAGE MANIFEST CONTEXT
+                </div>
+                <div
+                  style={{
+                    background: '#020003',
+                    border: '1.5px solid #28081c',
+                    borderRadius: '6px',
+                    padding: '14px',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11.5px',
+                    lineHeight: 1.6,
+                    color: '#38bdf8',
+                    whiteSpace: 'pre-wrap',
+                    overflowX: 'auto'
+                  }}
+                >
+                  {getFindingCodeSnippet(selectedFinding)}
+                </div>
+              </div>
+
               {/* Version Upgrade Banner */}
               <div
                 style={{
@@ -404,14 +427,14 @@ export function SCAView() {
                     background: 'rgba(16, 185, 129, 0.15)'
                   }}
                 >
-                  {selectedFinding.remediation || 'Upgrade package'}
+                  {getFindingRemediation(selectedFinding)}
                 </span>
               </div>
 
               {/* AI Recommendation */}
               <div style={{ padding: '10px 14px', borderRadius: '6px', background: 'rgba(0, 242, 254, 0.06)', border: '1.5px solid #00f2fe', fontSize: '11.5px', color: '#f8fafc' }}>
-                <strong style={{ color: '#00f2fe' }}>AI Supply Chain Note: </strong>
-                {selectedFinding.aiAnalysis?.recommendation || selectedFinding.remediation}
+                <strong style={{ color: '#00f2fe' }}>Remediation Guidance: </strong>
+                {getFindingRemediation(selectedFinding)}
               </div>
             </div>
           )}
