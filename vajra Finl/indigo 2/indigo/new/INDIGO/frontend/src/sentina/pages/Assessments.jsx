@@ -742,14 +742,14 @@ export function Assessments({ onSelectFinding }) {
                   <div style={{ padding: '6px 8px', borderRadius: '4px', background: '#040005', border: '1.2px solid #28081c' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: '9px', color: '#71717a' }}>Security Posture Score</span>
-                      {selectedAssessment.overallScore !== undefined && !isRunning && (
-                        <span style={{ fontSize: '8.5px', fontFamily: 'var(--font-mono)', fontWeight: 800, color: getScorePosture(selectedAssessment.overallScore).color }}>
-                          {getScorePosture(selectedAssessment.overallScore).label}
+                      {!isRunning && (
+                        <span style={{ fontSize: '8.5px', fontFamily: 'var(--font-mono)', fontWeight: 800, color: displayPosture.color }}>
+                          {displayPosture.label}
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: '16px', fontWeight: 900, fontFamily: 'var(--font-mono)', color: isRunning ? '#00f2fe' : getScorePosture(selectedAssessment.overallScore || 85).color, marginTop: '1px' }}>
-                      {selectedAssessment.overallScore || (isRunning ? 'Calculating...' : '85')} / 100
+                    <div style={{ fontSize: '16px', fontWeight: 900, fontFamily: 'var(--font-mono)', color: isRunning ? '#00f2fe' : displayPosture.color, marginTop: '1px' }}>
+                      {isRunning ? 'Calculating...' : `${displayScore} / 100`}
                     </div>
                   </div>
 
