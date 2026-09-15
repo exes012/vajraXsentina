@@ -32,7 +32,7 @@ import { SeverityBadge } from '../components/SeverityBadge';
 import { FindingDrawer } from '../components/FindingDrawer';
 import { ReportViewerModal } from '../components/ReportViewerModal';
 import { ScanFailureModal } from '../components/ScanFailureModal';
-import { getScorePosture } from '../utils/securityScore';
+import { getScorePosture, calculateFindingsScore } from '../utils/securityScore';
 
 export function Assessments({ onSelectFinding }) {
   const [assessments, setAssessments] = useState([]);
