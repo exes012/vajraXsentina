@@ -14,8 +14,7 @@ import {
 } from 'lucide-react';
 import { dashboardService } from '../services/dashboardService';
 import { SeverityBadge } from '../components/SeverityBadge';
-import { FindingDrawer } from '../components/FindingDrawer';
-import { calculateFindingsScore, filterModuleFindings, getScorePosture } from '../utils/securityScore';
+import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
 export function SASTView() {
   const [findings, setFindings] = useState(() => filterModuleFindings('sast', dashboardService.getInitialFindings({ module: 'sast' })));
