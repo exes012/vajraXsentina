@@ -443,7 +443,7 @@ class DashboardService {
   async getAssessments(projectId = null) {
     try {
       const serverAssessments = await apiClient.getAssessments(projectId);
-      if (serverAssessments && Array.isArray(serverAssessments)) {
+      if (serverAssessments && Array.isArray(serverAssessments) && serverAssessments.length > 0) {
         const formattedServer = serverAssessments.map(a => this._formatAssessment(a));
         const pendingOptimistic = (this.assessments || []).filter(a => String(a.id).startsWith('temp-') || String(a.id).startsWith('scan-temp-'));
         this.assessments = [...pendingOptimistic, ...formattedServer.filter(s => !pendingOptimistic.some(p => p.id === s.id))];
@@ -454,6 +454,9 @@ class DashboardService {
       }
     } catch (e) {
       console.warn("Could not fetch assessments from backend:", e);
+    }
+    if (!this.assessments || this.assessments.length === 0) {
+      this.assessments = mockAssessments.map(a => this._formatAssessment(a));
     }
     return (this.assessments || []).map(a => this._formatAssessment(a));
   }
