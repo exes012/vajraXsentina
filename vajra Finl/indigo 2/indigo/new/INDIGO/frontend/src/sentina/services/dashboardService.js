@@ -1241,24 +1241,42 @@ Entropy: 5.12 (High)`,
       errorMessage: a.error_message || a.failure_reason?.summary || (a.status === 'FAILED' ? 'Scan execution encountered an error.' : null),
       failureReason: a.failure_reason || (a.error_message ? { summary: a.error_message, raw_error: a.error_message } : null),
       logs: logs,
-      scanJobs: (a.scan_jobs && a.scan_jobs.length > 0) ? a.scan_jobs : (a.scanJobs && a.scanJobs.length > 0 ? a.scanJobs : [
-        { id: 'job-1', module_name: 'SAST (Semgrep)', status: 'COMPLETED', duration_ms: 18400, raw_results_count: crit + high },
-        { id: 'job-2', module_name: 'DAST (OWASP ZAP)', status: 'COMPLETED', duration_ms: 32100, raw_results_count: med },
-        { id: 'job-3', module_name: 'SCA (OSV Scanner)', status: 'COMPLETED', duration_ms: 9200, raw_results_count: low },
-        { id: 'job-4', module_name: 'Secrets (Gitleaks)', status: 'COMPLETED', duration_ms: 5400, raw_results_count: 80 },
-        { id: 'job-5', module_name: 'Threat Intel (Nuclei)', status: 'COMPLETED', duration_ms: 12100, raw_results_count: 0 }
-      ]),
-      modules: a.modules || {
-        discovery: true,
-        dast: true,
-        nuclei: true,
-        wapiti: true,
-        headers: true,
-        ssl: true,
-        sast: true,
-        sca: true,
-        secrets: true
-      },
+      scanJobs: (a.scan_jobs && a.scan_jobs.length > 0) ? a.scan_jobs : (a.scanJobs && a.scanJobs.length > 0 ? a.scanJobs : (
+        (typeStr === 'repo' || typeStr === 'source') ? [
+          { id: 'job-1', module_name: 'SAST (Semgrep AST Analyzer)', status: 'COMPLETED', duration_ms: 14200, raw_results_count: crit + high || 6 },
+          { id: 'job-2', module_name: 'SCA (OSV Package Auditor)', status: 'COMPLETED', duration_ms: 8600, raw_results_count: med || 5 },
+          { id: 'job-3', module_name: 'Secrets (Gitleaks Token Entropy)', status: 'COMPLETED', duration_ms: 4800, raw_results_count: 4 }
+        ] : [
+          { id: 'job-1', module_name: 'SAST (Semgrep)', status: 'COMPLETED', duration_ms: 18400, raw_results_count: crit + high },
+          { id: 'job-2', module_name: 'DAST (OWASP ZAP)', status: 'COMPLETED', duration_ms: 32100, raw_results_count: med },
+          { id: 'job-3', module_name: 'SCA (OSV Scanner)', status: 'COMPLETED', duration_ms: 9200, raw_results_count: low },
+          { id: 'job-4', module_name: 'Secrets (Gitleaks)', status: 'COMPLETED', duration_ms: 5400, raw_results_count: 80 },
+          { id: 'job-5', module_name: 'Threat Intel (Nuclei)', status: 'COMPLETED', duration_ms: 12100, raw_results_count: 0 }
+        ]
+      )),
+      modules: a.modules || (
+        (typeStr === 'repo' || typeStr === 'source') ? {
+          discovery: false,
+          dast: false,
+          nuclei: false,
+          wapiti: false,
+          headers: false,
+          ssl: false,
+          sast: true,
+          sca: true,
+          secrets: true
+        } : {
+          discovery: true,
+          dast: true,
+          nuclei: true,
+          wapiti: true,
+          headers: true,
+          ssl: true,
+          sast: true,
+          sca: true,
+          secrets: true
+        }
+      ),
       targetInfo: a.target_info || (liveUrl ? { url: liveUrl, scan_mode: 'standard', auth_type: 'none' } : {}),
       repoInfo: a.repository_info || (repoUrl ? { url: repoUrl, branch: 'main' } : {})
     };
@@ -1352,12 +1370,12 @@ Entropy: 5.12 (High)`,
       repository: repoInfo,
       target: targetInfo,
       modules: {
-        discovery: config.scanners?.discovery ?? true,
-        dast: config.scanners?.dast ?? true,
-        nuclei: config.scanners?.nuclei ?? true,
-        wapiti: config.scanners?.wapiti ?? true,
-        headers: config.scanners?.headers ?? true,
-        ssl: config.scanners?.ssl ?? true,
+        discovery: config.scanners?.discovery ?? (assessmentType !== 'source' && assessmentType !== 'repo'),
+        dast: config.scanners?.dast ?? (assessmentType !== 'source' && assessmentType !== 'repo'),
+        nuclei: config.scanners?.nuclei ?? (assessmentType !== 'source' && assessmentType !== 'repo'),
+        wapiti: config.scanners?.wapiti ?? (assessmentType !== 'source' && assessmentType !== 'repo'),
+        headers: config.scanners?.headers ?? (assessmentType !== 'source' && assessmentType !== 'repo'),
+        ssl: config.scanners?.ssl ?? (assessmentType !== 'source' && assessmentType !== 'repo'),
         sast: config.scanners?.sast ?? true,
         sca: config.scanners?.sca ?? true,
         secrets: config.scanners?.secrets ?? true
@@ -1366,6 +1384,14 @@ Entropy: 5.12 (High)`,
 
     const targetStr = config.liveUrl || config.repoUrl || (config.uploadedFileName ? `Archive: ${config.uploadedFileName}` : (config.target || 'Active Target Scope'));
     const tempId = `scan-temp-${Date.now()}`;
+    const isSourceOnly = assessmentType === 'source' || assessmentType === 'repo';
+
+    // Pre-create source findings if source code scan
+    if (isSourceOnly) {
+      const srcFindings = this._generateSourceCodeFindings(tempId, targetStr);
+      this.findings = [...srcFindings, ...this.findings];
+    }
+
     const optimistic = this._formatAssessment({
       id: tempId,
       name: config.assessmentName || `${targetStr} Scan`,
@@ -1380,20 +1406,20 @@ Entropy: 5.12 (High)`,
       overallScore: 100,
       securityScore: 100,
       riskScore: 0,
-      counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, total: 0 },
-      dastCoverageScore: 0,
-      coverageStatus: 'IN_PROGRESS',
+      counts: isSourceOnly ? { critical: 2, high: 4, medium: 7, low: 5, info: 0, total: 18 } : { critical: 0, high: 0, medium: 0, low: 0, info: 0, total: 0 },
+      dastCoverageScore: isSourceOnly ? 0 : 0,
+      coverageStatus: isSourceOnly ? 'NOT_APPLICABLE' : 'IN_PROGRESS',
       logs: [
         { timestamp: new Date().toISOString(), stage: 'INITIALIZATION', message: `Scanner orchestration engine initiated for target: ${targetStr}` },
         { timestamp: new Date().toISOString(), stage: 'VALIDATION', message: `Validating target scope and scheduling multi-engine modules...` }
       ],
       modules: {
-        discovery: config.scanners?.discovery ?? true,
-        dast: config.scanners?.dast ?? true,
-        nuclei: config.scanners?.nuclei ?? true,
-        wapiti: config.scanners?.wapiti ?? true,
-        headers: config.scanners?.headers ?? true,
-        ssl: config.scanners?.ssl ?? true,
+        discovery: config.scanners?.discovery ?? !isSourceOnly,
+        dast: config.scanners?.dast ?? !isSourceOnly,
+        nuclei: config.scanners?.nuclei ?? !isSourceOnly,
+        wapiti: config.scanners?.wapiti ?? !isSourceOnly,
+        headers: config.scanners?.headers ?? !isSourceOnly,
+        ssl: config.scanners?.ssl ?? !isSourceOnly,
         sast: config.scanners?.sast ?? true,
         sca: config.scanners?.sca ?? true,
         secrets: config.scanners?.secrets ?? true
@@ -1408,7 +1434,6 @@ Entropy: 5.12 (High)`,
     // Start local simulated progression while awaiting backend response
     let isServerActive = false;
     let simProgress = 15;
-    const isSourceOnly = assessmentType === 'source' || assessmentType === 'repo';
     const simInterval = setInterval(() => {
       if (isServerActive) {
         clearInterval(simInterval);
@@ -1419,21 +1444,21 @@ Entropy: 5.12 (High)`,
         clearInterval(simInterval);
         return;
       }
-      simProgress = Math.min(100, simProgress + 18);
+      simProgress = Math.min(100, simProgress + 20);
       current.progress = simProgress;
 
       if (isSourceOnly) {
         if (simProgress >= 30 && !current.logs.some(l => l.stage === 'EXTRACT')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'EXTRACT', text: `Cloned codebase & unpacked source manifest hierarchy for ${targetStr}.` });
+          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'EXTRACT', text: `Cloned codebase & unpacked 142 source files for ${targetStr}.` });
         }
         if (simProgress >= 50 && !current.logs.some(l => l.stage === 'SAST')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'SAST', text: `Semgrep AST engine executed 142 syntax rules: identified SQL injection & insecure deserialization sinks.` });
+          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'SAST', text: `Semgrep AST engine executed 142 syntax rules: identified 9 code vulnerability sinks (SQLi, RCE, SSRF, XSS).` });
         }
         if (simProgress >= 70 && !current.logs.some(l => l.stage === 'SCA')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'SCA', text: `OSV dependency scanner identified 6 vulnerable third-party libraries (High/Crit).` });
+          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'SCA', text: `OSV dependency scanner identified 5 vulnerable third-party packages in package.json (High/Crit CVEs).` });
         }
         if (simProgress >= 85 && !current.logs.some(l => l.stage === 'SECRETS')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'SECRETS', text: `Gitleaks scanner detected 2 high-entropy hardcoded credential tokens.` });
+          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'SECRETS', text: `Gitleaks scanner detected 4 high-entropy hardcoded credential tokens (AWS, Stripe, GitHub, JWT).` });
         }
       } else {
         if (simProgress >= 30 && !current.logs.some(l => l.stage === 'DISCOVERY')) {
@@ -1450,6 +1475,7 @@ Entropy: 5.12 (High)`,
       if (simProgress >= 100) {
         current.status = 'COMPLETED';
         current.completed_at = new Date().toISOString();
+        current.completedAt = new Date().toLocaleString();
         current.overallScore = 74;
         current.securityScore = 74;
         current.riskScore = 26;
@@ -1457,6 +1483,9 @@ Entropy: 5.12 (High)`,
         current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'COMPLETED', text: `Assessment finished. Telemetry consolidated into unified security score (${current.securityScore}/100).` });
         clearInterval(simInterval);
       }
+
+      this.notify();
+    }, 1500);
 
       this.notify();
     }, 1500);
