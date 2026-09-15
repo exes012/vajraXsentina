@@ -17,21 +17,23 @@ import { FindingDrawer } from '../components/FindingDrawer';
 import { calculateFindingsScore, filterModuleFindings, getScorePosture } from '../utils/securityScore';
 
 export function SecretsView() {
-  const [findings, setFindings] = useState(() => filterModuleFindings('secrets', dashboardService.getInitialFindings()));
+  const [findings, setFindings] = useState(() => filterModuleFindings('secrets', dashboardService.getInitialFindings({ module: 'secrets' })));
   const [selectedRating, setSelectedRating] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFinding, setSelectedFinding] = useState(() => {
-    const init = filterModuleFindings('secrets', dashboardService.getInitialFindings());
+    const init = filterModuleFindings('secrets', dashboardService.getInitialFindings({ module: 'secrets' }));
     return init.length > 0 ? init[0] : null;
   });
   const [activeDrawerFinding, setActiveDrawerFinding] = useState(null);
 
   useEffect(() => {
     async function loadSecrets() {
-      const all = await dashboardService.getFindings();
+      const all = await dashboardService.getFindings({ all: true });
       const secretsFindings = filterModuleFindings('secrets', all || []);
       setFindings(secretsFindings);
-      if (secretsFindings.length > 0) setSelectedFinding(secretsFindings[0]);
+      if (secretsFindings.length > 0) {
+        setSelectedFinding(prev => (prev && secretsFindings.some(f => f.id === prev.id) ? prev : secretsFindings[0]));
+      }
     }
     loadSecrets();
     const unsubscribe = dashboardService.subscribe(loadSecrets);
