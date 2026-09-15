@@ -10257,13 +10257,24 @@ export const mockAssessments = [
   {
     id: "asm-latest",
     name: "Production Comprehensive Scan Run #42",
-    type: "COMBINED",
+    assessment_type: "combined",
     target: "https://app.company.internal + Source Code",
+    target_info: { url: "https://app.company.internal", scan_mode: "standard", auth_type: "bearer" },
+    repository_info: { provider: "github", url: "https://github.com/company/core-api", branch: "main" },
     status: "COMPLETED",
-    createdAt: new Date().toISOString(),
+    created_at: new Date(Date.now() - 3600000).toISOString(),
+    completed_at: new Date(Date.now() - 3500000).toISOString(),
     overallScore: 87,
     securityScore: 87,
-    riskScore: 13,
+    overall_risk_score: 13,
+    critical_count: 66,
+    high_count: 109,
+    medium_count: 68,
+    low_count: 44,
+    info_count: 0,
+    total_findings: 287,
+    dast_coverage_score: 84,
+    coverage_status: "COMPLETED",
     counts: { critical: 66, high: 109, medium: 68, low: 44, info: 0, total: 287 }
   }
 ];
