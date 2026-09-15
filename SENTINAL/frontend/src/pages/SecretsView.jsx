@@ -400,17 +400,19 @@ export function SecretsView() {
                     fontFamily: 'var(--font-mono)',
                     fontSize: '12.5px',
                     lineHeight: 1.6,
-                    color: '#ff3366'
+                    color: '#ff3366',
+                    whiteSpace: 'pre-wrap',
+                    overflowX: 'auto'
                   }}
                 >
-                  {selectedFinding.codeSnippet || selectedFinding.rawEvidenceSnippet || 'AWS_SECRET_ACCESS_KEY=********'}
+                  {getFindingCodeSnippet(selectedFinding)}
                 </div>
               </div>
 
               {/* AI Recommendation */}
               <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)', fontSize: '12px', color: '#e2e8f0' }}>
                 <strong style={{ color: '#f59e0b' }}>Key Revocation Playbook: </strong>
-                {selectedFinding.aiAnalysis?.recommendation || selectedFinding.remediation}
+                {getFindingRemediation(selectedFinding)}
               </div>
             </div>
           )}
