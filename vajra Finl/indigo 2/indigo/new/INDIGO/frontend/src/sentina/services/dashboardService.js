@@ -51,11 +51,11 @@ function formatFinding(f) {
 
 class DashboardService {
   constructor() {
-    this.findings = [];
+    this.findings = [...mockFindings];
     this.assessments = [...mockAssessments];
     this.projects = [...mockProjects];
     this.assets = [...mockAssets];
-    this.correlatedRisks = [];
+    this.correlatedRisks = [...mockCorrelatedRisks];
     this.reports = [...mockReports];
     this.notifications = [...mockNotifications];
     this.activeAssessmentId = null;
