@@ -462,9 +462,43 @@ export function getFindingCodeSnippet(f) {
     return `// Vulnerable Dependency manifest in ${file}\n"dependencies": {\n  "${pkgName}": "vulnerable_version"\n}`;
   }
 
-  // 12. DAST / Runtime Web Flaw
+  // 12. DAST / Runtime Web Flaws with realistic HTTP request/response traces
   if (f.source === 'DAST' || f.endpoint) {
-    return `// Dynamic HTTP Request / Response Sink at ${f.endpoint || '/'}\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n${f.evidence || 'Vulnerable HTTP response detected.'}`;
+    if (f.evidence && typeof f.evidence === 'string' && f.evidence.trim().length > 0 && !f.evidence.startsWith('Semgrep Rule:')) {
+      return f.evidence;
+    }
+    const endpoint = f.endpoint || '/';
+    if (cwe.includes('CWE-89') || title.includes('sql')) {
+      return `POST ${endpoint} HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ "username": "admin' OR 1=1--", "password": "x" }\n\nHTTP/1.1 200 OK\nContent-Type: application/json\nSet-Cookie: auth_token=eyJhbGciOi...\n\n{"status": "authenticated", "role": "superadmin"}`;
+    }
+    if (cwe.includes('CWE-78') || title.includes('command') || title.includes('rce')) {
+      return `POST ${endpoint} HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ "host": "127.0.0.1; id; cat /etc/passwd" }\n\nHTTP/1.1 200 OK\nContent-Type: text/plain\n\nuid=0(root) gid=0(root) groups=0(root)\nroot:x:0:0:root:/root:/bin/bash`;
+    }
+    if (cwe.includes('CWE-918') || title.includes('ssrf')) {
+      return `POST ${endpoint} HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ "callback_url": "http://169.254.169.254/latest/meta-data/iam/security-credentials/" }\n\nHTTP/1.1 200 OK\n\n{"roleName": "production-ecs-task-role", "AccessKeyId": "AKIA...", "SecretAccessKey": "..."}`;
+    }
+    if (cwe.includes('CWE-79') || title.includes('xss')) {
+      return `GET ${endpoint}?q=%3Cscript%3Ealert(document.domain)%3C/script%3E HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n<div class="search-results">Results for: <script>alert(document.domain)</script></div>`;
+    }
+    if (cwe.includes('CWE-639') || title.includes('idor')) {
+      return `GET ${endpoint} HTTP/1.1\nHost: target-app.internal\nAuthorization: Bearer <unauthorized_tenant_token>\n\nHTTP/1.1 200 OK\nContent-Type: application/json\n\n{"invoice_id": 1092, "customer": "Competitor Corp", "amount_due": 45000, "credit_card_last4": "4242"}`;
+    }
+    if (cwe.includes('CWE-614') || title.includes('cookie')) {
+      return `GET ${endpoint} HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nSet-Cookie: session_id=eyJhbGciOi...; Path=/; Expires=Thu, 10 Sep 2026 03:41:42 GMT\n\n[OWASP ZAP Finding]: Missing HttpOnly, Secure, and SameSite flags on Set-Cookie header.`;
+    }
+    if (cwe.includes('CWE-319') || title.includes('hsts')) {
+      return `GET ${endpoint} HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\n\n[OWASP ZAP Finding]: HTTP Strict Transport Security (HSTS) header is absent in response headers.`;
+    }
+    if (cwe.includes('CWE-1021') || title.includes('csp') || title.includes('content security policy')) {
+      return `GET ${endpoint} HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\n\n[OWASP ZAP Finding]: Content-Security-Policy (CSP) header is absent in response headers.`;
+    }
+    if (cwe.includes('CWE-1021') || title.includes('clickjacking') || title.includes('x-frame-options')) {
+      return `GET ${endpoint} HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\n\n[OWASP ZAP Finding]: X-Frame-Options / frame-ancestors header is absent. Page can be embedded in malicious iframes.`;
+    }
+    if (cwe.includes('CWE-942') || title.includes('cors')) {
+      return `OPTIONS ${endpoint} HTTP/1.1\nHost: target-app.internal\nOrigin: https://evil-attacker.com\n\nHTTP/1.1 200 OK\nAccess-Control-Allow-Origin: https://evil-attacker.com\nAccess-Control-Allow-Credentials: true`;
+    }
+    return `GET ${endpoint} HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n${f.evidence || 'Vulnerable HTTP response telemetry recorded.'}`;
   }
 
   return `// AST Sink Trace in ${file}:${line}\n${f.evidence || 'Source sink trace captured by scanner.'}`;
@@ -475,7 +509,7 @@ export function getFindingCodeSnippet(f) {
  */
 export function getFindingRemediation(f) {
   if (!f) return 'Apply input validation and follow secure coding guidelines.';
-  if (f.remediation && typeof f.remediation === 'string' && f.remediation.trim().length > 0 && !f.remediation.startsWith('Upgrade to latest')) {
+  if (f.remediation && typeof f.remediation === 'string' && f.remediation.trim().length > 0 && !f.remediation.startsWith('Upgrade to latest') && !f.remediation.startsWith('Apply context-aware')) {
     return f.remediation;
   }
   if (f.aiAnalysis?.recommendation && typeof f.aiAnalysis.recommendation === 'string' && f.aiAnalysis.recommendation.trim().length > 0) {
@@ -502,6 +536,21 @@ export function getFindingRemediation(f) {
   }
   if (cwe.includes('CWE-639') || title.includes('idor')) {
     return 'Verify that req.session.userId or req.user.id matches the owner of the requested accountId.';
+  }
+  if (cwe.includes('CWE-614') || title.includes('cookie')) {
+    return 'Add HttpOnly, Secure, and SameSite=Lax (or Strict) attributes to all Set-Cookie headers in web server and application configuration.';
+  }
+  if (cwe.includes('CWE-319') || title.includes('hsts')) {
+    return 'Add Strict-Transport-Security: max-age=31536000; includeSubDomains; preload header to all HTTPS responses.';
+  }
+  if (cwe.includes('CWE-1021') || title.includes('csp') || title.includes('content security policy')) {
+    return "Configure a strict Content-Security-Policy header: default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none';";
+  }
+  if (cwe.includes('CWE-1021') || title.includes('clickjacking') || title.includes('x-frame-options')) {
+    return "Set X-Frame-Options: DENY or Content-Security-Policy: frame-ancestors 'none' to prevent framing.";
+  }
+  if (cwe.includes('CWE-942') || title.includes('cors')) {
+    return 'Do not reflect arbitrary Origin headers when Access-Control-Allow-Credentials is true. Restrict allowed origins to an explicit whitelist.';
   }
   if (cwe.includes('CWE-328') || title.includes('md5') || title.includes('hash')) {
     return 'Use SHA-256 or SHA-512 for cryptographic hashing: crypto.createHash("sha256").update(token).digest("hex");';
