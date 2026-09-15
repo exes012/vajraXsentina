@@ -92,7 +92,7 @@ export function Assessments({ onSelectFinding }) {
 
     loadAssessments();
     const unsubscribe = dashboardService.subscribe(loadAssessments);
-    const pollInterval = setInterval(loadAssessments, 10000);
+    const pollInterval = setInterval(loadAssessments, 1500);
 
     return () => {
       isMounted = false;
@@ -136,7 +136,7 @@ export function Assessments({ onSelectFinding }) {
     }
 
     loadScanFindings();
-  }, [selectedAssessment?.id, selectedAssessment?.status, selectedAssessment?.counts?.total]);
+  }, [selectedAssessment?.id, selectedAssessment?.status, selectedAssessment?.counts?.total, selectedAssessment?.overallScore]);
 
   const handleStartNewScan = async (config) => {
     // 1. Instantly reset findings for the hit target URL / repo
