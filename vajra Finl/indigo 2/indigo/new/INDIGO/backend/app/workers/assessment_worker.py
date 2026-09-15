@@ -15,6 +15,7 @@ from app.config import settings
 from app.core.database import SessionLocal
 from app.core.logging import logger
 from app.models import Assessment, ScanJob, Finding, CorrelatedRisk, Report, Project, Asset
+from app.scanners.base import RawFinding
 from app.scanners.runner import ScannerOrchestrator
 from app.pipeline import (
     normalize_findings_list,

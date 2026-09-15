@@ -5,7 +5,7 @@ import shutil
 import json
 import asyncio
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from app.scanners.base import ScannerAdapter, RawFinding
 
 EXPOSURE_PROBES = [
