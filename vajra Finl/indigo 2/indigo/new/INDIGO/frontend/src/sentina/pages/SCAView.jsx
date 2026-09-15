@@ -14,7 +14,7 @@ import {
 import { dashboardService } from '../services/dashboardService';
 import { SeverityBadge, getRatingMeta } from '../components/SeverityBadge';
 import { FindingDrawer } from '../components/FindingDrawer';
-import { calculateFindingsScore, filterModuleFindings, getScorePosture } from '../utils/securityScore';
+import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
 export function SCAView() {
   const [findings, setFindings] = useState(() => filterModuleFindings('sca', dashboardService.getInitialFindings({ module: 'sca' })));
