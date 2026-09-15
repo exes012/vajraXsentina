@@ -53,14 +53,17 @@ function formatFinding(f) {
 
 class DashboardService {
   constructor() {
-    this.findings = [...mockFindings];
+    this.findings = [
+      ...this._generateSourceCodeFindings('asm-source-01', 'https://github.com/company/core-api (main)'),
+      ...mockFindings
+    ];
     this.assessments = mockAssessments.map(a => this._formatAssessment(a));
     this.projects = [...mockProjects];
     this.assets = [...mockAssets];
     this.correlatedRisks = [...mockCorrelatedRisks];
     this.reports = [...mockReports];
     this.notifications = [...mockNotifications];
-    this.activeAssessmentId = this.assessments[0]?.id || 'asm-latest';
+    this.activeAssessmentId = this.assessments[0]?.id || 'asm-source-01';
     this.listeners = new Set();
   }
 
