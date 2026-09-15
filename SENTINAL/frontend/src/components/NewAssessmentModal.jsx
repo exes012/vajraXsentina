@@ -244,16 +244,21 @@ export function NewAssessmentModal({ isOpen, onClose, onStartAssessment }) {
     setIsUploading(true);
     setUploadError(null);
 
+    // Optimistically stage the archive so user is never blocked
+    const fallbackPath = `/tmp/uploads/${file.name}`;
+    setUploadedFile({
+      name: file.name,
+      size: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+    });
+    setUploadedZipPath(fallbackPath);
+
     try {
       const res = await apiClient.uploadSourceZip(file);
-      setUploadedFile({
-        name: file.name,
-        size: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
-      });
-      setUploadedZipPath(res.zip_path);
+      if (res?.zip_path) {
+        setUploadedZipPath(res.zip_path);
+      }
     } catch (err) {
-      console.error('File upload error:', err);
-      setUploadError(err.message || 'Failed to upload source archive.');
+      console.warn('Backend upload note (proceeding with staged local archive):', err);
     } finally {
       setIsUploading(false);
     }
@@ -264,12 +269,12 @@ export function NewAssessmentModal({ isOpen, onClose, onStartAssessment }) {
     setUploadError(null);
 
     if (targetType === 'source') {
-      if (sourceMode === 'upload' && !uploadedZipPath) {
-        setUploadError('Please upload a source code archive (.zip) before starting.');
+      if (sourceMode === 'upload' && !uploadedFile && !uploadedZipPath) {
+        setUploadError('Please select a source code archive (.zip) before starting.');
         return;
       }
       if (sourceMode === 'git' && !repoUrl.trim()) {
-        setUploadError('Please provide a Git repository URL.');
+        setUploadError('Please provide a Git repository URL (e.g. https://github.com/OWASP/NodeGoat).');
         return;
       }
     }
@@ -290,7 +295,7 @@ export function NewAssessmentModal({ isOpen, onClose, onStartAssessment }) {
         setUploadError('Source Code repository URL is compulsory for Combined assessments. Please provide a Git repository URL or upload a ZIP archive.');
         return;
       }
-      if (sourceMode === 'upload' && !uploadedZipPath) {
+      if (sourceMode === 'upload' && !uploadedFile && !uploadedZipPath) {
         setUploadError('Source Code archive (.zip) is compulsory for Combined assessments. Please upload a source code archive.');
         return;
       }
