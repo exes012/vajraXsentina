@@ -16,7 +16,13 @@ import {
 import { dashboardService } from '../services/dashboardService';
 import { SeverityBadge, getRatingMeta } from '../components/SeverityBadge';
 import { FindingDrawer } from '../components/FindingDrawer';
-import { calculateFindingsScore, filterModuleFindings, getScorePosture } from '../utils/securityScore';
+import {
+  calculateFindingsScore,
+  filterModuleFindings,
+  getScorePosture,
+  getFindingCodeSnippet,
+  getFindingRemediation
+} from '../utils/securityScore';
 
 export function SASTView() {
   const [findings, setFindings] = useState(() => filterModuleFindings('sast', dashboardService.getInitialFindings({ module: 'sast' })));
@@ -34,7 +40,11 @@ export function SASTView() {
       const sastFindings = filterModuleFindings('sast', all || []);
       setFindings(sastFindings);
       if (sastFindings.length > 0) {
-        setSelectedFinding(prev => (prev && sastFindings.some(f => f.id === prev.id) ? prev : sastFindings[0]));
+        setSelectedFinding(prev => {
+          if (!prev) return sastFindings[0];
+          const found = sastFindings.find(f => String(f.id) === String(prev.id));
+          return found || sastFindings[0];
+        });
       }
     }
     loadSAST();
@@ -305,7 +315,7 @@ export function SASTView() {
                 </div>
               ) : (
                 filteredFindings.map((f, idx) => {
-                  const isSelected = selectedFinding?.id === f.id || (selectedFinding == null && idx === 0);
+                  const isSelected = String(selectedFinding?.id) === String(f.id) || (selectedFinding == null && idx === 0);
 
                   return (
                     <div
@@ -330,7 +340,7 @@ export function SASTView() {
                       </div>
 
                       <div style={{ fontSize: '10.5px', color: '#00f2fe', marginTop: '3px', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>
-                        {f.affectedComponent || f.filePath || 'Source Code'}
+                        {f.affectedComponent || (f.file ? (f.line ? `${f.file}:${f.line}` : f.file) : 'Source Code')}
                       </div>
                     </div>
                   );
@@ -344,15 +354,22 @@ export function SASTView() {
             <div className="cyber-card" style={{ padding: '20px', background: '#060108', border: '3px solid #360a25', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
                     <SeverityBadge severity={selectedFinding.severity || selectedFinding.rating} size="sm" />
-                    <span style={{ fontSize: '11px', color: '#c084fc', fontFamily: 'var(--font-mono)' }}>{selectedFinding.cwe}</span>
+                    <span style={{ fontSize: '11px', color: '#c084fc', fontFamily: 'var(--font-mono)' }}>
+                      {selectedFinding.cwe || 'CWE Flaw'}
+                    </span>
+                    {selectedFinding.cve && (
+                      <span style={{ fontSize: '11px', color: '#fbbf24', fontFamily: 'var(--font-mono)' }}>
+                        {selectedFinding.cve}
+                      </span>
+                    )}
                   </div>
                   <h2 style={{ fontSize: '16px', fontWeight: 900, color: '#f8fafc', margin: '4px 0' }}>
                     {selectedFinding.title}
                   </h2>
                   <div style={{ fontSize: '11.5px', color: '#00f2fe', fontFamily: 'var(--font-mono)' }}>
-                    File: {selectedFinding.affectedComponent || selectedFinding.file}
+                    File: {selectedFinding.affectedComponent || (selectedFinding.file ? (selectedFinding.line ? `${selectedFinding.file}:${selectedFinding.line}` : selectedFinding.file) : 'src/app.js')}
                   </div>
                 </div>
 
@@ -368,7 +385,7 @@ export function SASTView() {
 
               {/* Description */}
               <div style={{ padding: '10px 14px', borderRadius: '6px', background: '#040005', border: '1.5px solid #28081c', fontSize: '12px', color: '#cbd5e1', lineHeight: 1.5 }}>
-                {selectedFinding.description}
+                {selectedFinding.description || 'Static code analysis engine identified a high-risk tainted variable flow reaching a critical execution sink.'}
               </div>
 
               {/* Code Snippet */}
@@ -385,19 +402,19 @@ export function SASTView() {
                     fontFamily: 'var(--font-mono)',
                     fontSize: '11.5px',
                     lineHeight: 1.6,
-                    color: '#94a3b8',
+                    color: '#38bdf8',
                     whiteSpace: 'pre-wrap',
                     overflowX: 'auto'
                   }}
                 >
-                  {selectedFinding.patchDiff || selectedFinding.evidence || 'Source sink trace captured by Semgrep AST analyzer.'}
+                  {getFindingCodeSnippet(selectedFinding)}
                 </div>
               </div>
 
               {/* Remediation */}
               <div style={{ padding: '10px 14px', borderRadius: '6px', background: 'rgba(0, 255, 136, 0.08)', border: '1.5px solid #00ff88', fontSize: '11.5px', color: '#f8fafc' }}>
                 <strong style={{ color: '#00ff88' }}>Remediation Guidance: </strong>
-                {selectedFinding.remediation || selectedFinding.aiAnalysis?.recommendation || 'Apply strict input sanitization and use parameterized APIs.'}
+                {getFindingRemediation(selectedFinding)}
               </div>
             </div>
           )}
@@ -415,3 +432,4 @@ export function SASTView() {
 }
 
 export default SASTView;
+
