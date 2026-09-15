@@ -18,7 +18,7 @@ import {
 import { dashboardService } from '../services/dashboardService';
 import { SeverityBadge } from '../components/SeverityBadge';
 import { FindingDrawer } from '../components/FindingDrawer';
-import { calculateFindingsScore, filterModuleFindings, getScorePosture } from '../utils/securityScore';
+import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
 export function DASTView() {
   const [findings, setFindings] = useState(() => filterModuleFindings('dast', dashboardService.getInitialFindings({ module: 'dast' })));
@@ -36,7 +36,7 @@ export function DASTView() {
       const dastFindings = filterModuleFindings('dast', all || []);
       setFindings(dastFindings);
       if (dastFindings.length > 0) {
-        setSelectedFinding(prev => (prev && dastFindings.some(f => f.id === prev.id) ? prev : dastFindings[0]));
+        setSelectedFinding(prev => (prev && dastFindings.some(f => String(f.id) === String(prev.id)) ? prev : dastFindings[0]));
       }
     }
     loadDAST();
