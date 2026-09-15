@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { dashboardService } from '../services/dashboardService';
 import { SeverityBadge } from '../components/SeverityBadge';
+import { FindingDrawer } from '../components/FindingDrawer';
 import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
 export function SASTView() {
