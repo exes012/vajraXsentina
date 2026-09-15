@@ -31,6 +31,7 @@ import {
   AlertOctagon
 } from 'lucide-react';
 import { SeverityBadge } from './SeverityBadge';
+import { getFindingCodeSnippet, getFindingRemediation, getFindingThreatScenario } from '../utils/securityScore';
 
 export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
   const [activeTab, setActiveTab] = useState('threat_impact');
@@ -40,8 +41,9 @@ export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
   if (!isOpen || !finding) return null;
 
   const handleCopyEvidence = () => {
-    if (finding.evidence) {
-      navigator.clipboard.writeText(finding.evidence);
+    const text = finding.evidence || getFindingCodeSnippet(finding);
+    if (text) {
+      navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
