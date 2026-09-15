@@ -166,6 +166,11 @@ export function Assessments({ onSelectFinding }) {
       }
     } catch (err) {
       console.error('Failed to trigger scan:', err);
+      const data = await dashboardService.getAssessments();
+      setAssessments(data || []);
+      if (data && data.length > 0) {
+        setSelectedAssessment(data[0]);
+      }
     }
   };
 
