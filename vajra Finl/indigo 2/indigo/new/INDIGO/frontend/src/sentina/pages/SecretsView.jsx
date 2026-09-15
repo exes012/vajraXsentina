@@ -14,7 +14,7 @@ import {
 import { dashboardService } from '../services/dashboardService';
 import { SeverityBadge, getRatingMeta } from '../components/SeverityBadge';
 import { FindingDrawer } from '../components/FindingDrawer';
-import { calculateFindingsScore, filterModuleFindings, getScorePosture } from '../utils/securityScore';
+import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
 export function SecretsView() {
   const [findings, setFindings] = useState(() => filterModuleFindings('secrets', dashboardService.getInitialFindings({ module: 'secrets' })));
@@ -382,19 +382,19 @@ export function SecretsView() {
                     fontFamily: 'var(--font-mono)',
                     fontSize: '11.5px',
                     lineHeight: 1.6,
-                    color: '#94a3b8',
+                    color: '#ff3366',
                     whiteSpace: 'pre-wrap',
                     overflowX: 'auto'
                   }}
                 >
-                  {selectedFinding.patchDiff || selectedFinding.evidence || 'Secret payload masked automatically by Sentina Redaction Engine: ********************'}
+                  {getFindingCodeSnippet(selectedFinding)}
                 </div>
               </div>
 
               {/* Remediation */}
               <div style={{ padding: '10px 14px', borderRadius: '6px', background: 'rgba(0, 255, 136, 0.08)', border: '1.5px solid #00ff88', fontSize: '11.5px', color: '#f8fafc' }}>
                 <strong style={{ color: '#00ff88' }}>Remediation Action: </strong>
-                {selectedFinding.remediation || 'Revoke the exposed token in cloud provider dashboard and rotate with secrets manager.'}
+                {getFindingRemediation(selectedFinding)}
               </div>
             </div>
           )}
