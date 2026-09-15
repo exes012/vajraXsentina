@@ -14,20 +14,27 @@ import { SeverityBadge } from '../components/SeverityBadge';
 import { calculateFindingsScore, filterModuleFindings, getScorePosture } from '../utils/securityScore';
 
 export function SCAView() {
-  const [findings, setFindings] = useState([]);
+  const [findings, setFindings] = useState(() => filterModuleFindings('sca', dashboardService.getInitialFindings({ module: 'sca' })));
   const [selectedSeverity, setSelectedSeverity] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFinding, setSelectedFinding] = useState(null);
+  const [selectedFinding, setSelectedFinding] = useState(() => {
+    const init = filterModuleFindings('sca', dashboardService.getInitialFindings({ module: 'sca' }));
+    return init.length > 0 ? init[0] : null;
+  });
   const [activeDrawerFinding, setActiveDrawerFinding] = useState(null);
 
   useEffect(() => {
     async function loadSCA() {
-      const all = await dashboardService.getFindings({ source: 'SCA' });
+      const all = await dashboardService.getFindings({ all: true });
       const scaFindings = filterModuleFindings('sca', all || []);
       setFindings(scaFindings);
-      if (scaFindings.length > 0) setSelectedFinding(scaFindings[0]);
+      if (scaFindings.length > 0) {
+        setSelectedFinding(prev => (prev && scaFindings.some(f => f.id === prev.id) ? prev : scaFindings[0]));
+      }
     }
     loadSCA();
+    const unsubscribe = dashboardService.subscribe(loadSCA);
+    return () => unsubscribe();
   }, []);
 
   const scaScore = calculateFindingsScore(findings);
