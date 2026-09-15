@@ -36,7 +36,7 @@ export function Sidebar({ currentTab, onTabChange, isCollapsed }) {
     async function loadTelemetry() {
       try {
         const [findings, correlated] = await Promise.all([
-          dashboardService.getFindings().catch(() => []),
+          dashboardService.getFindings({ all: true }).catch(() => []),
           dashboardService.getCorrelatedRisks().catch(() => [])
         ]);
 
