@@ -134,7 +134,11 @@ export function Assessments({ onSelectFinding }) {
     let isMounted = true;
 
     async function loadScanFindings() {
-      if (!selectedAssessment?.id || String(selectedAssessment.id).startsWith('temp-') || String(selectedAssessment.id).startsWith('scan-temp-')) {
+      if (!selectedAssessment?.id) {
+        setScanFindings([]);
+        return;
+      }
+      if (selectedAssessment.status === 'RUNNING' && (String(selectedAssessment.id).startsWith('temp-') || String(selectedAssessment.id).startsWith('scan-temp-'))) {
         setScanFindings([]);
         return;
       }
@@ -158,7 +162,7 @@ export function Assessments({ onSelectFinding }) {
 
     // Periodic refresh for active assessments
     const findingsInterval = setInterval(() => {
-      if (selectedAssessment?.id && !String(selectedAssessment.id).startsWith('temp-') && !String(selectedAssessment.id).startsWith('scan-temp-')) {
+      if (selectedAssessment?.id && selectedAssessment.status !== 'RUNNING') {
         loadScanFindings();
       }
     }, 2000);
