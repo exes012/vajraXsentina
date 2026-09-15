@@ -32,6 +32,7 @@ import {
   AlertOctagon
 } from 'lucide-react';
 import { SeverityBadge } from './SeverityBadge';
+import { getFindingCodeSnippet, getFindingRemediation, getFindingThreatScenario } from '../utils/securityScore';
 
 export function FindingDrawer({ finding, isOpen, onClose, onStatusChange }) {
   const [activeTab, setActiveTab] = useState('threat_impact');
