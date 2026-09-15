@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { dashboardService } from '../services/dashboardService';
 import { SeverityBadge } from '../components/SeverityBadge';
-import { calculateFindingsScore, filterModuleFindings, getScorePosture } from '../utils/securityScore';
+import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
 export function SCAView() {
   const [findings, setFindings] = useState(() => filterModuleFindings('sca', dashboardService.getInitialFindings({ module: 'sca' })));
