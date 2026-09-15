@@ -816,7 +816,6 @@ class DashboardService {
     };
 
     // Reflect instantly in the UI state
-    this.findings = [];
     this.assessments = [optimistic, ...this.assessments.filter(a => a.id !== tempId)];
     this.activeAssessmentId = tempId;
     this.notify();
