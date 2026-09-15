@@ -1526,9 +1526,6 @@ Entropy: 5.12 (High)`,
       this.notify();
     }, 1500);
 
-      this.notify();
-    }, 1500);
-
     try {
       const serverAssessment = await apiClient.startAssessment(payload);
       if (serverAssessment && serverAssessment.id) {
