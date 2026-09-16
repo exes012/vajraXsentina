@@ -13,7 +13,7 @@ import { dashboardService } from '../services/dashboardService';
 import { SeverityBadge } from '../components/SeverityBadge';
 import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
-export function SCAView() {
+export function SCAView({ onNavigateTab, onNewAssessment }) {
   const [scaRepoInput, setSastRepoInput] = useState('https://github.com/company/core-api');
   const [isStarting, setIsStarting] = useState(false);
   const [findings, setFindings] = useState(() => filterModuleFindings('sca', dashboardService.getInitialFindings({ module: 'sca' })));
@@ -29,7 +29,9 @@ export function SCAView() {
     if (!scaRepoInput.trim()) return;
     setIsStarting(true);
     try {
-      await dashboardService.triggerNewScan({
+      const repoName = scaRepoInput.split('/').pop().replace('.git', '') || 'Repository';
+      const newAsm = await dashboardService.triggerNewScan({
+        assessmentName: `${repoName} [SCA]`,
         targetType: 'source',
         repoUrl: scaRepoInput.trim(),
         scanners: {
@@ -44,6 +46,12 @@ export function SCAView() {
           ssl: false
         }
       });
+      if (newAsm?.id) {
+        dashboardService.setActiveAssessmentId(newAsm.id);
+      }
+      if (onNavigateTab) {
+        onNavigateTab('assessments');
+      }
     } catch (e) {
       console.warn('Start SCA error:', e);
     } finally {

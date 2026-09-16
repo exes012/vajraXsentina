@@ -80,19 +80,19 @@ export function App() {
           />
         );
       case 'findings':
-        return <FindingsExplorer />;
+        return <FindingsExplorer onSelectFinding={handleSelectFinding} />;
       case 'sast':
-        return <SASTView />;
+        return <SASTView onNavigateTab={(tab) => setCurrentTab(tab)} onNewAssessment={() => setIsNewAssessmentOpen(true)} />;
       case 'dast':
-        return <DASTView />;
+        return <DASTView onNavigateTab={(tab) => setCurrentTab(tab)} onNewAssessment={() => setIsNewAssessmentOpen(true)} />;
       case 'sca':
-        return <SCAView />;
+        return <SCAView onNavigateTab={(tab) => setCurrentTab(tab)} onNewAssessment={() => setIsNewAssessmentOpen(true)} />;
       case 'secrets':
-        return <SecretsView />;
+        return <SecretsView onNavigateTab={(tab) => setCurrentTab(tab)} onNewAssessment={() => setIsNewAssessmentOpen(true)} />;
       case 'threat_intel':
-        return <ThreatIntelView />;
+        return <ThreatIntelView onNavigateTab={(tab) => setCurrentTab(tab)} onNewAssessment={() => setIsNewAssessmentOpen(true)} />;
       case 'ai_correlation':
-        return <AICorrelationView />;
+        return <AICorrelationView onNavigateTab={(tab) => setCurrentTab(tab)} onNewAssessment={() => setIsNewAssessmentOpen(true)} />;
       case 'reports':
         return <Reports />;
       case 'settings':

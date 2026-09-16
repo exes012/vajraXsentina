@@ -17,7 +17,7 @@ import { SeverityBadge } from '../components/SeverityBadge';
 import { FindingDrawer } from '../components/FindingDrawer';
 import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
-export function SASTView() {
+export function SASTView({ onNavigateTab, onNewAssessment }) {
   const [sastRepoInput, setSastRepoInput] = useState('https://github.com/company/core-api');
   const [isStarting, setIsStarting] = useState(false);
   const [findings, setFindings] = useState(() => filterModuleFindings('sast', dashboardService.getInitialFindings({ module: 'sast' })));
@@ -33,7 +33,9 @@ export function SASTView() {
     if (!sastRepoInput.trim()) return;
     setIsStarting(true);
     try {
-      await dashboardService.triggerNewScan({
+      const repoName = sastRepoInput.split('/').pop().replace('.git', '') || 'Repository';
+      const newAsm = await dashboardService.triggerNewScan({
+        assessmentName: `${repoName} [SAST]`,
         targetType: 'source',
         repoUrl: sastRepoInput.trim(),
         scanners: {
@@ -48,6 +50,12 @@ export function SASTView() {
           ssl: false
         }
       });
+      if (newAsm?.id) {
+        dashboardService.setActiveAssessmentId(newAsm.id);
+      }
+      if (onNavigateTab) {
+        onNavigateTab('assessments');
+      }
     } catch (e) {
       console.warn('Start SAST error:', e);
     } finally {

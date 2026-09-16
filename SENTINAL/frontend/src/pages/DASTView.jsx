@@ -20,7 +20,7 @@ import { SeverityBadge } from '../components/SeverityBadge';
 import { FindingDrawer } from '../components/FindingDrawer';
 import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
-export function DASTView() {
+export function DASTView({ onNavigateTab, onNewAssessment }) {
   const [dastUrlInput, setDastUrlInput] = useState('https://example.com');
   const [isStarting, setIsStarting] = useState(false);
   const [findings, setFindings] = useState(() => filterModuleFindings('dast', dashboardService.getInitialFindings({ module: 'dast' })));
@@ -36,7 +36,9 @@ export function DASTView() {
     if (!dastUrlInput.trim()) return;
     setIsStarting(true);
     try {
-      await dashboardService.triggerNewScan({
+      const hostName = dastUrlInput.replace(/^https?:\/\//i, '').split('/')[0] || 'Target';
+      const newAsm = await dashboardService.triggerNewScan({
+        assessmentName: `${hostName} [DAST]`,
         targetType: 'dast',
         liveUrl: dastUrlInput.trim(),
         scanners: {
@@ -51,6 +53,12 @@ export function DASTView() {
           ssl: true
         }
       });
+      if (newAsm?.id) {
+        dashboardService.setActiveAssessmentId(newAsm.id);
+      }
+      if (onNavigateTab) {
+        onNavigateTab('assessments');
+      }
     } catch (e) {
       console.warn('Start DAST error:', e);
     } finally {
