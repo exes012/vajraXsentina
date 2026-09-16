@@ -128,7 +128,7 @@ export const Assets = ({ onSelectAsset, onNewAssessment }) => {
         </div>
       ) : assets.length === 0 ? (
         <div className="cyber-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
-          <Globe size={48} color="#334155" style={{ margin: '0 auto 16px' }} />
+          <Globe size={48} color="#360a25" style={{ margin: '0 auto 16px' }} />
           <h3 style={{ fontSize: '18px', color: '#f8fafc', marginBottom: '8px' }}>No Production Assets Registered</h3>
           <p style={{ fontSize: '14px', color: '#64748b', maxWidth: '480px', margin: '0 auto 20px' }}>
             Register target web application URLs above to authorize HTTP discovery and schedule DAST vulnerability assessments.
@@ -181,8 +181,8 @@ export const Assets = ({ onSelectAsset, onNewAssessment }) => {
                       asset.tech_stack.map((t, idx) => (
                         <span key={idx} style={{
                           fontSize: '11px',
-                          background: '#090d16',
-                          border: '1px solid #1e293b',
+                          background: '#040005',
+                          border: '1px solid #360a25',
                           color: '#38bdf8',
                           padding: '2px 8px',
                           borderRadius: '4px'
@@ -200,10 +200,10 @@ export const Assets = ({ onSelectAsset, onNewAssessment }) => {
                 <div style={{
                   fontSize: '12px',
                   color: '#94a3b8',
-                  background: '#090d16',
+                  background: '#040005',
                   borderRadius: '6px',
                   padding: '10px',
-                  border: '1px solid #1e293b',
+                  border: '1px solid #360a25',
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
                   gap: '8px',

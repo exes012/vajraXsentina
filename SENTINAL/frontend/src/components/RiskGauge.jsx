@@ -31,7 +31,7 @@ export const RiskGauge = ({ score = 0, size = 180 }) => {
       <div style={{ position: 'relative', width: size, height: size }}>
         <svg height={size} width={size} viewBox="0 0 160 160">
           <circle
-            stroke="#1e293b"
+            stroke="#360a25"
             fill="transparent"
             strokeWidth={stroke}
             r={normalizedRadius}

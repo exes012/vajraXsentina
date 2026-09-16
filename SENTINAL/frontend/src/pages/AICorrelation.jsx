@@ -119,8 +119,8 @@ result = await db.execute(stmt, {"uid": user_input})`,
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="tech-border-card rounded-xl p-5 bg-command-950/90 border border-purple-500/30 shadow-[0_0_30px_rgba(139,92,246,0.2)]">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-cyan-900/40">
+      <div className="tech-border-card rounded-xl p-5 bg-[#060108] border border-purple-500/30 shadow-[0_0_30px_rgba(139,92,246,0.2)]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#360a25]">
           <div>
             <div className="flex items-center space-x-3">
               <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse shadow-[0_0_12px_#c084fc]"></div>
@@ -144,19 +144,19 @@ result = await db.execute(stmt, {"uid": user_input})`,
 
         {/* System Stats Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 font-mono text-xs">
-          <div className="p-3 rounded-lg bg-command-900/80 border border-purple-500/20">
+          <div className="p-3 rounded-lg bg-[#0b020e] border border-purple-500/20">
             <span className="text-slate-400 block text-[10px] uppercase">AI Fix Confidence</span>
             <span className="text-purple-300 font-hud font-bold text-lg">99.4% MATCH</span>
-            <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-cyan-950 mt-1">
+            <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-[#28081c] mt-1">
               <div className="bg-gradient-to-r from-purple-500 to-cyan-400 h-full w-[99.4%] shadow-[0_0_6px_#c084fc]"></div>
             </div>
           </div>
-          <div className="p-3 rounded-lg bg-command-900/80 border border-cyan-900/40">
+          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25]">
             <span className="text-slate-400 block text-[10px] uppercase">Correlated Threats</span>
             <span className="text-cyan-300 font-hud font-bold text-lg">4 VECTORS</span>
             <span className="text-[10px] text-cyan-400/70 block mt-0.5">FULL CORRELATION</span>
           </div>
-          <div className="p-3 rounded-lg bg-command-900/80 border border-cyan-900/40">
+          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25]">
             <span className="text-slate-400 block text-[10px] uppercase">Auto-Patches Ready</span>
             <span className="text-emerald-400 font-hud font-bold text-lg">
               {4 - fixedRemedies.length} / 4 REMAINING
@@ -165,7 +165,7 @@ result = await db.execute(stmt, {"uid": user_input})`,
               {fixedRemedies.length} APPLIED
             </span>
           </div>
-          <div className="p-3 rounded-lg bg-command-900/80 border border-cyan-900/40">
+          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25]">
             <span className="text-slate-400 block text-[10px] uppercase">Alert Fatigue Reduction</span>
             <span className="text-cyan-300 font-hud font-bold text-lg">-84.2%</span>
             <span className="text-[10px] text-slate-400 block mt-0.5">ROOT CAUSE DEDUP</span>
@@ -187,7 +187,7 @@ result = await db.execute(stmt, {"uid": user_input})`,
 
         <div className="space-y-4">
           {remedies.filter((rem) => !deletedIds.includes(rem.id)).length === 0 ? (
-            <div className="tech-border-card rounded-xl p-8 bg-command-950/90 border border-emerald-500/40 text-center font-mono space-y-2">
+            <div className="tech-border-card rounded-xl p-8 bg-[#060108] border border-emerald-500/40 text-center font-mono space-y-2">
               <span className="material-symbols-outlined text-4xl text-emerald-400 animate-bounce">check_circle</span>
               <h3 className="text-lg font-hud font-bold text-emerald-300">ALL VULNERABILITIES AUTOMATICALLY RESOLVED & DELETED</h3>
               <p className="text-xs text-slate-400">Threat graph contains 0 active critical vulnerabilities. All automated fix playbooks executed successfully.</p>
@@ -202,12 +202,12 @@ result = await db.execute(stmt, {"uid": user_input})`,
                 key={rem.id}
                 className={`tech-border-card rounded-xl p-5 transition-all duration-300 ${
                   isFixed
-                    ? 'bg-command-950/60 border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
-                    : 'bg-command-950/90 border-purple-500/30 hover:border-purple-400/60 shadow-[0_0_20px_rgba(139,92,246,0.1)]'
+                    ? 'bg-[#040005] border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
+                    : 'bg-[#060108] border-purple-500/30 hover:border-purple-400/60 shadow-[0_0_20px_rgba(139,92,246,0.1)]'
                 }`}
               >
                 {/* Remedy Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-cyan-900/40">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#360a25]">
                   <div className="flex items-center space-x-3">
                     <span className="px-2.5 py-1 rounded bg-purple-500/20 border border-purple-400/50 text-xs font-mono font-bold text-purple-300">
                       {rem.number}
@@ -223,7 +223,7 @@ result = await db.execute(stmt, {"uid": user_input})`,
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleCopyCode(rem.id, rem.codeSnippet)}
-                      className="px-3 py-1.5 rounded-lg bg-command-900 border border-cyan-500/30 text-xs font-mono text-cyan-300 hover:bg-cyan-950 hover:border-cyan-400 transition-colors flex items-center space-x-1.5"
+                      className="px-3 py-1.5 rounded-lg bg-[#0b020e] border border-cyan-500/30 text-xs font-mono text-cyan-300 hover:bg-cyan-950 hover:border-cyan-400 transition-colors flex items-center space-x-1.5"
                     >
                       <span className="material-symbols-outlined text-[15px]">content_copy</span>
                       <span>{copiedId === rem.id ? 'COPIED!' : 'COPY FIX CODE'}</span>
@@ -259,7 +259,7 @@ result = await db.execute(stmt, {"uid": user_input})`,
                       <p className="text-slate-400 text-xs mt-1 leading-relaxed">{rem.description}</p>
                     </div>
 
-                    <div className="p-3 rounded-lg bg-command-900/90 border border-cyan-900/40 space-y-1.5 text-[11px]">
+                    <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] space-y-1.5 text-[11px]">
                       <div className="flex justify-between">
                         <span className="text-slate-400">VECTOR:</span>
                         <span className="text-cyan-300 font-bold">{rem.vector}</span>
@@ -280,14 +280,14 @@ result = await db.execute(stmt, {"uid": user_input})`,
 
                   {/* Right Code Box */}
                   <div className="lg:col-span-7">
-                    <div className="flex items-center justify-between px-3 py-2 bg-command-900/90 border border-cyan-900/60 rounded-t-lg text-[10px] text-cyan-400 font-bold">
+                    <div className="flex items-center justify-between px-3 py-2 bg-[#0b020e] border border-[#360a25] rounded-t-lg text-[10px] text-cyan-400 font-bold">
                       <div className="flex items-center space-x-2">
                         <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
                         <span>GENERATED FIX PATCH CODE</span>
                       </div>
                       <span className="text-slate-500">GEMINI AI VERIFIED</span>
                     </div>
-                    <pre className="p-3.5 bg-command-950 border border-t-0 border-cyan-900/60 rounded-b-lg text-[11px] text-cyan-200 overflow-x-auto hud-scrollbar font-mono leading-relaxed">
+                    <pre className="p-3.5 bg-[#060108] border border-t-0 border-[#360a25] rounded-b-lg text-[11px] text-cyan-200 overflow-x-auto hud-scrollbar font-mono leading-relaxed">
                       <code>{rem.codeSnippet}</code>
                     </pre>
                   </div>

@@ -51,8 +51,8 @@ export const Capabilities = () => {
   return (
     <div className="space-y-6 animate-fade-in pb-12 font-mono">
       {/* MASTER CYBER HEADER */}
-      <div className="tech-border-card rounded-xl bg-command-950/90 border border-cyan-500/30 shadow-[0_0_35px_rgba(6,182,212,0.15)] p-6 backdrop-blur-md">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-cyan-900/40">
+      <div className="tech-border-card rounded-xl bg-[#060108] border border-cyan-500/30 shadow-[0_0_35px_rgba(6,182,212,0.15)] p-6 backdrop-blur-md">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#360a25]">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center shadow-[0_0_15px_rgba(56,189,248,0.3)]">
               <span className="material-symbols-outlined text-3xl text-cyan-400">settings</span>
@@ -95,7 +95,7 @@ export const Capabilities = () => {
               className={`px-3.5 py-2 rounded-lg text-xs font-hud font-bold tracking-wider transition-all flex items-center space-x-2 border ${
                 activeTab === tab.id
                   ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(56,189,248,0.3)]'
-                  : 'bg-command-900/60 border-cyan-900/40 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/30'
+                  : 'bg-[#0b020e]/60 border-[#360a25] text-slate-400 hover:text-cyan-300 hover:border-cyan-500/30'
               }`}
             >
               <span className="material-symbols-outlined text-base">{tab.icon}</span>
@@ -168,13 +168,13 @@ export const Capabilities = () => {
           ].map((engine) => (
             <div
               key={engine.key}
-              className={`tech-border-card rounded-xl p-5 bg-command-950/90 border transition-all ${
+              className={`tech-border-card rounded-xl p-5 bg-[#060108] border transition-all ${
                 engineToggles[engine.key]
                   ? 'border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.1)]'
-                  : 'border-slate-800 opacity-60'
+                  : 'border-[#360a25] opacity-60'
               }`}
             >
-              <div className="flex items-center justify-between pb-3 border-b border-cyan-900/40 mb-3">
+              <div className="flex items-center justify-between pb-3 border-b border-[#360a25] mb-3">
                 <div className="flex items-center space-x-3">
                   <span className={`material-symbols-outlined text-2xl text-${engine.color}-400`}>
                     {engine.icon}
@@ -191,7 +191,7 @@ export const Capabilities = () => {
                   className={`w-12 h-6 rounded-full transition-colors p-1 relative border ${
                     engineToggles[engine.key]
                       ? 'bg-cyan-500/30 border-cyan-400'
-                      : 'bg-slate-900 border-slate-700'
+                      : 'bg-slate-900 border-[#360a25]'
                   }`}
                 >
                   <div
@@ -206,7 +206,7 @@ export const Capabilities = () => {
 
               <p className="text-xs text-slate-400 leading-relaxed">{engine.desc}</p>
 
-              <div className="mt-4 pt-3 border-t border-cyan-900/30 flex items-center justify-between text-[10px]">
+              <div className="mt-4 pt-3 border-t border-[#360a25]/30 flex items-center justify-between text-[10px]">
                 <span className="text-slate-500">ADAPTER STATUS:</span>
                 <span className={`font-bold ${engineToggles[engine.key] ? 'text-emerald-400' : 'text-slate-500'}`}>
                   {engineToggles[engine.key] ? '● OPERATIONAL' : '○ DISABLED'}
@@ -219,8 +219,8 @@ export const Capabilities = () => {
 
       {/* TAB 2: AI MODEL & GUARDRAILS */}
       {activeTab === 'ai' && (
-        <div className="tech-border-card rounded-xl p-6 bg-command-950/90 border border-purple-500/30 shadow-[0_0_25px_rgba(168,85,247,0.15)] space-y-6">
-          <div className="flex items-center space-x-3 pb-4 border-b border-cyan-900/40">
+        <div className="tech-border-card rounded-xl p-6 bg-[#060108] border border-purple-500/30 shadow-[0_0_25px_rgba(168,85,247,0.15)] space-y-6">
+          <div className="flex items-center space-x-3 pb-4 border-b border-[#360a25]">
             <span className="material-symbols-outlined text-3xl text-purple-400">psychology</span>
             <div>
               <h2 className="font-hud font-bold text-lg text-purple-200 uppercase tracking-widest">
@@ -241,7 +241,7 @@ export const Capabilities = () => {
                 <select
                   value={aiModelSelect}
                   onChange={(e) => setAiModelSelect(e.target.value)}
-                  className="w-full bg-command-900 border border-cyan-900/60 rounded-lg px-4 py-2.5 text-xs text-cyan-100 focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-[#0b020e] border border-[#360a25] rounded-lg px-4 py-2.5 text-xs text-cyan-100 focus:outline-none focus:border-cyan-400"
                 >
                   <option value="gemini-2.5-flash">Gemini 2.5 Flash (Ultra Fast • Recommended)</option>
                   <option value="gemini-2.0-pro">Gemini 2.0 Pro (Deep Reasoning)</option>
@@ -258,7 +258,7 @@ export const Capabilities = () => {
                     type="password"
                     value={apiKeyInput}
                     onChange={(e) => setApiKeyInput(e.target.value)}
-                    className="w-full bg-command-900 border border-cyan-900/60 rounded-lg px-4 py-2.5 text-xs text-cyan-100 focus:outline-none focus:border-cyan-400"
+                    className="w-full bg-[#0b020e] border border-[#360a25] rounded-lg px-4 py-2.5 text-xs text-cyan-100 focus:outline-none focus:border-cyan-400"
                   />
                   <span className="absolute right-3 top-2.5 text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40">
                     KEY VALIDATED
@@ -292,8 +292,8 @@ export const Capabilities = () => {
 
       {/* TAB 3: EXECUTION & AUTO-PURGE POLICY */}
       {activeTab === 'policy' && (
-        <div className="tech-border-card rounded-xl p-6 bg-command-950/90 border border-cyan-500/30 shadow-[0_0_25px_rgba(6,182,212,0.15)] space-y-6">
-          <div className="flex items-center space-x-3 pb-4 border-b border-cyan-900/40">
+        <div className="tech-border-card rounded-xl p-6 bg-[#060108] border border-cyan-500/30 shadow-[0_0_25px_rgba(6,182,212,0.15)] space-y-6">
+          <div className="flex items-center space-x-3 pb-4 border-b border-[#360a25]">
             <span className="material-symbols-outlined text-3xl text-cyan-400">tune</span>
             <div>
               <h2 className="font-hud font-bold text-lg text-cyan-200 uppercase tracking-widest">
@@ -319,7 +319,7 @@ export const Capabilities = () => {
                       className={`py-2 rounded-lg text-xs font-hud font-bold uppercase transition-all border ${
                         scanMode === mode
                           ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_10px_#38bdf8]'
-                          : 'bg-command-900 text-slate-400 border-cyan-900/50 hover:text-cyan-300'
+                          : 'bg-[#0b020e] text-slate-400 border-[#360a25] hover:text-cyan-300'
                       }`}
                     >
                       {mode} MODE
@@ -328,7 +328,7 @@ export const Capabilities = () => {
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-command-900/80 border border-cyan-500/30 flex items-center justify-between">
+              <div className="p-4 rounded-xl bg-[#0b020e] border border-cyan-500/30 flex items-center justify-between">
                 <div>
                   <h4 className="font-hud font-bold text-xs text-slate-200 uppercase">
                     AUTO-DELETE RESOLVED VULNERABILITIES
@@ -340,7 +340,7 @@ export const Capabilities = () => {
                 <button
                   onClick={() => setAutoPurgeResolved(!autoPurgeResolved)}
                   className={`w-12 h-6 rounded-full transition-colors p-1 relative border ${
-                    autoPurgeResolved ? 'bg-emerald-500/30 border-emerald-400' : 'bg-slate-900 border-slate-700'
+                    autoPurgeResolved ? 'bg-emerald-500/30 border-emerald-400' : 'bg-slate-900 border-[#360a25]'
                   }`}
                 >
                   <div
@@ -353,15 +353,15 @@ export const Capabilities = () => {
             </div>
 
             <div className="space-y-3 font-mono text-xs">
-              <div className="p-3 rounded-lg bg-command-900/90 border border-cyan-900/60 flex justify-between">
+              <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex justify-between">
                 <span className="text-slate-400">TRIAGE EFFICIENCY GAIN</span>
                 <span className="text-emerald-400 font-bold">+14.2%</span>
               </div>
-              <div className="p-3 rounded-lg bg-command-900/90 border border-cyan-900/60 flex justify-between">
+              <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex justify-between">
                 <span className="text-slate-400">DATABASE CACHE TTL</span>
                 <span className="text-cyan-300 font-bold">30 MINUTES</span>
               </div>
-              <div className="p-3 rounded-lg bg-command-900/90 border border-cyan-900/60 flex justify-between">
+              <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex justify-between">
                 <span className="text-slate-400">HTTP ADAPTER TIMEOUT</span>
                 <span className="text-cyan-300 font-bold">60 SECONDS</span>
               </div>
@@ -372,8 +372,8 @@ export const Capabilities = () => {
 
       {/* TAB 4: SUPPORTED ECOSYSTEMS */}
       {activeTab === 'ecosystems' && (
-        <div className="tech-border-card rounded-xl p-6 bg-command-950/90 border border-cyan-500/30 shadow-[0_0_25px_rgba(6,182,212,0.15)] space-y-6">
-          <div className="flex items-center space-x-3 pb-4 border-b border-cyan-900/40">
+        <div className="tech-border-card rounded-xl p-6 bg-[#060108] border border-cyan-500/30 shadow-[0_0_25px_rgba(6,182,212,0.15)] space-y-6">
+          <div className="flex items-center space-x-3 pb-4 border-b border-[#360a25]">
             <span className="material-symbols-outlined text-3xl text-cyan-400">code_blocks</span>
             <div>
               <h2 className="font-hud font-bold text-lg text-cyan-200 uppercase tracking-widest">
@@ -402,7 +402,7 @@ export const Capabilities = () => {
             ].map((ecosystem) => (
               <div
                 key={ecosystem}
-                className="p-3 rounded-lg bg-command-900/90 border border-cyan-500/30 flex items-center space-x-2 text-xs font-bold text-cyan-300"
+                className="p-3 rounded-lg bg-[#0b020e] border border-cyan-500/30 flex items-center space-x-2 text-xs font-bold text-cyan-300"
               >
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0" />
                 <span className="truncate">{ecosystem}</span>

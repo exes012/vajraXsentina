@@ -7,7 +7,7 @@ export const Navbar = ({ onNewAssessmentClick }) => {
   const { user, logout } = useAuth();
 
   return (
-    <header className="w-full border-b border-cyan-900/40 bg-command-950/90 backdrop-blur px-6 flex items-center justify-between z-50 sticky top-0 py-3" data-purpose="global-header">
+    <header className="w-full border-b border-[#360a25] bg-[#060108] backdrop-blur px-6 flex items-center justify-between z-50 sticky top-0 py-3" data-purpose="global-header">
       <div className="flex items-center space-x-4">
         <img 
           src="/sentinal_logo.png" 
@@ -63,8 +63,8 @@ export const Navbar = ({ onNewAssessmentClick }) => {
           </span>
         </button>
 
-        <div className="flex items-center space-x-2 pl-2 border-l border-slate-800 text-xs font-mono">
-          <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-cyan-400 font-bold">
+        <div className="flex items-center space-x-2 pl-2 border-l border-[#360a25] text-xs font-mono">
+          <div className="w-7 h-7 rounded-full bg-slate-800 border border-[#360a25] flex items-center justify-center text-cyan-400 font-bold">
             {user?.username?.charAt(0).toUpperCase() || 'A'}
           </div>
           <span className="text-slate-300 hidden lg:inline">{user?.username || 'admin.sentinel'}</span>

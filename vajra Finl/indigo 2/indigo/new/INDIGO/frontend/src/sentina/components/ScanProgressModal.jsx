@@ -69,8 +69,8 @@ export const ScanProgressModal = ({ assessment, onClose, onCancel, onViewDetails
       <div className="cyber-card cyber-card-glow" style={{
         width: '100%',
         maxWidth: '780px',
-        background: '#0c1322',
-        border: '1px solid #1e293b',
+        background: '#060108',
+        border: '1px solid #360a25',
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.9)'
       }}>
         {/* Header */}
@@ -78,7 +78,7 @@ export const ScanProgressModal = ({ assessment, onClose, onCancel, onViewDetails
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid #1e293b',
+          borderBottom: '1px solid #360a25',
           paddingBottom: '16px',
           marginBottom: '20px'
         }}>
@@ -119,9 +119,9 @@ export const ScanProgressModal = ({ assessment, onClose, onCancel, onViewDetails
           alignItems: 'center',
           marginBottom: '24px',
           padding: '12px',
-          background: '#070a12',
+          background: '#030004',
           borderRadius: '10px',
-          border: '1px solid #1e293b'
+          border: '1px solid #360a25'
         }}>
           {activeStages.map((st, idx) => {
             const isDone = activeStageIdx > idx || isCompleted;
@@ -132,7 +132,7 @@ export const ScanProgressModal = ({ assessment, onClose, onCancel, onViewDetails
                   width: '20px',
                   height: '20px',
                   borderRadius: '50%',
-                  background: isDone ? '#10b981' : (isCurrent ? '#00f2fe' : '#1e293b'),
+                  background: isDone ? '#10b981' : (isCurrent ? '#00f2fe' : '#360a25'),
                   color: isDone || isCurrent ? '#000' : '#64748b',
                   fontSize: '10px',
                   fontWeight: '800',

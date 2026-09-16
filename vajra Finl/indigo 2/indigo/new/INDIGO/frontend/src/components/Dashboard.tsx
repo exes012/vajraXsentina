@@ -35,41 +35,46 @@ export default function Dashboard() {
     )
   }
 
-  if (currentPlatform === 'SENTINA') {
-    return <SentinaApp />
-  }
-
   return (
     <div className="flex min-h-screen bg-[#030004] text-white">
-      {/* Sticky Left Sidebar */}
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        setCollapsed={setSidebarCollapsed}
-      />
+      {/* Sticky Left Sidebar (Active when in VAJRA mode; Sentina has its own Module Sidebar) */}
+      {currentPlatform === 'VAJRA' && (
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          setCollapsed={setSidebarCollapsed}
+        />
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Unified Top Navbar with Permanent Platform Switcher */}
         <Navbar />
 
-        <main className="flex-1 overflow-y-auto p-3.5 sm:p-4 mx-auto w-full max-w-[1440px] space-y-3.5">
-          {/* Top Hero Cockpit (Matching Sentina HeroCockpit & Energy Gauge) */}
-          <VajraHeroCockpit />
+        {currentPlatform === 'SENTINA' ? (
+          <main className="flex-1 overflow-y-auto">
+            <SentinaApp embedded={true} />
+          </main>
+        ) : (
+          <main className="flex-1 overflow-y-auto p-3.5 sm:p-4 mx-auto w-full max-w-[1440px] space-y-3.5">
+            {/* Top Hero Cockpit (Matching Sentina HeroCockpit & Energy Gauge) */}
+            <VajraHeroCockpit />
 
-          {/* Recent Critical Alerts */}
-          <CriticalAlerts />
+            {/* Recent Critical Alerts */}
+            <CriticalAlerts />
 
-          {/* Threat Intelligence Matrix & Trend Radar */}
-          <ThreatIntelligenceSummary />
+            {/* Threat Intelligence Matrix & Trend Radar */}
+            <ThreatIntelligenceSummary />
 
-          {/* Ransomware Live Grid */}
-          <RansomwareLive />
+            {/* Ransomware Live Grid */}
+            <RansomwareLive />
 
-          {/* Attack Trend Telemetry */}
-          <AttackTrendGraph />
+            {/* Attack Trend Telemetry */}
+            <AttackTrendGraph />
 
-          {/* Live Threat News Feed */}
-          <LiveCyberThreatNews />
-        </main>
+            {/* Live Threat News Feed */}
+            <LiveCyberThreatNews />
+          </main>
+        )}
       </div>
     </div>
   )

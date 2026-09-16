@@ -21,12 +21,14 @@ import { useLanguageStore } from '@/store/languageStore'
 import { useNotificationStore } from '@/store/notificationStore'
 import { SUPPORTED_LANGUAGES } from '@/i18n/translations'
 import PlatformToggle from './PlatformToggle'
+import { usePlatformStore } from '@/store/platformStore'
 
 export default function Navbar() {
   const { user, logout } = useAuthStore()
   const { selectedCompany } = useCompanyStore()
   const { currentLanguage, t } = useLanguageStore()
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotificationStore()
+  const { currentPlatform } = usePlatformStore()
   const router = useRouter()
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -160,12 +162,12 @@ export default function Navbar() {
             gap: '6px',
             padding: '4px 10px',
             borderRadius: '10px',
-            background: 'rgba(255, 23, 68, 0.1)',
-            border: '1.5px solid rgba(255, 23, 68, 0.4)',
+            background: currentPlatform === 'SENTINA' ? 'rgba(0, 242, 254, 0.1)' : 'rgba(255, 23, 68, 0.1)',
+            border: currentPlatform === 'SENTINA' ? '1.5px solid rgba(0, 242, 254, 0.4)' : '1.5px solid rgba(255, 23, 68, 0.4)',
             fontSize: '10.5px',
             fontWeight: 900,
-            color: '#ff2a4d',
-            boxShadow: '0 0 10px rgba(255, 23, 68, 0.15)',
+            color: currentPlatform === 'SENTINA' ? '#00f2fe' : '#ff2a4d',
+            boxShadow: currentPlatform === 'SENTINA' ? '0 0 10px rgba(0, 242, 254, 0.15)' : '0 0 10px rgba(255, 23, 68, 0.15)',
             fontFamily: 'var(--font-mono)',
             whiteSpace: 'nowrap'
           }}
@@ -175,15 +177,25 @@ export default function Navbar() {
               width: '6px',
               height: '6px',
               borderRadius: '50%',
-              background: '#ff1744',
-              boxShadow: '0 0 8px #ff1744',
+              background: currentPlatform === 'SENTINA' ? '#00f2fe' : '#ff1744',
+              boxShadow: currentPlatform === 'SENTINA' ? '0 0 8px #00f2fe' : '0 0 8px #ff1744',
               flexShrink: 0
             }}
             className="animate-pulse"
           />
-          <span className="hidden xl:inline">VAJRA: GLOBAL THREAT RADAR</span>
-          <span className="hidden sm:inline xl:hidden">VAJRA RADAR</span>
-          <span className="sm:hidden">VAJRA</span>
+          {currentPlatform === 'SENTINA' ? (
+            <>
+              <span className="hidden xl:inline">SENTINA: SECURE TELEMETRY CORE</span>
+              <span className="hidden sm:inline xl:hidden">SENTINA COCKPIT</span>
+              <span className="sm:hidden">SENTINA</span>
+            </>
+          ) : (
+            <>
+              <span className="hidden xl:inline">VAJRA: GLOBAL THREAT RADAR</span>
+              <span className="hidden sm:inline xl:hidden">VAJRA RADAR</span>
+              <span className="sm:hidden">VAJRA</span>
+            </>
+          )}
         </div>
       </div>
 

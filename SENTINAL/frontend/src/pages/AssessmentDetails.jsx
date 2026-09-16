@@ -236,8 +236,8 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
 
           {/* Scope Target Info */}
           <div style={{
-            background: '#090d16',
-            border: '1px solid #1e293b',
+            background: '#040005',
+            border: '1px solid #360a25',
             borderRadius: '8px',
             padding: '12px 16px',
             marginTop: '16px',
@@ -259,8 +259,8 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
       </div>
 
       {/* TARGET PROFILE CARD */}
-      <div className="w-full tech-border-card rounded-xl p-5 bg-command-950/90 border border-cyan-500/30 shadow-[0_0_25px_rgba(6,182,212,0.15)] font-sans text-white mb-6">
-        <div className="pb-3 border-b border-cyan-900/40 mb-4 flex items-center justify-between">
+      <div className="w-full tech-border-card rounded-xl p-5 bg-[#060108] border border-cyan-500/30 shadow-[0_0_25px_rgba(6,182,212,0.15)] font-sans text-white mb-6">
+        <div className="pb-3 border-b border-[#360a25] mb-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="w-2.5 h-2.5 rounded-sm bg-cyan-400 shadow-[0_0_8px_#38bdf8]"></span>
             <h3 className="font-hud font-bold text-sm tracking-widest text-cyan-200 uppercase drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]">
@@ -275,7 +275,7 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
 
         <div className="space-y-3 font-mono text-xs">
           {/* Field 1: Target Scope */}
-          <div className="p-3 rounded-lg bg-command-900/90 border border-cyan-900/60 flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
+          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
             <span className="text-[11px] text-slate-400 font-bold">Target Scope</span>
             <span className="text-sm font-bold text-white tracking-wide truncate">
               {assessment.target_info?.url || assessment.repository_info?.url || 'https://www.goindigo.in'}
@@ -283,7 +283,7 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
           </div>
 
           {/* Field 2: Target Type */}
-          <div className="p-3 rounded-lg bg-command-900/90 border border-cyan-900/60 flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
+          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
             <span className="text-[11px] text-slate-400 font-bold">Target Type</span>
             <span className="text-sm font-bold text-cyan-300 drop-shadow-[0_0_6px_#38bdf8]">
               {assessment.assessment_type === 'dast' ? 'Web Application (DAST)' : (assessment.assessment_type === 'source' ? 'Source Code Archive' : 'Unified Security Assessment (DAST + SAST + SCA)')}
@@ -291,7 +291,7 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
           </div>
 
           {/* Field 3: Security Score */}
-          <div className="p-3 rounded-lg bg-command-900/90 border border-cyan-900/60 flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
+          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
             <span className="text-[11px] text-slate-400 font-bold">Security Score</span>
             <span className={`text-xl font-hud font-black ${assessment.overall_risk_score >= 70 ? 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]' : (assessment.overall_risk_score >= 40 ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]')}`}>
               {assessment.overall_risk_score || 24.2} / 100
@@ -299,7 +299,7 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
           </div>
 
           {/* Field 4: DAST Coverage Status */}
-          <div className="p-3 rounded-lg bg-command-900/90 border border-cyan-900/60 flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
+          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-slate-400 font-bold">DAST Coverage Status</span>
               <span className="text-xs font-bold text-cyan-300 font-hud">40%</span>
@@ -311,14 +311,14 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
                 <span className={`w-1.5 h-1.5 rounded-full ${assessment.status === 'COMPLETED' ? 'bg-emerald-400' : 'bg-rose-500'} animate-pulse`}></span>
                 <span>{assessment.status === 'COMPLETED' ? 'COMPLETED' : 'FAILED'}</span>
               </span>
-              <div className="w-1/2 bg-slate-900 h-2 rounded-full overflow-hidden border border-cyan-950">
+              <div className="w-1/2 bg-slate-900 h-2 rounded-full overflow-hidden border border-[#28081c]">
                 <div className="bg-gradient-to-r from-rose-500 via-amber-500 to-cyan-400 h-full w-[40%] shadow-[0_0_8px_#38bdf8]"></div>
               </div>
             </div>
           </div>
 
           {/* Field 5: Detected Flaws */}
-          <div className="p-3 rounded-lg bg-command-900/90 border border-cyan-900/60 flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
+          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
             <span className="text-[11px] text-slate-400 font-bold">Detected Flaws</span>
             <span className="text-base font-hud font-bold text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]">
               {assessment.total_findings !== undefined ? assessment.total_findings : findings.length} Findings
@@ -329,8 +329,8 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
           {(() => {
             const wafInfo = getDetectedWaf();
             return (
-              <div className={`p-3.5 rounded-lg bg-command-900/90 border ${
-                wafInfo.isBlocked ? 'border-rose-500/60 shadow-[0_0_15px_rgba(244,63,94,0.25)]' : 'border-cyan-900/60'
+              <div className={`p-3.5 rounded-lg bg-[#0b020e] border ${
+                wafInfo.isBlocked ? 'border-rose-500/60 shadow-[0_0_15px_rgba(244,63,94,0.25)]' : 'border-[#360a25]'
               } flex flex-col space-y-1 transition-colors shadow-inner`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-1.5 text-amber-400">
@@ -369,7 +369,7 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
             <div className="flex items-center justify-between gap-2 pt-1">
               <button 
                 onClick={() => loadAssessmentData(true)}
-                className="flex-1 py-2 px-3 rounded-lg bg-command-900/90 border border-cyan-900/80 hover:border-cyan-400 text-slate-300 hover:text-white font-mono text-xs font-bold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+                className="flex-1 py-2 px-3 rounded-lg bg-[#0b020e] border border-[#360a25]/80 hover:border-cyan-400 text-slate-300 hover:text-white font-mono text-xs font-bold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
               >
                 <RefreshCw size={16} className="text-cyan-400" />
                 <span>Re-scan</span>
@@ -427,8 +427,8 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
                   borderRadius: '6px',
                   fontSize: '11px',
                   fontWeight: '700',
-                  border: filterSeverity === s ? '1px solid #38bdf8' : '1px solid #1e293b',
-                  background: filterSeverity === s ? 'rgba(56, 189, 248, 0.15)' : '#090d16',
+                  border: filterSeverity === s ? '1px solid #38bdf8' : '1px solid #360a25',
+                  background: filterSeverity === s ? 'rgba(56, 189, 248, 0.15)' : '#040005',
                   color: filterSeverity === s ? '#38bdf8' : '#94a3b8',
                   cursor: 'pointer'
                 }}
@@ -441,33 +441,33 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
 
       {/* Security Regression Summary Card */}
       {assessment.regression_summary && (assessment.regression_summary.new !== undefined) && (
-        <div className="cyber-card" style={{ marginBottom: '24px', background: 'rgba(9, 13, 22, 0.8)', border: '1px solid #1e293b' }}>
+        <div className="cyber-card" style={{ marginBottom: '24px', background: 'rgba(9, 13, 22, 0.8)', border: '1px solid #360a25' }}>
           <div style={{ fontSize: '13px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '12px' }}>
             Security Regression Analysis (vs. Previous Assessment)
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-            <div style={{ background: '#0d1322', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+            <div style={{ background: '#0d1322', padding: '12px', borderRadius: '8px', border: '1px solid #360a25' }}>
               <span style={{ fontSize: '11px', color: '#ff3366', fontWeight: '700', textTransform: 'uppercase' }}>NEW FINDINGS</span>
               <div style={{ fontSize: '22px', fontWeight: '800', color: '#f8fafc', marginTop: '4px' }}>
                 +{assessment.regression_summary.new || 0}
               </div>
             </div>
 
-            <div style={{ background: '#0d1322', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+            <div style={{ background: '#0d1322', padding: '12px', borderRadius: '8px', border: '1px solid #360a25' }}>
               <span style={{ fontSize: '11px', color: '#10b981', fontWeight: '700', textTransform: 'uppercase' }}>RESOLVED FINDINGS</span>
               <div style={{ fontSize: '22px', fontWeight: '800', color: '#10b981', marginTop: '4px' }}>
                 -{assessment.regression_summary.resolved || 0}
               </div>
             </div>
 
-            <div style={{ background: '#0d1322', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+            <div style={{ background: '#0d1322', padding: '12px', borderRadius: '8px', border: '1px solid #360a25' }}>
               <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: '700', textTransform: 'uppercase' }}>PERSISTENT</span>
               <div style={{ fontSize: '22px', fontWeight: '800', color: '#38bdf8', marginTop: '4px' }}>
                 {assessment.regression_summary.persistent || 0}
               </div>
             </div>
 
-            <div style={{ background: '#0d1322', padding: '12px', borderRadius: '8px', border: '1px solid #1e293b' }}>
+            <div style={{ background: '#0d1322', padding: '12px', borderRadius: '8px', border: '1px solid #360a25' }}>
               <span style={{ fontSize: '11px', color: '#c084fc', fontWeight: '700', textTransform: 'uppercase' }}>SCORE DELTA</span>
               <div style={{ fontSize: '22px', fontWeight: '800', color: (assessment.regression_summary.score_delta || 0) <= 0 ? '#10b981' : '#ff3366', marginTop: '4px' }}>
                 {(assessment.regression_summary.score_delta || 0) > 0 ? `+${assessment.regression_summary.score_delta}` : assessment.regression_summary.score_delta || 0}
@@ -503,12 +503,12 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                     {(finding.detected_by && finding.detected_by.length > 0) ? (
                       finding.detected_by.map((scannerTag, idx) => (
-                        <span key={idx} style={{ fontSize: '10px', padding: '2px 5px', borderRadius: '4px', background: '#1e293b', color: '#38bdf8', fontFamily: 'var(--font-mono)', fontWeight: '700' }}>
+                        <span key={idx} style={{ fontSize: '10px', padding: '2px 5px', borderRadius: '4px', background: '#360a25', color: '#38bdf8', fontFamily: 'var(--font-mono)', fontWeight: '700' }}>
                           {scannerTag}
                         </span>
                       ))
                     ) : (
-                      <span style={{ fontSize: '10px', padding: '2px 5px', borderRadius: '4px', background: '#1e293b', color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>
+                      <span style={{ fontSize: '10px', padding: '2px 5px', borderRadius: '4px', background: '#360a25', color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>
                         {finding.source}
                       </span>
                     )}

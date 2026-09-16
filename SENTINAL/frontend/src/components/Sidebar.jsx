@@ -84,9 +84,9 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
   };
 
   return (
-    <aside className="w-full flex-shrink-0 tech-border-card rounded-xl border border-cyan-500/25 bg-command-900/95 backdrop-blur-md shadow-[0_0_40px_rgba(2,6,23,0.85)] sticky top-20 z-30 lg:w-72 p-4" data-purpose="platform-modules-sidebar">
+    <aside className="w-full flex-shrink-0 tech-border-card rounded-xl border-[1.5px] border-[#360a25] bg-[#060108] backdrop-blur-md shadow-[0_8px_32px_0_rgba(0,0,0,0.95),0_0_14px_rgba(0,242,254,0.06)] sticky top-20 z-30 lg:w-72 p-4" data-purpose="platform-modules-sidebar">
       {/* Sidebar Header / Module Crest */}
-      <div className="flex items-center justify-between pb-3 border-b border-cyan-900/50 mb-4">
+      <div className="flex items-center justify-between pb-3 border-b border-[#360a25] mb-4">
         <div className="flex items-center space-x-2.5">
           <div className="w-2.5 h-2.5 bg-cyan-400 rounded-sm shadow-[0_0_8px_#38bdf8]"></div>
           <div>
@@ -103,7 +103,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
 
         {/* Category Divider */}
         <div className="pt-2 pb-1 px-3">
-          <div className="flex items-center justify-between text-[9px] text-cyan-400/60 uppercase tracking-widest border-t border-cyan-900/40 pt-2">
+          <div className="flex items-center justify-between text-[9px] text-cyan-400/60 uppercase tracking-widest border-t border-[#360a25] pt-2">
             <span>ANALYSIS ENGINES</span>
             <span>AUTO-SCAN</span>
           </div>
@@ -114,7 +114,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
           onClick={() => onTabChange('sast')} 
           className={currentTab === 'sast' 
             ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-transparent border-l-4 border-l-cyan-400 border-y border-r border-cyan-400/30 text-white shadow-[inset_0_0_15px_rgba(6,182,212,0.15)] transition-all cursor-pointer" 
-            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
+            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-[#0e0212] border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
         >
           <div className="flex items-center space-x-2.5 min-w-0">
             <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'sast' ? 'text-cyan-300' : 'text-slate-400 group-hover:text-cyan-400'}`}>code_blocks</span>
@@ -128,7 +128,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
           onClick={() => onTabChange('dast')} 
           className={currentTab === 'dast' 
             ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/20 via-amber-500/15 to-transparent border-l-4 border-l-amber-400 border-y border-r border-amber-400/30 text-white shadow-[inset_0_0_15px_rgba(245,158,11,0.15)] transition-all cursor-pointer" 
-            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
+            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-[#0e0212] border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
         >
           <div className="flex items-center space-x-2.5 min-w-0">
             <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'dast' ? 'text-amber-400' : 'text-slate-400 group-hover:text-amber-400'}`}>language</span>
@@ -142,7 +142,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
           onClick={() => onTabChange('sca')} 
           className={currentTab === 'sca' 
             ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 via-purple-500/15 to-transparent border-l-4 border-l-purple-400 border-y border-r border-purple-400/30 text-white shadow-[inset_0_0_15px_rgba(168,85,247,0.15)] transition-all cursor-pointer" 
-            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
+            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-[#0e0212] border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
         >
           <div className="flex items-center space-x-2.5 min-w-0">
             <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'sca' ? 'text-purple-400' : 'text-slate-400 group-hover:text-purple-400'}`}>account_tree</span>
@@ -156,7 +156,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
           onClick={() => onTabChange('secrets')} 
           className={currentTab === 'secrets' 
             ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-rose-500/20 via-rose-500/15 to-transparent border-l-4 border-l-rose-400 border-y border-r border-rose-400/30 text-white shadow-[inset_0_0_15px_rgba(244,63,94,0.15)] transition-all cursor-pointer" 
-            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
+            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-[#0e0212] border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
         >
           <div className="flex items-center space-x-2.5 min-w-0">
             <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'secrets' ? 'text-rose-400' : 'text-slate-400 group-hover:text-rose-400'}`}>vpn_key</span>
@@ -170,7 +170,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
           onClick={() => onTabChange('capabilities')} 
           className={currentTab === 'capabilities' 
             ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-transparent border-l-4 border-l-cyan-400 border-y border-r border-cyan-400/30 text-white shadow-[inset_0_0_15px_rgba(6,182,212,0.15)] transition-all cursor-pointer" 
-            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
+            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-[#0e0212] border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
         >
           <div className="flex items-center space-x-2.5 min-w-0">
             <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'capabilities' ? 'text-cyan-300' : 'text-slate-400 group-hover:text-cyan-400'}`}>settings</span>
@@ -181,16 +181,16 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
       </nav>
 
       {/* Sidebar Mini Telemetry Pod */}
-      <div className="mt-4 pt-3 border-t border-cyan-900/50 bg-command-950/60 rounded-lg p-2.5 border border-cyan-800/30">
+      <div className="mt-4 pt-3 border-t border-[#360a25] bg-[#040005] rounded-lg p-2.5 border-[1.5px] border-[#28081c]">
         <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mb-1">
           <span>PIPELINE HEALTH</span>
           <span className="text-cyan-300 font-bold">99.8%</span>
         </div>
-        <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-cyan-900/60">
+        <div className="w-full bg-[#0e0212] h-1.5 rounded-full overflow-hidden border border-[#360a25]">
           <div className="bg-gradient-to-r from-blue-500 to-cyan-400 h-full w-[94%] shadow-[0_0_8px_#38bdf8]"></div>
         </div>
         <div className="flex items-center justify-between text-[9px] font-mono text-cyan-400/70 mt-1.5">
-          <span>HOST: sentinel-node-04</span>
+          <span>HOST: sentina-node-01</span>
           <span className="text-emerald-400">ACTIVE</span>
         </div>
       </div>

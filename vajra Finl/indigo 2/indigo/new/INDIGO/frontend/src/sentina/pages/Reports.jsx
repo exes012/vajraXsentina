@@ -103,8 +103,8 @@ export const Reports = ({ onViewAssessment }) => {
               borderRadius: '8px',
               fontSize: '12px',
               fontWeight: '700',
-              border: filterStatus === tab.id ? '1px solid #00f2fe' : '1px solid #1e293b',
-              background: filterStatus === tab.id ? 'rgba(0, 242, 254, 0.12)' : '#090d16',
+              border: filterStatus === tab.id ? '1px solid #00f2fe' : '1px solid #360a25',
+              background: filterStatus === tab.id ? 'rgba(0, 242, 254, 0.12)' : '#040005',
               color: filterStatus === tab.id ? '#00f2fe' : '#94a3b8',
               cursor: 'pointer',
               transition: 'all 0.15s ease'
@@ -141,7 +141,7 @@ export const Reports = ({ onViewAssessment }) => {
                   transition: 'all 0.15s ease'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.borderColor = '#00f2fe'}
-                onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1e293b'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = '#360a25'}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div style={{
@@ -166,7 +166,7 @@ export const Reports = ({ onViewAssessment }) => {
                         fontSize: '11px',
                         padding: '2px 8px',
                         borderRadius: '4px',
-                        background: '#1e293b',
+                        background: '#360a25',
                         color: '#38bdf8',
                         fontWeight: '600'
                       }}>

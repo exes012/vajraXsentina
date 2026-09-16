@@ -15,7 +15,7 @@ import { Assets } from './pages/Assets';
 import { Login } from './pages/Login';
 import { apiClient } from './api/client';
 
-function SentinaMainContent() {
+function SentinaMainContent({ embedded = false }) {
   const { user, loading } = useAuth();
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [selectedAssessmentId, setSelectedAssessmentId] = useState(null);
@@ -43,7 +43,7 @@ function SentinaMainContent() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#070a12' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#030004' }}>
         <div className="scanning-pulse" style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#00f2fe' }} />
       </div>
     );
@@ -154,16 +154,18 @@ function SentinaMainContent() {
   };
 
   return (
-    <div className="min-h-screen bg-command-950 text-slate-200 antialiased cyber-grid flex flex-col justify-between">
+    <div className={`min-h-screen bg-[#030004] text-slate-200 antialiased cyber-grid flex flex-col justify-between ${embedded ? 'p-0' : ''}`}>
       <div>
-        {/* Top Global Navigation */}
-        <Navbar
-          onNewAssessmentClick={() => setCurrentTab('new_assessment')}
-        />
+        {/* Top Global Navigation (rendered only when standalone) */}
+        {!embedded && (
+          <Navbar
+            onNewAssessmentClick={() => setCurrentTab('new_assessment')}
+          />
+        )}
 
         {/* Unified Dashboard Container with Cyber-HUD Sidebar */}
-        <div className="max-w-[1720px] mx-auto px-4 sm:px-6 py-6">
-          <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className="max-w-[1720px] mx-auto px-3.5 sm:px-4 py-4">
+          <div className="flex flex-col lg:flex-row gap-4 items-start">
             <Sidebar
               currentTab={currentTab === 'assessment_detail' ? 'assessments' : currentTab}
               onTabChange={(tab) => {
@@ -172,7 +174,7 @@ function SentinaMainContent() {
               }}
             />
 
-            <main className="flex-1 min-w-0 w-full space-y-6" data-purpose="telemetry-dashboard">
+            <main className="flex-1 min-w-0 w-full space-y-4" data-purpose="telemetry-dashboard">
               {renderContent()}
             </main>
           </div>
@@ -180,12 +182,12 @@ function SentinaMainContent() {
       </div>
 
       {/* Footer Status */}
-      <footer className="border-t border-slate-800/80 bg-command-950 text-center text-xs font-mono text-slate-500 py-3" data-purpose="command-footer">
+      <footer className="border-t border-[#360a25] bg-[#060108] text-center text-xs font-mono text-zinc-500 py-3" data-purpose="command-footer">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0">
-          <div>SENTINEL CYBERMETRIC CORE • SECURE SENSING NETWORK & CLOUD POSTURE</div>
+          <div>SENTINA CYBERMETRIC CORE • SECURE SENSING NETWORK & CLOUD POSTURE</div>
           <div className="flex items-center space-x-4">
-            <span>SECURITY LEVEL: AUTHORIZED</span>
-            <span>ENCRYPTION: AES-GCM-256</span>
+            <span className="text-cyan-400">STATUS: AUTHORIZED</span>
+            <span className="text-zinc-400">ENCRYPTION: AES-GCM-256</span>
           </div>
         </div>
       </footer>
@@ -203,10 +205,10 @@ function SentinaMainContent() {
   );
 }
 
-export function App() {
+export function App({ embedded = false }) {
   return (
     <AuthProvider>
-      <SentinaMainContent />
+      <SentinaMainContent embedded={embedded} />
     </AuthProvider>
   );
 }

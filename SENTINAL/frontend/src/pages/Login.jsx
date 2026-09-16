@@ -47,7 +47,7 @@ export const Login = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'radial-gradient(circle at 50% 30%, #0c192e 0%, #070a12 70%)',
+      background: 'radial-gradient(circle at 50% 30%, #0c192e 0%, #030004 70%)',
       padding: '20px'
     }}>
       <div className="cyber-card cyber-card-glow" style={{
@@ -55,7 +55,7 @@ export const Login = () => {
         maxWidth: '440px',
         padding: '36px',
         background: '#0d1322',
-        border: '1px solid #1e293b'
+        border: '1px solid #360a25'
       }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>

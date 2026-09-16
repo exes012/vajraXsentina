@@ -354,8 +354,8 @@ export const NewAssessment = ({ onAssessmentStarted }) => {
               onClick={() => setMode(tab.id)}
               style={{
                 padding: '16px',
-                background: isSel ? 'rgba(0, 242, 254, 0.08)' : '#0f172a',
-                border: isSel ? '1px solid #00f2fe' : '1px solid #1e293b',
+                background: isSel ? 'rgba(0, 242, 254, 0.08)' : '#060108',
+                border: isSel ? '1px solid #00f2fe' : '1px solid #360a25',
                 borderRadius: '10px',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -441,11 +441,11 @@ export const NewAssessment = ({ onAssessmentStarted }) => {
             </div>
 
             <div style={{
-              border: '2px dashed #334155',
+              border: '2px dashed #360a25',
               borderRadius: '10px',
               padding: '32px',
               textAlign: 'center',
-              background: '#090d16',
+              background: '#040005',
               cursor: 'pointer'
             }}
             onClick={() => document.getElementById('zip-upload-input').click()}
@@ -552,10 +552,10 @@ export const NewAssessment = ({ onAssessmentStarted }) => {
                     alignItems: 'flex-start',
                     gap: '10px',
                     padding: '12px',
-                    background: isDisabled ? '#060a12' : '#090d16',
+                    background: isDisabled ? '#060a12' : '#040005',
                     borderRadius: '8px',
                     border: '1px solid',
-                    borderColor: isDisabled ? '#111827' : '#1e293b',
+                    borderColor: isDisabled ? '#111827' : '#360a25',
                     opacity: isDisabled ? 0.45 : 1,
                     cursor: isDisabled ? 'not-allowed' : 'pointer'
                   }}
@@ -584,7 +584,7 @@ export const NewAssessment = ({ onAssessmentStarted }) => {
         {/* Authorization Confirmation */}
         <div style={{
           background: 'rgba(56, 189, 248, 0.05)',
-          border: '1px solid #1e293b',
+          border: '1px solid #360a25',
           borderRadius: '10px',
           padding: '16px',
           marginBottom: '24px',

@@ -130,8 +130,8 @@ export const FindingDrawer = ({ finding, onClose, onStatusUpdated }) => {
       bottom: 0,
       width: '100%',
       maxWidth: '680px',
-      background: '#090d16',
-      borderLeft: '1px solid #1e293b',
+      background: '#040005',
+      borderLeft: '1px solid #360a25',
       boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.8)',
       zIndex: 100,
       display: 'flex',
@@ -141,7 +141,7 @@ export const FindingDrawer = ({ finding, onClose, onStatusUpdated }) => {
       {/* Header */}
       <div style={{
         padding: '24px',
-        borderBottom: '1px solid #1e293b',
+        borderBottom: '1px solid #360a25',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'space-between',
@@ -151,7 +151,7 @@ export const FindingDrawer = ({ finding, onClose, onStatusUpdated }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <SeverityBadge severity={finding.severity} />
             <span style={{
-              background: '#1e293b',
+              background: '#360a25',
               color: '#38bdf8',
               fontSize: '11px',
               padding: '2px 8px',
@@ -161,7 +161,7 @@ export const FindingDrawer = ({ finding, onClose, onStatusUpdated }) => {
               {finding.source}
             </span>
             <span style={{
-              background: '#1e293b',
+              background: '#360a25',
               color: '#94a3b8',
               fontSize: '11px',
               padding: '2px 8px',
@@ -196,10 +196,10 @@ export const FindingDrawer = ({ finding, onClose, onStatusUpdated }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: '#0f172a',
+          background: '#060108',
           padding: '12px 16px',
           borderRadius: '8px',
-          border: '1px solid #1e293b'
+          border: '1px solid #360a25'
         }}>
           <div>
             <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase' }}>Normalized Risk Score</div>
@@ -218,8 +218,8 @@ export const FindingDrawer = ({ finding, onClose, onStatusUpdated }) => {
                   borderRadius: '6px',
                   fontSize: '12px',
                   fontWeight: '600',
-                  border: currentStatus === st ? '1px solid #38bdf8' : '1px solid #1e293b',
-                  background: currentStatus === st ? 'rgba(56, 189, 248, 0.15)' : '#1e293b',
+                  border: currentStatus === st ? '1px solid #38bdf8' : '1px solid #360a25',
+                  background: currentStatus === st ? 'rgba(56, 189, 248, 0.15)' : '#360a25',
                   color: currentStatus === st ? '#38bdf8' : '#94a3b8',
                   cursor: 'pointer',
                   textTransform: 'capitalize'
@@ -261,8 +261,8 @@ export const FindingDrawer = ({ finding, onClose, onStatusUpdated }) => {
           </div>
 
           {/* Code Box */}
-          <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid #1e293b', background: '#070b14', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#0f172a', borderBottom: '1px solid #1e293b', fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#38bdf8' }}>
+          <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid #360a25', background: '#070b14', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#060108', borderBottom: '1px solid #360a25', fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#38bdf8' }}>
               <span>RECOMMENDED FIX CODE PATCH</span>
               <button
                 onClick={handleCopyCode}
@@ -340,7 +340,7 @@ export const FindingDrawer = ({ finding, onClose, onStatusUpdated }) => {
           </h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
             {finding.cwe?.map((cwe) => (
-              <span key={cwe} style={{ background: '#1e293b', color: '#38bdf8', padding: '3px 8px', borderRadius: '4px', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
+              <span key={cwe} style={{ background: '#360a25', color: '#38bdf8', padding: '3px 8px', borderRadius: '4px', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
                 {cwe}
               </span>
             ))}
