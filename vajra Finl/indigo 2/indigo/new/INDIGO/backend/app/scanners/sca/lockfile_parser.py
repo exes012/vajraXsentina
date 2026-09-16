@@ -296,54 +296,68 @@ def parse_packages_config(path: Path, base_dir: Path) -> List[DependencyItem]:
     return items
 
 def discover_all_dependencies(root_dir: Path) -> List[DependencyItem]:
-    """Scan and parse all supported manifests and lockfiles recursively."""
+    """Scan and parse all supported manifests and lockfiles recursively with fast in-place directory pruning."""
     deps: List[DependencyItem] = []
     if not root_dir.exists():
         return deps
 
-    for root, _, files in os.walk(root_dir):
-        rel_root = str(Path(root).relative_to(root_dir)).replace("\\", "/")
-        if any(ignored in rel_root for ignored in ["node_modules", "vendor", ".git", ".venv", "__pycache__"]):
-            continue
+    IGNORED_DIRS = {
+        "node_modules", "vendor", ".git", ".venv", "venv", "env", "__pycache__",
+        "dist", "build", ".next", ".cache", ".idea", ".vscode", "target", "bin", "obj",
+        ".gradle", ".pytest_cache", ".tox", "coverage", "public", "static", "assets"
+    }
 
-        for f in files:
-            file_path = Path(root) / f
-            lower_name = f.lower()
+    try:
+        for root, dirs, files in os.walk(root_dir):
+            # Prune ignored and hidden directories in-place to prevent recursive walk into giant trees
+            dirs[:] = [d for d in dirs if d.lower() not in IGNORED_DIRS and not d.startswith('.')]
 
-            if lower_name == "package.json":
-                deps.extend(parse_package_json(file_path, root_dir))
-            elif lower_name == "package-lock.json":
-                deps.extend(parse_package_lock_json(file_path, root_dir))
-            elif lower_name == "yarn.lock":
-                deps.extend(parse_yarn_lock(file_path, root_dir))
-            elif lower_name in ["pnpm-lock.yaml", "pnpm-lock.yml"]:
-                deps.extend(parse_pnpm_lock_yaml(file_path, root_dir))
-            elif lower_name == "requirements.txt" or lower_name.endswith(".requirements.txt"):
-                deps.extend(parse_requirements_txt(file_path, root_dir))
-            elif lower_name == "poetry.lock":
-                deps.extend(parse_poetry_lock(file_path, root_dir))
-            elif lower_name == "pipfile.lock":
-                deps.extend(parse_pipfile_lock(file_path, root_dir))
-            elif lower_name == "pyproject.toml":
-                deps.extend(parse_pyproject_toml(file_path, root_dir))
-            elif lower_name == "go.mod":
-                deps.extend(parse_go_mod(file_path, root_dir))
-            elif lower_name == "go.sum":
-                deps.extend(parse_go_sum(file_path, root_dir))
-            elif lower_name == "pom.xml":
-                deps.extend(parse_pom_xml(file_path, root_dir))
-            elif lower_name in ["build.gradle", "build.gradle.kts"]:
-                deps.extend(parse_build_gradle(file_path, root_dir))
-            elif lower_name == "cargo.lock":
-                deps.extend(parse_cargo_lock(file_path, root_dir))
-            elif lower_name == "gemfile.lock":
-                deps.extend(parse_gemfile_lock(file_path, root_dir))
-            elif lower_name == "composer.lock":
-                deps.extend(parse_composer_lock(file_path, root_dir))
-            elif lower_name.endswith(".csproj"):
-                deps.extend(parse_csproj(file_path, root_dir))
-            elif lower_name == "packages.config":
-                deps.extend(parse_packages_config(file_path, root_dir))
+            for f in files:
+                file_path = Path(root) / f
+                lower_name = f.lower()
+
+                if lower_name == "package.json":
+                    deps.extend(parse_package_json(file_path, root_dir))
+                elif lower_name == "package-lock.json":
+                    deps.extend(parse_package_lock_json(file_path, root_dir))
+                elif lower_name == "yarn.lock":
+                    deps.extend(parse_yarn_lock(file_path, root_dir))
+                elif lower_name in ["pnpm-lock.yaml", "pnpm-lock.yml"]:
+                    deps.extend(parse_pnpm_lock_yaml(file_path, root_dir))
+                elif lower_name == "requirements.txt" or lower_name.endswith(".requirements.txt"):
+                    deps.extend(parse_requirements_txt(file_path, root_dir))
+                elif lower_name == "poetry.lock":
+                    deps.extend(parse_poetry_lock(file_path, root_dir))
+                elif lower_name == "pipfile.lock":
+                    deps.extend(parse_pipfile_lock(file_path, root_dir))
+                elif lower_name == "pyproject.toml":
+                    deps.extend(parse_pyproject_toml(file_path, root_dir))
+                elif lower_name == "go.mod":
+                    deps.extend(parse_go_mod(file_path, root_dir))
+                elif lower_name == "go.sum":
+                    deps.extend(parse_go_sum(file_path, root_dir))
+                elif lower_name == "pom.xml":
+                    deps.extend(parse_pom_xml(file_path, root_dir))
+                elif lower_name in ["build.gradle", "build.gradle.kts"]:
+                    deps.extend(parse_build_gradle(file_path, root_dir))
+                elif lower_name == "cargo.lock":
+                    deps.extend(parse_cargo_lock(file_path, root_dir))
+                elif lower_name == "gemfile.lock":
+                    deps.extend(parse_gemfile_lock(file_path, root_dir))
+                elif lower_name == "composer.lock":
+                    deps.extend(parse_composer_lock(file_path, root_dir))
+                elif lower_name.endswith(".csproj"):
+                    deps.extend(parse_csproj(file_path, root_dir))
+                elif lower_name == "packages.config":
+                    deps.extend(parse_packages_config(file_path, root_dir))
+
+                # Safety cap for mega repositories (first 1,000 distinct dependencies)
+                if len(deps) > 1500:
+                    break
+            if len(deps) > 1500:
+                break
+    except Exception:
+        pass
 
     # Deduplicate dependencies preserving direct status
     seen: Dict[tuple, DependencyItem] = {}
@@ -354,4 +368,4 @@ def discover_all_dependencies(root_dir: Path) -> List[DependencyItem]:
         elif d.is_direct and not seen[key].is_direct:
             seen[key] = d
 
-    return list(seen.values())
+    return list(seen.values())[:1000]

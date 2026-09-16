@@ -104,20 +104,39 @@ def _calculate_stage_progress(assessment: Assessment) -> int:
     stage_map = {
         "QUEUED": 5,
         "INITIALIZING": 10,
-        "TARGET VALIDATION": 20,
+        "TARGET VALIDATION": 15,
+        "CONNECTIVITY DIAGNOSTICS": 20,
+        "DIAGNOSTICS": 20,
+        "CLONING": 25,
         "REPOSITORY DISCOVERY": 25,
+        "DISCOVERING": 25,
         "SOURCE PREPARATION": 30,
-        "SAST": 45,
+        "SOURCE CODE PREPARATION": 30,
+        "SOURCE EXTRACTION": 30,
+        "PREREQUISITE VERIFICATION": 35,
+        "SCANNER EXECUTION": 40,
+        "HTTP DISCOVERY": 42,
+        "SAST": 50,
         "SCA": 60,
-        "SECRETS": 70,
-        "CRAWLING": 40,
-        "DAST": 75,
-        "CORRELATING": 85,
-        "AI CORRELATION": 85,
-        "GENERATING REPORT": 95,
+        "SECRETS": 68,
+        "SECRET SCAN": 68,
+        "SECURITY HEADERS": 72,
+        "TLS": 74,
+        "NUCLEI": 76,
+        "DAST": 80,
+        "ZAP SPIDER": 80,
+        "ZAP ACTIVE SCAN": 82,
+        "WAPITI": 83,
+        "NIKTO": 84,
+        "NORMALIZATION": 86,
+        "CORRELATING": 88,
+        "AI CORRELATION": 92,
+        "REPORT GENERATION": 96,
+        "GENERATING_REPORT": 96,
+        "GENERATING REPORT": 96,
         "COMPLETED": 100
     }
-    return stage_map.get(stage, 35)
+    return stage_map.get(stage, 45)
 
 @router.post("", response_model=AssessmentResponse, status_code=status.HTTP_201_CREATED)
 async def create_and_start_scan(

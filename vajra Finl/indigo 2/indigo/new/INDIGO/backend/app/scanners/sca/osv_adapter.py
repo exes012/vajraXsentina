@@ -220,12 +220,13 @@ class OSVAdapter(ScannerAdapter):
             })
 
         batch_size = 500
-        for i in range(0, len(queries), batch_size):
+        for i in range(0, min(len(queries), 1000), batch_size):
             chunk = queries[i:i + batch_size]
             dep_chunk = dependencies[i:i + batch_size]
 
             try:
-                async with httpx.AsyncClient(timeout=15.0) as client:
+                # Fast 3.5s timeout with 1.5s connect limit to prevent any stalling
+                async with httpx.AsyncClient(timeout=httpx.Timeout(3.5, connect=1.5)) as client:
                     resp = await client.post(OSV_BATCH_URL, json={"queries": chunk})
                     if resp.status_code == 200:
                         api_success = True
@@ -233,6 +234,8 @@ class OSVAdapter(ScannerAdapter):
                         results = data.get("results", [])
 
                         for idx, res in enumerate(results):
+                            if idx >= len(dep_chunk):
+                                break
                             vulns = res.get("vulns", [])
                             dep = dep_chunk[idx]
 
@@ -330,7 +333,8 @@ class OSVAdapter(ScannerAdapter):
                                     }
                                 ))
             except Exception:
-                pass
+                # Silently catch network or timeout issues and fall back immediately
+                break
 
         # Offline / Fallback Verification against authoritative database
         if not api_success or len(findings) == 0:

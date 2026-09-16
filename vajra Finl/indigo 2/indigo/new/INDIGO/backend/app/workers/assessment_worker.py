@@ -517,7 +517,13 @@ async def run_assessment_job(assessment_id: str):
             try:
                 target_p = Path(repo_or_code_target)
                 if target_p.is_dir():
-                    files_scanned_count = len([f for f in target_p.rglob("*") if f.is_file() and not any(part.startswith('.') or part in ['node_modules', 'venv', '__pycache__', 'dist', 'build'] for part in f.parts)])
+                    count = 0
+                    for root, dirs, files in os.walk(str(target_p)):
+                        dirs[:] = [d for d in dirs if d.lower() not in {'node_modules', 'vendor', '.git', '.venv', 'venv', '__pycache__', 'dist', 'build'} and not d.startswith('.')]
+                        count += len(files)
+                        if count > 5000:
+                            break
+                    files_scanned_count = count
                 else:
                     files_scanned_count = 1
             except Exception:
