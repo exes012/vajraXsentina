@@ -174,9 +174,9 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
   }
 
   return (
-    <div className="space-y-6" data-purpose="telemetry-dashboard">
-      {/* Grand Console Container */}
-      <div className="tech-border-card rounded-xl border-[2px] border-[#360a25] hover:border-cyan-400/60 bg-[#0b020e] shadow-[0_0_50px_rgba(15,23,42,0.9)] backdrop-blur-md p-8">
+    <div className="space-y-3.5" data-purpose="telemetry-dashboard">
+      {/* Grand Console Container Matching VAJRA Cockpit */}
+      <div className="tech-border-card rounded-xl border-[2.5px] border-[#360a25] bg-[#060108] shadow-[0_8px_32px_0_rgba(0,0,0,0.95),0_0_14px_rgba(0,242,254,0.12)] p-4 sm:p-5">
 
 
         {/* Main Visual Grid: Left Panels, Center 3D Sphere Core, Right Panels */}

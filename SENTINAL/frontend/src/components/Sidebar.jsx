@@ -1,7 +1,39 @@
 import React, { useState, useEffect } from 'react';
+import {
+  LayoutDashboard,
+  Play,
+  FileText,
+  Search,
+  Code2,
+  Globe,
+  Layers,
+  KeyRound,
+  Grid,
+  Cpu,
+  Server,
+  Sparkles,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Shield,
+  ShieldAlert,
+  AlertTriangle,
+  Activity,
+  CheckCircle2
+} from 'lucide-react';
 import { apiClient } from '../api/client';
 
-export const Sidebar = ({ currentTab, onTabChange }) => {
+export const Sidebar = ({ currentTab, onTabChange, collapsed = false, setCollapsed }) => {
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
+  const isCollapsed = setCollapsed !== undefined ? collapsed : internalCollapsed;
+  const toggleCollapse = () => {
+    if (setCollapsed) {
+      setCollapsed(!collapsed);
+    } else {
+      setInternalCollapsed(!internalCollapsed);
+    }
+  };
+
   const [secretsCount, setSecretsCount] = useState(14);
   const [dastCount, setDastCount] = useState(31);
   const [sastCount, setSastCount] = useState(73);
@@ -34,166 +66,334 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
     return () => window.removeEventListener('sentinal_findings_updated', handleRefresh);
   }, []);
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', statusLabel: 'LIVE', statusColor: 'cyan', isPulse: true },
-    { id: 'assessments', label: 'Assessment', icon: 'fact_check', subtitle: 'SYS.01' },
-    { id: 'findings', label: 'Finding Explorer', icon: 'travel_explore', badgeLabel: `${openAlertsCount} ALERTS`, badgeColor: 'rose' },
-    { id: 'reports', label: 'Security Reports', icon: 'assessment', subtitle: 'PDF/CSV' },
-    { id: 'capabilities', label: 'Engine Matrix', icon: 'grid_view', subtitle: 'SYNC' },
+  const navSections = [
+    {
+      label: 'COMMAND & POSTURE',
+      items: [
+        { id: 'dashboard', label: 'SecOps Dashboard', icon: LayoutDashboard, color: '#00f2fe' },
+        { id: 'new_assessment', label: 'Start New Scan', icon: Play, color: '#00ff88' },
+        { id: 'assessments', label: 'Scan Reports', icon: FileText, color: '#fbbf24' },
+        { id: 'findings', label: 'Findings Explorer', icon: ShieldAlert, color: '#ff1744', badge: `${openAlertsCount} ALERTS`, badgeColor: '#ff1744' },
+      ]
+    },
+    {
+      label: 'SCANNING ENGINES',
+      items: [
+        { id: 'sast', label: 'SAST (Static Code)', icon: Code2, color: '#00f2fe', badge: `${sastCount} ISSUES`, badgeColor: '#00f2fe' },
+        { id: 'dast', label: 'DAST (Live Web)', icon: Globe, color: '#f59e0b', badge: `${dastCount} ISSUES`, badgeColor: '#f59e0b' },
+        { id: 'sca', label: 'SCA (Dependencies)', icon: Layers, color: '#c084fc', badge: `${scaCount} ISSUES`, badgeColor: '#c084fc' },
+        { id: 'secrets', label: 'Secret Leaks', icon: KeyRound, color: '#ff1744', badge: `${secretsCount} LEAKS`, badgeColor: '#ff1744' },
+      ]
+    },
+    {
+      label: 'ADVANCED SECOPS',
+      items: [
+        { id: 'capabilities', label: 'Engine Matrix', icon: Grid, color: '#38bdf8' },
+        { id: 'ai-correlation', label: 'AI Risk Graph', icon: Sparkles, color: '#c084fc' },
+        { id: 'assets', label: 'Monitored Assets', icon: Server, color: '#00ff88' },
+        { id: 'projects', label: 'Project Scopes', icon: Cpu, color: '#a1a1aa' },
+      ]
+    }
   ];
 
-  const renderMenuItem = (item) => {
-    const isActive = currentTab === item.id;
-    
-    // Active classes vs Inactive classes
-    const containerClasses = isActive
-      ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-transparent border-l-4 border-l-cyan-400 border-y border-r border-cyan-400/30 text-white shadow-[inset_0_0_15px_rgba(6,182,212,0.15)] transition-all cursor-pointer"
-      : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer";
-      
-    const iconColor = isActive 
-      ? "text-cyan-300" 
-      : (item.iconColor === 'purple' ? 'text-purple-400 group-hover:text-purple-300' : 'text-slate-400 group-hover:text-cyan-400');
-      
-    const textClasses = isActive ? "font-semibold tracking-wide text-cyan-200 truncate" : "truncate";
-
-    return (
-      <a key={item.id} onClick={() => onTabChange(item.id)} className={containerClasses}>
-        <div className="flex items-center space-x-2.5 min-w-0">
-          <span className={`material-symbols-outlined text-[17px] transition-colors ${iconColor}`}>{item.icon}</span>
-          <span className={textClasses}>{item.label}</span>
-        </div>
-        
-        {item.statusLabel && (
-          <span className="flex items-center space-x-1">
-            <span className={`w-1.5 h-1.5 rounded-full bg-${item.statusColor}-400 ${item.isPulse ? 'animate-pulse' : ''} shadow-[0_0_6px_#38bdf8]`}></span>
-            <span className={`text-[9px] text-${item.statusColor}-400/80 font-bold uppercase`}>{item.statusLabel}</span>
-          </span>
-        )}
-        
-        {item.subtitle && !isActive && (
-          <span className="text-[10px] text-slate-500 font-mono group-hover:text-cyan-400">{item.subtitle}</span>
-        )}
-        
-        {item.badgeLabel && (
-          <span className={`px-1.5 py-0.5 rounded bg-${item.badgeColor}-500/15 border border-${item.badgeColor}-500/30 text-[9px] ${item.iconColor === 'purple' ? 'font-bold' : ''} text-${item.badgeColor}-300`}>
-            {item.badgeLabel}
-          </span>
-        )}
-      </a>
-    );
-  };
-
   return (
-    <aside className="w-full flex-shrink-0 tech-border-card rounded-xl border-[2.5px] border-[#360a25] bg-[#060108] backdrop-blur-md shadow-[0_8px_32px_0_rgba(0,0,0,0.95),0_0_14px_rgba(0,242,254,0.06)] sticky top-20 z-30 lg:w-72 p-4" data-purpose="platform-modules-sidebar">
-      {/* Sidebar Header / Module Crest */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#360a25] mb-4">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-2.5 h-2.5 bg-cyan-400 rounded-sm shadow-[0_0_8px_#38bdf8]"></div>
-          <div>
-            <span className="font-hud font-bold tracking-widest text-xs uppercase text-white drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]">PLATFORM MODULES</span>
-            <span className="block text-[9px] font-mono text-cyan-400/70 tracking-wider">NAV // V3.4 SUBSYSTEMS</span>
-          </div>
+    <aside
+      style={{
+        width: isCollapsed ? '60px' : '224px',
+        backgroundColor: '#040005',
+        borderRight: '2px solid #360a25',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        zIndex: 50,
+        userSelect: 'none',
+        boxShadow: '4px 0 24px rgba(0, 0, 0, 0.85)',
+        transition: 'width 0.22s cubic-bezier(0.4, 0, 0.2, 1)'
+      }}
+      className="flex-shrink-0"
+    >
+      {/* Brand Header Matching VAJRA */}
+      <div
+        onClick={() => onTabChange('dashboard')}
+        style={{
+          height: '46px',
+          padding: isCollapsed ? '0' : '0 12px',
+          borderBottom: '2px solid #360a25',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: isCollapsed ? 'center' : 'flex-start',
+          gap: '10px',
+          cursor: 'pointer',
+          background: '#040005',
+          flexShrink: 0
+        }}
+      >
+        <div
+          style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            border: '1.5px solid #00f2fe',
+            boxShadow: '0 0 12px rgba(0, 242, 254, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            background: '#040005'
+          }}
+        >
+          <img
+            src="/sentinal_logo.png"
+            alt="SENTINA"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
+            }}
+          />
         </div>
-        <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 border-[2px] border-[#360a25] hover:border-cyan-400/60 text-[9px] font-mono text-cyan-300">ONLINE</span>
+
+        {!isCollapsed && (
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: '13px', fontWeight: 900, letterSpacing: '1px', color: '#ffffff', lineHeight: 1.1, fontFamily: 'var(--font-main)' }}>
+              SENTINA
+            </div>
+            <div style={{ fontSize: '7.5px', fontWeight: 900, color: '#00f2fe', marginTop: '1px', letterSpacing: '0.5px', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+              SECOPS • SAST • DAST • SCA
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Module Navigation List */}
-      <nav className="space-y-1 font-mono text-xs max-h-[calc(100vh-210px)] overflow-y-auto hud-scrollbar pr-1">
-        {menuItems.map(renderMenuItem)}
+      {/* Navigation Sections */}
+      <nav
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '12px 10px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '14px'
+        }}
+        className="custom-scrollbar"
+      >
+        {navSections.map((section, sIdx) => (
+          <div key={sIdx} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            {!isCollapsed && (
+              <div
+                style={{
+                  fontSize: '9px',
+                  fontWeight: 900,
+                  fontFamily: 'var(--font-mono)',
+                  color: '#71717a',
+                  letterSpacing: '1px',
+                  padding: '2px 8px 4px 8px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                {section.label}
+              </div>
+            )}
 
-        {/* Category Divider */}
-        <div className="pt-2 pb-1 px-3">
-          <div className="flex items-center justify-between text-[9px] text-cyan-400/60 uppercase tracking-widest border-t border-[#360a25] pt-2">
-            <span>ANALYSIS ENGINES</span>
-            <span>AUTO-SCAN</span>
-          </div>
-        </div>
+            {section.items.map((item) => {
+              const active = currentTab === item.id;
+              const Icon = item.icon;
+              const iconAccent = item.color || (active ? '#00f2fe' : '#71717a');
 
-        {/* 8. SAST (Static) */}
-        <a 
-          onClick={() => onTabChange('sast')} 
-          className={currentTab === 'sast' 
-            ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-transparent border-l-4 border-l-cyan-400 border-y border-r border-cyan-400/30 text-white shadow-[inset_0_0_15px_rgba(6,182,212,0.15)] transition-all cursor-pointer" 
-            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-[#0e0212] border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
-        >
-          <div className="flex items-center space-x-2.5 min-w-0">
-            <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'sast' ? 'text-cyan-300' : 'text-slate-400 group-hover:text-cyan-400'}`}>code_blocks</span>
-            <span className={currentTab === 'sast' ? "font-semibold text-cyan-200 truncate" : "truncate"}>SAST (Static)</span>
-          </div>
-          <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 border-[2px] border-[#360a25] hover:border-cyan-400/60 text-[9px] font-bold text-cyan-300">{sastCount} ISSUES</span>
-        </a>
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => onTabChange(item.id)}
+                  style={{
+                    width: '100%',
+                    height: '34px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: isCollapsed ? 'center' : 'flex-start',
+                    gap: '10px',
+                    padding: isCollapsed ? '0' : '0 10px',
+                    borderRadius: '6px',
+                    background: active
+                      ? 'linear-gradient(90deg, rgba(0, 242, 254, 0.22) 0%, rgba(2, 132, 199, 0.08) 100%)'
+                      : 'transparent',
+                    border: active ? '1.5px solid #00f2fe' : '1.5px solid transparent',
+                    boxShadow: active ? '0 0 16px rgba(0, 242, 254, 0.35)' : 'none',
+                    color: active ? '#ffffff' : '#a1a1aa',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    position: 'relative',
+                    transition: 'all 0.15s ease',
+                    userSelect: 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'rgba(0, 242, 254, 0.08)';
+                      e.currentTarget.style.color = '#f8fafc';
+                      e.currentTarget.style.borderColor = 'rgba(0, 242, 254, 0.3)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = '#a1a1aa';
+                      e.currentTarget.style.borderColor = 'transparent';
+                    }
+                  }}
+                  title={isCollapsed ? item.label : undefined}
+                >
+                  {/* Left Accent Indicator */}
+                  {active && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: '-2px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '3.5px',
+                        height: '18px',
+                        borderRadius: '0 2px 2px 0',
+                        background: '#00f2fe',
+                        boxShadow: '0 0 8px #00f2fe'
+                      }}
+                    />
+                  )}
 
-        {/* 9. DAST (Web) */}
-        <a 
-          onClick={() => onTabChange('dast')} 
-          className={currentTab === 'dast' 
-            ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/20 via-amber-500/15 to-transparent border-l-4 border-l-amber-400 border-y border-r border-amber-400/30 text-white shadow-[inset_0_0_15px_rgba(245,158,11,0.15)] transition-all cursor-pointer" 
-            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-[#0e0212] border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
-        >
-          <div className="flex items-center space-x-2.5 min-w-0">
-            <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'dast' ? 'text-amber-400' : 'text-slate-400 group-hover:text-amber-400'}`}>language</span>
-            <span className={currentTab === 'dast' ? "font-semibold text-amber-200 truncate" : "truncate"}>DAST (Web)</span>
-          </div>
-          <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border-[2px] border-[#360a25] hover:border-amber-400/60 text-[9px] font-bold text-amber-300">{dastCount} ISSUES</span>
-        </a>
+                  {/* Icon with fixed width container */}
+                  <div
+                    style={{
+                      width: '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}
+                  >
+                    <Icon
+                      size={15}
+                      color={iconAccent}
+                      strokeWidth={active ? 2.5 : 2}
+                      style={{
+                        filter: active ? `drop-shadow(0 0 6px ${iconAccent})` : 'none',
+                        transition: 'all 0.15s'
+                      }}
+                    />
+                  </div>
 
-        {/* 10. SCA (Deps) */}
-        <a 
-          onClick={() => onTabChange('sca')} 
-          className={currentTab === 'sca' 
-            ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 via-purple-500/15 to-transparent border-l-4 border-l-purple-400 border-y border-r border-purple-400/30 text-white shadow-[inset_0_0_15px_rgba(168,85,247,0.15)] transition-all cursor-pointer" 
-            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-[#0e0212] border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
-        >
-          <div className="flex items-center space-x-2.5 min-w-0">
-            <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'sca' ? 'text-purple-400' : 'text-slate-400 group-hover:text-purple-400'}`}>account_tree</span>
-            <span className={currentTab === 'sca' ? "font-semibold text-purple-200 truncate" : "truncate"}>SCA (Deps)</span>
-          </div>
-          <span className="px-1.5 py-0.5 rounded bg-purple-500/15 border-[2px] border-[#360a25] hover:border-purple-400/60 text-[9px] font-bold text-purple-300">{scaCount} ISSUES</span>
-        </a>
+                  {/* Label & Chip */}
+                  {!isCollapsed && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 1, minWidth: 0 }}>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: active ? 800 : 600,
+                          letterSpacing: '0.3px',
+                          fontFamily: 'var(--font-main)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {item.label}
+                      </span>
 
-        {/* 11. Secrets */}
-        <a 
-          onClick={() => onTabChange('secrets')} 
-          className={currentTab === 'secrets' 
-            ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-rose-500/20 via-rose-500/15 to-transparent border-l-4 border-l-rose-400 border-y border-r border-rose-400/30 text-white shadow-[inset_0_0_15px_rgba(244,63,94,0.15)] transition-all cursor-pointer" 
-            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-[#0e0212] border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
-        >
-          <div className="flex items-center space-x-2.5 min-w-0">
-            <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'secrets' ? 'text-rose-400' : 'text-slate-400 group-hover:text-rose-400'}`}>vpn_key</span>
-            <span className={currentTab === 'secrets' ? "font-semibold text-rose-200 truncate" : "truncate"}>Secrets</span>
+                      {item.badge && (
+                        <span
+                          style={{
+                            fontSize: '8.5px',
+                            fontWeight: 900,
+                            fontFamily: 'var(--font-mono)',
+                            padding: '1px 5px',
+                            borderRadius: '4px',
+                            background: `${item.badgeColor || '#00f2fe'}18`,
+                            color: item.badgeColor || '#00f2fe',
+                            border: `1px solid ${item.badgeColor || '#00f2fe'}40`,
+                            flexShrink: 0,
+                            marginLeft: '4px'
+                          }}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 border-[2px] border-[#360a25] hover:border-rose-400/60 text-[9px] font-bold text-rose-300">{secretsCount} LEAKS</span>
-        </a>
-
-        {/* 12. Setting */}
-        <a 
-          onClick={() => onTabChange('capabilities')} 
-          className={currentTab === 'capabilities' 
-            ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-transparent border-l-4 border-l-cyan-400 border-y border-r border-cyan-400/30 text-white shadow-[inset_0_0_15px_rgba(6,182,212,0.15)] transition-all cursor-pointer" 
-            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-[#0e0212] border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
-        >
-          <div className="flex items-center space-x-2.5 min-w-0">
-            <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'capabilities' ? 'text-cyan-300' : 'text-slate-400 group-hover:text-cyan-400'}`}>settings</span>
-            <span className={currentTab === 'capabilities' ? "font-semibold text-cyan-200 truncate" : "truncate"}>Setting</span>
-          </div>
-          <span className="text-[10px] text-slate-500 font-mono group-hover:text-cyan-400">CFG</span>
-        </a>
+        ))}
       </nav>
 
-      {/* Sidebar Mini Telemetry Pod */}
-      <div className="mt-4 pt-3 border-t border-[#360a25] bg-[#040005] rounded-lg p-2.5 border-[1.5px] border-[#28081c]">
-        <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mb-1">
-          <span>PIPELINE HEALTH</span>
-          <span className="text-cyan-300 font-bold">99.8%</span>
+      {/* Mini Telemetry Pod Matching VAJRA */}
+      {!isCollapsed && (
+        <div
+          style={{
+            margin: '8px 10px',
+            padding: '8px 10px',
+            borderRadius: '8px',
+            background: '#060108',
+            border: '1.5px solid #360a25',
+            boxShadow: '0 0 12px rgba(0,0,0,0.5)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '9px', fontFamily: 'var(--font-mono)', color: '#a1a1aa', marginBottom: '4px' }}>
+            <span>ENGINE PIPELINE</span>
+            <span style={{ color: '#00f2fe', fontWeight: 900 }}>99.8%</span>
+          </div>
+          <div style={{ width: '100%', height: '4px', background: '#0e0212', borderRadius: '2px', overflow: 'hidden', border: '1px solid #28081c' }}>
+            <div style={{ width: '94%', height: '100%', background: 'linear-gradient(90deg, #00f2fe 0%, #38bdf8 100%)', boxShadow: '0 0 6px #00f2fe' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '8px', fontFamily: 'var(--font-mono)', color: '#71717a', marginTop: '4px' }}>
+            <span>HOST: sentina-node-01</span>
+            <span style={{ color: '#00ff88', fontWeight: 700 }}>ACTIVE</span>
+          </div>
         </div>
-        <div className="w-full bg-[#0e0212] h-1.5 rounded-full overflow-hidden border-[2px] border-[#360a25]">
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-400 h-full w-[94%] shadow-[0_0_8px_#38bdf8]"></div>
-        </div>
-        <div className="flex items-center justify-between text-[9px] font-mono text-cyan-400/70 mt-1.5">
-          <span>HOST: sentina-node-01</span>
-          <span className="text-emerald-400">ACTIVE</span>
-        </div>
+      )}
+
+      {/* Collapse/Expand Footer Toggle */}
+      <div
+        style={{
+          height: '38px',
+          borderTop: '2px solid #360a25',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: isCollapsed ? 'center' : 'space-between',
+          padding: isCollapsed ? '0' : '0 12px',
+          background: '#040005',
+          flexShrink: 0
+        }}
+      >
+        {!isCollapsed && (
+          <span style={{ fontSize: '9px', fontWeight: 900, fontFamily: 'var(--font-mono)', color: '#71717a', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+            V3.4 CORE SECOPS
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={toggleCollapse}
+          style={{
+            width: '24px',
+            height: '24px',
+            borderRadius: '5px',
+            background: '#0b020e',
+            border: '1px solid #360a25',
+            color: '#a1a1aa',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.15s'
+          }}
+          className="hover:border-cyan-400 hover:text-cyan-300"
+          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {isCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+        </button>
       </div>
     </aside>
   );
 };
+
+export default Sidebar;

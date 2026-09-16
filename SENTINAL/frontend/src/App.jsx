@@ -19,6 +19,7 @@ function SentinaMainContent({ embedded = false }) {
   const { user, loading } = useAuth();
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [selectedAssessmentId, setSelectedAssessmentId] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Live Active Assessment for Progress Modal
   const [activeRunningAssessment, setActiveRunningAssessment] = useState(null);
@@ -154,39 +155,44 @@ function SentinaMainContent({ embedded = false }) {
   };
 
   return (
-    <div className={`min-h-screen bg-[#030004] text-slate-200 antialiased cyber-grid flex flex-col justify-between ${embedded ? 'p-0' : ''}`}>
-      <div>
-        {/* Top Global Navigation (rendered only when standalone) */}
+    <div className="min-h-screen bg-[#030004] text-white flex flex-col justify-between">
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Global Navigation (standalone mode only) */}
         {!embedded && (
           <Navbar
             onNewAssessmentClick={() => setCurrentTab('new_assessment')}
           />
         )}
 
-        {/* Unified Dashboard Container with Cyber-HUD Sidebar */}
-        <div className="max-w-[1720px] mx-auto px-3.5 sm:px-4 py-4">
-          <div className="flex flex-col lg:flex-row gap-4 items-start">
-            <Sidebar
-              currentTab={currentTab === 'assessment_detail' ? 'assessments' : currentTab}
-              onTabChange={(tab) => {
-                setSelectedAssessmentId(null);
-                setCurrentTab(tab);
-              }}
-            />
+        {/* Dashboard Shell with Left Sticky Sidebar & Matching Main Content Layout */}
+        <div className="flex flex-1 min-h-0">
+          <Sidebar
+            currentTab={currentTab === 'assessment_detail' ? 'assessments' : currentTab}
+            onTabChange={(tab) => {
+              setSelectedAssessmentId(null);
+              setCurrentTab(tab);
+            }}
+            collapsed={sidebarCollapsed}
+            setCollapsed={setSidebarCollapsed}
+          />
 
-            <main className="flex-1 min-w-0 w-full space-y-4" data-purpose="telemetry-dashboard">
-              {renderContent()}
-            </main>
-          </div>
+          <main className="flex-1 overflow-y-auto p-3.5 sm:p-4 mx-auto w-full max-w-[1440px] space-y-3.5" data-purpose="telemetry-dashboard">
+            {renderContent()}
+          </main>
         </div>
       </div>
 
-      {/* Footer Status */}
-      <footer className="border-t border-[#360a25] bg-[#060108] text-center text-xs font-mono text-zinc-500 py-3" data-purpose="command-footer">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0">
-          <div>SENTINA CYBERMETRIC CORE • SECURE SENSING NETWORK & CLOUD POSTURE</div>
+      {/* Footer Status Matching VAJRA */}
+      <footer className="border-t-[2px] border-[#360a25] bg-[#040005] text-center text-xs font-mono text-zinc-500 py-2.5 px-4" data-purpose="command-footer">
+        <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row items-center justify-between space-y-1.5 md:space-y-0">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00f2fe] animate-pulse shadow-[0_0_6px_#00f2fe]"></span>
+            <span className="text-zinc-300 font-bold">SENTINA SECOPS CORE</span>
+            <span className="text-zinc-600">•</span>
+            <span>MULTI-ENGINE VULNERABILITY & CLOUD POSTURE INTELLIGENCE</span>
+          </div>
           <div className="flex items-center space-x-4">
-            <span className="text-cyan-400">STATUS: AUTHORIZED</span>
+            <span className="text-cyan-400 font-bold">DEFCON: LEVEL 2</span>
             <span className="text-zinc-400">ENCRYPTION: AES-GCM-256</span>
           </div>
         </div>

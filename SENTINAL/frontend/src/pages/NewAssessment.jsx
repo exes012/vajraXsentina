@@ -337,7 +337,7 @@ export const NewAssessment = ({ onAssessmentStarted }) => {
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',
         gap: '12px',
-        marginBottom: '24px'
+        marginBottom: '20px'
       }}>
         {[
           { id: 'repo', label: 'GitHub Repository', desc: 'SAST + SCA + Secret Detection', icon: GitBranch },
@@ -352,22 +352,22 @@ export const NewAssessment = ({ onAssessmentStarted }) => {
               key={tab.id}
               onClick={() => setMode(tab.id)}
               style={{
-                padding: '16px',
-                background: isSel ? 'rgba(0, 242, 254, 0.08)' : '#060108',
-                border: isSel ? '1px solid #00f2fe' : '1px solid #360a25',
-                borderRadius: '10px',
+                padding: '14px',
+                background: isSel ? 'linear-gradient(135deg, rgba(0, 242, 254, 0.18) 0%, rgba(2, 132, 199, 0.06) 100%)' : '#060108',
+                border: isSel ? '2px solid #00f2fe' : '2px solid #360a25',
+                borderRadius: '12px',
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                boxShadow: isSel ? '0 0 16px rgba(0, 242, 254, 0.2)' : 'none'
+                transition: 'all 0.18s ease',
+                boxShadow: isSel ? '0 0 20px rgba(0, 242, 254, 0.35)' : '0 4px 16px rgba(0,0,0,0.5)'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                <Icon size={18} color={isSel ? '#00f2fe' : '#94a3b8'} />
-                <span style={{ fontSize: '13px', fontWeight: '700', color: isSel ? '#00f2fe' : '#f8fafc' }}>
+                <Icon size={18} color={isSel ? '#00f2fe' : '#a1a1aa'} />
+                <span style={{ fontSize: '13px', fontWeight: '900', color: isSel ? '#00f2fe' : '#ffffff', fontFamily: 'var(--font-main)' }}>
                   {tab.label}
                 </span>
               </div>
-              <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>
+              <p style={{ fontSize: '11px', color: '#71717a', margin: 0, fontFamily: 'var(--font-mono)' }}>
                 {tab.desc}
               </p>
             </div>
