@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { ScanProgressModal } from './components/ScanProgressModal';
@@ -16,7 +16,7 @@ import { Assets } from './pages/Assets';
 import { Login } from './pages/Login';
 import { apiClient } from './api/client';
 
-export function App() {
+function SentinaMainContent() {
   const { user, loading } = useAuth();
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [selectedAssessmentId, setSelectedAssessmentId] = useState(null);
@@ -201,6 +201,14 @@ export function App() {
         />
       )}
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <AuthProvider>
+      <SentinaMainContent />
+    </AuthProvider>
   );
 }
 
