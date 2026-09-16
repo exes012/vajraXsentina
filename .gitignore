@@ -53,3 +53,5 @@ reports/
 **/reports/
 uploads/
 **/uploads/
+*.db
+**/*.db

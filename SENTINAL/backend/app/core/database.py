@@ -23,13 +23,24 @@ if is_sqlite:
         except Exception:
             pass
 else:
-    engine = create_engine(
-        settings.DATABASE_URL,
-        pool_pre_ping=True,
-        pool_size=5,
-        max_overflow=10,
-        echo=False
-    )
+    try:
+        engine = create_engine(
+            settings.DATABASE_URL,
+            pool_pre_ping=True,
+            pool_size=5,
+            max_overflow=10,
+            echo=False
+        )
+    except Exception as e:
+        # Fallback to local SQLite if PostgreSQL driver is unavailable in local dev
+        import logging
+        logging.getLogger("uvicorn.error").warning(f"Could not initialize PostgreSQL engine ({e}), falling back to SQLite.")
+        engine = create_engine(
+            "sqlite:///./sentinal.db",
+            connect_args={"check_same_thread": False, "timeout": 30},
+            poolclass=NullPool,
+            echo=False
+        )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -96,6 +107,8 @@ def run_db_migrations():
                 if existing_user_cols:
                     if "username" not in existing_user_cols:
                         conn.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR(64)"))
+                    if "name" not in existing_user_cols:
+                        conn.execute(text("ALTER TABLE users ADD COLUMN name VARCHAR(128)"))
                     if "role" not in existing_user_cols:
                         conn.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR(32) DEFAULT 'admin'"))
                     if "is_active" not in existing_user_cols:
