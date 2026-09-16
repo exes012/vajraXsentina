@@ -13,6 +13,7 @@ from app.api import (
     repos_router,
     assets_router,
     assessments_router,
+    scans_router,
     findings_router,
     reports_router,
     dashboard_router,
@@ -72,6 +73,7 @@ app.include_router(projects_router, prefix=settings.API_V1_PREFIX)
 app.include_router(repos_router, prefix=settings.API_V1_PREFIX)
 app.include_router(assets_router, prefix=settings.API_V1_PREFIX)
 app.include_router(assessments_router, prefix=settings.API_V1_PREFIX)
+app.include_router(scans_router, prefix=settings.API_V1_PREFIX)
 app.include_router(findings_router, prefix=settings.API_V1_PREFIX)
 app.include_router(reports_router, prefix=settings.API_V1_PREFIX)
 app.include_router(dashboard_router, prefix=settings.API_V1_PREFIX)

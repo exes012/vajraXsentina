@@ -82,15 +82,68 @@ class DashboardService {
     this.reports = [...mockReports];
     this.notifications = [...mockNotifications];
     this.activeAssessmentId = this.assessments[0]?.id || 'asm-source-01';
+    this.activeScanId = (typeof window !== 'undefined' && window.sessionStorage) ? window.sessionStorage.getItem('sentina_active_scan_id') : null;
+    this.activePollingInterval = null;
+    this.activeScanStats = {
+      files_scanned: 0,
+      dependencies_scanned: 0,
+      endpoints_discovered: 0,
+      requests_sent: 0,
+      findings: 0
+    };
     this.listeners = new Set();
+    
+    // Auto-recover active scan from session if page refreshed
+    if (this.activeScanId) {
+      this.recoverActiveScan(this.activeScanId);
+    }
+  }
+
+  getActiveScanId() {
+    return this.activeScanId;
+  }
+
+  setActiveScanId(id) {
+    this.activeScanId = id;
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      if (id) {
+        window.sessionStorage.setItem('sentina_active_scan_id', id);
+      } else {
+        window.sessionStorage.removeItem('sentina_active_scan_id');
+      }
+    }
+    this.notify();
+  }
+
+  async recoverActiveScan(scanId) {
+    if (!scanId) return;
+    try {
+      const statusData = await apiClient.getScanStatus(scanId).catch(() => null);
+      if (statusData && (statusData.status === 'RUNNING' || statusData.status === 'INITIALIZING' || statusData.status === 'QUEUED')) {
+        this.activeAssessmentId = scanId;
+        this.activeScanId = scanId;
+        this.pollAssessmentProgress(scanId);
+        this.notify();
+      }
+    } catch (e) {
+      console.warn('Could not recover active scan:', e);
+    }
   }
 
   getActiveAssessmentId() {
-    return this.activeAssessmentId;
+    return this.activeScanId || this.activeAssessmentId;
   }
 
   setActiveAssessmentId(id) {
     this.activeAssessmentId = id;
+    this.activeScanId = id;
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      if (id) {
+        window.sessionStorage.setItem('sentina_active_scan_id', id);
+      } else {
+        window.sessionStorage.removeItem('sentina_active_scan_id');
+      }
+    }
     if (id && !String(id).startsWith('temp-') && !String(id).startsWith('scan-temp-')) {
       this.getFindings({ assessment_id: id }).then(f => {
         this.notify();
@@ -1725,11 +1778,15 @@ Entropy: 5.12 (High)`,
     const tempId = `scan-temp-${Date.now()}`;
     const isSourceOnly = assessmentType === 'source' || assessmentType === 'repo';
 
-    // Pre-create source findings if source code scan
-    if (isSourceOnly) {
-      const srcFindings = this._generateSourceCodeFindings(tempId, targetStr);
-      this.findings = [...srcFindings, ...this.findings];
-    }
+    // Clear active findings completely for the new scan
+    this.findings = [];
+    this.activeScanStats = {
+      files_scanned: 0,
+      dependencies_scanned: 0,
+      endpoints_discovered: 0,
+      requests_sent: 0,
+      findings: 0
+    };
 
     const optimistic = this._formatAssessment({
       id: tempId,
@@ -1740,17 +1797,17 @@ Entropy: 5.12 (High)`,
       assessment_type: assessmentType,
       started_at: new Date().toISOString(),
       completed_at: null,
-      status: 'RUNNING',
-      progress: 15,
+      status: 'QUEUED',
+      progress: 5,
       overallScore: 100,
       securityScore: 100,
       riskScore: 0,
-      counts: isSourceOnly ? { critical: 2, high: 4, medium: 7, low: 5, info: 0, total: 18 } : { critical: 0, high: 0, medium: 0, low: 0, info: 0, total: 0 },
+      counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, total: 0 },
       dastCoverageScore: isSourceOnly ? 0 : 0,
       coverageStatus: isSourceOnly ? 'NOT_APPLICABLE' : 'IN_PROGRESS',
       logs: [
-        { timestamp: new Date().toISOString(), stage: 'INITIALIZATION', message: `Scanner orchestration engine initiated for target: ${targetStr}` },
-        { timestamp: new Date().toISOString(), stage: 'VALIDATION', message: `Validating target scope and scheduling multi-engine modules...` }
+        { timestamp: new Date().toISOString(), stage: 'QUEUED', message: `Scan request queued for target: ${targetStr}` },
+        { timestamp: new Date().toISOString(), stage: 'INITIALIZING', message: `Initializing scanner engines and environment...` }
       ],
       modules: {
         discovery: config.scanners?.discovery ?? !isSourceOnly,
@@ -1765,75 +1822,22 @@ Entropy: 5.12 (High)`,
       }
     });
 
-    // Reflect instantly in the UI state BEFORE any await network call
+    // Reflect immediately in the active UI
     this.assessments = [optimistic, ...this.assessments.filter(a => a.id !== tempId)];
     this.activeAssessmentId = tempId;
+    this.activeScanId = tempId;
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      window.sessionStorage.setItem('sentina_active_scan_id', tempId);
+    }
     this.notify();
 
-    // Start local simulated progression while awaiting backend response
-    let isServerActive = false;
-    let simProgress = 15;
-    const simInterval = setInterval(() => {
-      if (isServerActive) {
-        clearInterval(simInterval);
-        return;
-      }
-      const current = this.assessments.find(a => a.id === tempId);
-      if (!current || current.status !== 'RUNNING') {
-        clearInterval(simInterval);
-        return;
-      }
-      simProgress = Math.min(100, simProgress + 20);
-      current.progress = simProgress;
-
-      if (isSourceOnly) {
-        if (simProgress >= 30 && !current.logs.some(l => l.stage === 'EXTRACT')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'EXTRACT', text: `Cloned codebase & unpacked 142 source files for ${targetStr}.` });
-        }
-        if (simProgress >= 50 && !current.logs.some(l => l.stage === 'SAST')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'SAST', text: `Semgrep AST engine executed 142 syntax rules: identified 9 code vulnerability sinks (SQLi, RCE, SSRF, XSS).` });
-        }
-        if (simProgress >= 70 && !current.logs.some(l => l.stage === 'SCA')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'SCA', text: `OSV dependency scanner identified 5 vulnerable third-party packages in package.json (High/Crit CVEs).` });
-        }
-        if (simProgress >= 85 && !current.logs.some(l => l.stage === 'SECRETS')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'SECRETS', text: `Gitleaks scanner detected 4 high-entropy hardcoded credential tokens (AWS, Stripe, GitHub, JWT).` });
-        }
-      } else {
-        if (simProgress >= 30 && !current.logs.some(l => l.stage === 'DISCOVERY')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'DISCOVERY', text: `Analyzing attack surface and endpoints for ${targetStr}...` });
-        }
-        if (simProgress >= 50 && !current.logs.some(l => l.stage === 'EXECUTION')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'EXECUTION', text: `Dispatching AST syntax rules, dependency CVE audits and live fuzzers...` });
-        }
-        if (simProgress >= 75 && !current.logs.some(l => l.stage === 'CORRELATION')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'AI CORRELATION', text: `Correlating multi-vector vulnerability telemetry across modules...` });
-        }
-      }
-
-      if (simProgress >= 100) {
-        current.status = 'COMPLETED';
-        current.completed_at = new Date().toISOString();
-        current.completedAt = new Date().toLocaleString();
-        current.overallScore = 74;
-        current.securityScore = 74;
-        current.riskScore = 26;
-        current.counts = { critical: 2, high: 4, medium: 7, low: 5, info: 0, total: 18 };
-        current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'COMPLETED', text: `Assessment finished. Telemetry consolidated into unified security score (${current.securityScore}/100).` });
-        clearInterval(simInterval);
-      }
-
-      this.notify();
-    }, 1500);
-
     try {
-      const serverAssessment = await apiClient.startAssessment(payload);
-      if (serverAssessment && serverAssessment.id) {
-        isServerActive = true;
-        clearInterval(simInterval);
-        const formatted = this._formatAssessment(serverAssessment);
+      // Call dedicated /api/scans endpoint (with fallback to /api/assessments)
+      const serverScan = await (apiClient.startScan(payload).catch(() => apiClient.startAssessment(payload)));
+      if (serverScan && serverScan.id) {
+        const formatted = this._formatAssessment(serverScan);
 
-        // Replace temporary placeholder with real server assessment
+        // Replace temporary placeholder with real server scan
         const tempIdx = this.assessments.findIndex(a => a.id === tempId);
         if (tempIdx !== -1) {
           this.assessments[tempIdx] = formatted;
@@ -1841,14 +1845,54 @@ Entropy: 5.12 (High)`,
           this.assessments = [formatted, ...this.assessments.filter(a => a.id !== formatted.id)];
         }
         this.activeAssessmentId = formatted.id;
-        this.pollAssessmentProgress(serverAssessment.id);
+        this.activeScanId = formatted.id;
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.setItem('sentina_active_scan_id', formatted.id);
+        }
+        this.pollAssessmentProgress(formatted.id);
         this.notify();
         return formatted;
       }
     } catch (err) {
-      console.warn('Backend start assessment error / offline, proceeding with simulated execution engine:', err);
+      console.warn('Backend scan initiation notice:', err);
+      // Mark optimistic as FAILED if network unreachable
+      optimistic.status = 'FAILED';
+      optimistic.logs.push({
+        timestamp: new Date().toISOString(),
+        stage: 'FAILED',
+        message: `Connection to Sentina backend service failed: ${err.message || err}`
+      });
+      this.notify();
     }
     return optimistic;
+  }
+
+  async cancelActiveScan(scanId = null) {
+    const targetId = scanId || this.activeScanId || this.activeAssessmentId;
+    if (!targetId) return;
+
+    if (this.activePollingInterval) {
+      clearInterval(this.activePollingInterval);
+      this.activePollingInterval = null;
+    }
+
+    try {
+      await (apiClient.cancelScan(targetId).catch(() => apiClient.cancelAssessment(targetId)));
+    } catch (e) {
+      console.warn('Cancel scan notice:', e);
+    }
+
+    const current = this.assessments.find(a => String(a.id) === String(targetId));
+    if (current) {
+      current.status = 'CANCELLED';
+      current.logs = current.logs || [];
+      current.logs.push({
+        time: new Date().toLocaleTimeString(),
+        stage: 'CANCELLED',
+        text: 'Assessment scan was cancelled by analyst.'
+      });
+    }
+    this.notify();
   }
 
   async deleteAssessment(id) {
@@ -1861,6 +1905,7 @@ Entropy: 5.12 (High)`,
     this.assessments = this.assessments.filter(a => a.id !== id);
     if (this.activeAssessmentId === id) {
       this.activeAssessmentId = this.assessments.length > 0 ? this.assessments[0].id : null;
+      this.activeScanId = this.activeAssessmentId;
     }
     this.notify();
     return this.assessments;
@@ -1868,42 +1913,94 @@ Entropy: 5.12 (High)`,
 
   pollAssessmentProgress(assessmentId) {
     if (!assessmentId) return;
+    if (this.activePollingInterval) {
+      clearInterval(this.activePollingInterval);
+    }
+
     let pollCount = 0;
-    const interval = setInterval(async () => {
+    this.activePollingInterval = setInterval(async () => {
       pollCount++;
       try {
-        const [asm, fnds] = await Promise.all([
-          apiClient.getAssessment(assessmentId).catch(() => null),
-          apiClient.getFindings({ assessment_id: assessmentId, limit: 500 }).catch(() => [])
+        const [statusData, fnds] = await Promise.all([
+          apiClient.getScanStatus(assessmentId).catch(() => null),
+          apiClient.getScanFindings(assessmentId).catch(() => apiClient.getFindings({ assessment_id: assessmentId, limit: 500 }).catch(() => []))
         ]);
 
-        if (asm) {
-          const formatted = this._formatAssessment(asm);
+        if (statusData) {
           const idx = this.assessments.findIndex(a => String(a.id) === String(assessmentId));
+          const existing = idx !== -1 ? this.assessments[idx] : null;
+
+          const updated = {
+            ...(existing || {}),
+            id: statusData.scan_id || assessmentId,
+            status: statusData.status,
+            progress: statusData.progress ?? (statusData.status === 'COMPLETED' ? 100 : existing?.progress || 35),
+            started_at: statusData.started_at || existing?.started_at,
+            completed_at: statusData.completed_at || existing?.completed_at,
+            target: statusData.target?.url || statusData.target?.repository || existing?.target || 'Target Scope',
+            target_info: statusData.target || existing?.target_info,
+            logs: (statusData.logs && statusData.logs.length > 0) ? statusData.logs : existing?.logs || [],
+            counts: {
+              critical: statusData.statistics?.critical || 0,
+              high: statusData.statistics?.high || 0,
+              medium: statusData.statistics?.medium || 0,
+              low: statusData.statistics?.low || 0,
+              info: statusData.statistics?.info || 0,
+              total: statusData.statistics?.findings || (fnds ? fnds.length : 0)
+            }
+          };
+
           if (idx !== -1) {
-            this.assessments[idx] = formatted;
+            this.assessments[idx] = this._formatAssessment(updated);
           } else {
-            this.assessments.unshift(formatted);
+            this.assessments.unshift(this._formatAssessment(updated));
           }
 
-          if (String(this.activeAssessmentId) === String(assessmentId)) {
+          if (String(this.activeAssessmentId) === String(assessmentId) || String(this.activeScanId) === String(assessmentId)) {
             this.findings = (fnds || []).map(formatFinding);
+            this.activeScanStats = statusData.statistics || this.activeScanStats;
           }
           this.notify();
 
-          if (asm.status === 'COMPLETED' || asm.status === 'FAILED' || asm.status === 'CANCELLED' || pollCount > 180) {
-            clearInterval(interval);
-            if (String(this.activeAssessmentId) === String(assessmentId)) {
-              const finalFindings = await apiClient.getFindings({ assessment_id: assessmentId, limit: 500 }).catch(() => []);
+          if (statusData.status === 'COMPLETED' || statusData.status === 'FAILED' || statusData.status === 'CANCELLED' || pollCount > 300) {
+            clearInterval(this.activePollingInterval);
+            this.activePollingInterval = null;
+
+            if (String(this.activeAssessmentId) === String(assessmentId) || String(this.activeScanId) === String(assessmentId)) {
+              const finalFindings = await (apiClient.getScanFindings(assessmentId).catch(() => apiClient.getFindings({ assessment_id: assessmentId, limit: 500 }).catch(() => [])));
               this.findings = (finalFindings || []).map(formatFinding);
             }
             this.notify();
           }
+        } else {
+          // Fallback to getAssessment if /status is not available
+          const asm = await apiClient.getAssessment(assessmentId).catch(() => null);
+          if (asm) {
+            const formatted = this._formatAssessment(asm);
+            const idx = this.assessments.findIndex(a => String(a.id) === String(assessmentId));
+            if (idx !== -1) {
+              this.assessments[idx] = formatted;
+            } else {
+              this.assessments.unshift(formatted);
+            }
+            if (String(this.activeAssessmentId) === String(assessmentId)) {
+              this.findings = (fnds || []).map(formatFinding);
+            }
+            this.notify();
+
+            if (asm.status === 'COMPLETED' || asm.status === 'FAILED' || asm.status === 'CANCELLED' || pollCount > 300) {
+              clearInterval(this.activePollingInterval);
+              this.activePollingInterval = null;
+            }
+          }
         }
       } catch (e) {
-        if (pollCount > 180) clearInterval(interval);
+        if (pollCount > 300) {
+          clearInterval(this.activePollingInterval);
+          this.activePollingInterval = null;
+        }
       }
-    }, 2000);
+    }, 1500);
   }
 }
 

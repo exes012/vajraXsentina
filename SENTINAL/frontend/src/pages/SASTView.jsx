@@ -18,6 +18,8 @@ import { FindingDrawer } from '../components/FindingDrawer';
 import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
 export function SASTView() {
+  const [sastRepoInput, setSastRepoInput] = useState('https://github.com/company/core-api');
+  const [isStarting, setIsStarting] = useState(false);
   const [findings, setFindings] = useState(() => filterModuleFindings('sast', dashboardService.getInitialFindings({ module: 'sast' })));
   const [selectedSeverity, setSelectedSeverity] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,6 +28,32 @@ export function SASTView() {
     return init.length > 0 ? init[0] : null;
   });
   const [activeDrawerFinding, setActiveDrawerFinding] = useState(null);
+
+  const handleStartSAST = async () => {
+    if (!sastRepoInput.trim()) return;
+    setIsStarting(true);
+    try {
+      await dashboardService.triggerNewScan({
+        targetType: 'source',
+        repoUrl: sastRepoInput.trim(),
+        scanners: {
+          sast: true,
+          sca: false,
+          secrets: false,
+          discovery: false,
+          dast: false,
+          nuclei: false,
+          wapiti: false,
+          headers: false,
+          ssl: false
+        }
+      });
+    } catch (e) {
+      console.warn('Start SAST error:', e);
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
   useEffect(() => {
     async function loadSAST() {
@@ -120,6 +148,68 @@ export function SASTView() {
         >
           {findings.length} SAST Flaws Detected
         </span>
+      </div>
+
+      {/* Quick SAST Assessment Launcher Card */}
+      <div
+        className="cyber-card"
+        style={{
+          padding: '16px 20px',
+          background: 'rgba(15, 23, 42, 0.85)',
+          border: '1px solid rgba(0, 242, 254, 0.3)',
+          borderRadius: '10px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '280px' }}>
+          <Code2 size={22} color="#00f2fe" />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, marginBottom: '4px' }}>
+              TARGET REPOSITORY FOR SAST ANALYSIS
+            </div>
+            <input
+              type="text"
+              placeholder="https://github.com/company/project"
+              value={sastRepoInput}
+              onChange={e => setSastRepoInput(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                background: 'rgba(0, 0, 0, 0.3)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                color: '#f8fafc',
+                fontSize: '13px',
+                outline: 'none'
+              }}
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handleStartSAST}
+          disabled={isStarting}
+          style={{
+            padding: '10px 20px',
+            fontSize: '13px',
+            fontWeight: 800,
+            borderRadius: '6px',
+            background: 'linear-gradient(135deg, #00f2fe, #4facfe)',
+            color: '#020617',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          {isStarting ? 'Initiating SAST...' : 'Start SAST Assessment'}
+        </button>
       </div>
 
       {/* KPI Stats - Explicit SAST Security Score */}

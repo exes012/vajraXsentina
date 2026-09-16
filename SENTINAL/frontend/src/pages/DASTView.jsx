@@ -21,6 +21,8 @@ import { FindingDrawer } from '../components/FindingDrawer';
 import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
 export function DASTView() {
+  const [dastUrlInput, setDastUrlInput] = useState('https://example.com');
+  const [isStarting, setIsStarting] = useState(false);
   const [findings, setFindings] = useState(() => filterModuleFindings('dast', dashboardService.getInitialFindings({ module: 'dast' })));
   const [selectedSeverity, setSelectedSeverity] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,6 +31,32 @@ export function DASTView() {
     return init.length > 0 ? init[0] : null;
   });
   const [activeDrawerFinding, setActiveDrawerFinding] = useState(null);
+
+  const handleStartDAST = async () => {
+    if (!dastUrlInput.trim()) return;
+    setIsStarting(true);
+    try {
+      await dashboardService.triggerNewScan({
+        targetType: 'dast',
+        liveUrl: dastUrlInput.trim(),
+        scanners: {
+          sast: false,
+          sca: false,
+          secrets: false,
+          discovery: true,
+          dast: true,
+          nuclei: true,
+          wapiti: true,
+          headers: true,
+          ssl: true
+        }
+      });
+    } catch (e) {
+      console.warn('Start DAST error:', e);
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
   useEffect(() => {
     async function loadDAST() {
@@ -148,6 +176,68 @@ export function DASTView() {
         >
           {findings.length} RUNTIME FINDINGS DETECTED
         </span>
+      </div>
+
+      {/* Quick DAST Assessment Launcher Card */}
+      <div
+        className="cyber-card"
+        style={{
+          padding: '16px 20px',
+          background: 'rgba(15, 23, 42, 0.85)',
+          border: '1px solid rgba(249, 115, 22, 0.3)',
+          borderRadius: '10px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '280px' }}>
+          <Radio size={22} color="#f97316" />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, marginBottom: '4px' }}>
+              AUTHORIZED PRODUCTION TARGET URL FOR DAST AUDIT
+            </div>
+            <input
+              type="text"
+              placeholder="https://example.com"
+              value={dastUrlInput}
+              onChange={e => setDastUrlInput(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                background: 'rgba(0, 0, 0, 0.3)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                color: '#f8fafc',
+                fontSize: '13px',
+                outline: 'none'
+              }}
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handleStartDAST}
+          disabled={isStarting}
+          style={{
+            padding: '10px 20px',
+            fontSize: '13px',
+            fontWeight: 800,
+            borderRadius: '6px',
+            background: 'linear-gradient(135deg, #f97316, #fbbf24)',
+            color: '#020617',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          {isStarting ? 'Initiating DAST...' : 'Start DAST Assessment'}
+        </button>
       </div>
 
       {/* KPI Stats */}

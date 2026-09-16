@@ -3,6 +3,7 @@ from app.api.projects import router as projects_router
 from app.api.repositories import router as repos_router
 from app.api.assets import router as assets_router
 from app.api.assessments import router as assessments_router
+from app.api.scans import router as scans_router
 from app.api.findings import router as findings_router
 from app.api.reports import router as reports_router
 from app.api.dashboard import router as dashboard_router
@@ -14,6 +15,7 @@ __all__ = [
     "repos_router",
     "assets_router",
     "assessments_router",
+    "scans_router",
     "findings_router",
     "reports_router",
     "dashboard_router",

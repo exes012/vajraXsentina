@@ -3,12 +3,13 @@ import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 from app.core.security import create_access_token
-from app.core.database import SessionLocal
+from app.core.database import SessionLocal, run_db_migrations
 from app.models import User
 from app.core.security import get_password_hash
 
 @pytest.fixture
 def auth_headers():
+    run_db_migrations()
     db = SessionLocal()
     try:
         user = db.query(User).filter(User.username == "admin").first()

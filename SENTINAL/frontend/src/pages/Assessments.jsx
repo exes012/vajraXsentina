@@ -32,9 +32,11 @@ import { SeverityBadge } from '../components/SeverityBadge';
 import { FindingDrawer } from '../components/FindingDrawer';
 import { ReportViewerModal } from '../components/ReportViewerModal';
 import { ScanFailureModal } from '../components/ScanFailureModal';
+import { ActiveAssessmentDashboard } from '../components/ActiveAssessmentDashboard';
 import { getScorePosture, calculateFindingsScore } from '../utils/securityScore';
 
 export function Assessments({ onSelectFinding }) {
+  const [viewMode, setViewMode] = useState('active'); // 'active' | 'history'
   const [assessments, setAssessments] = useState(() => {
     const list = dashboardService.assessments;
     if (list && list.length > 0) return list;
@@ -374,19 +376,79 @@ export function Assessments({ onSelectFinding }) {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowNewModal(true)}
-          className="btn btn-primary"
-          style={{ fontSize: '12px', padding: '8px 16px', gap: '6px' }}
-        >
-          <Play size={14} />
-          <span>Launch Assessment</span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Active Assessment vs Scan History View Switcher */}
+          <div
+            style={{
+              display: 'flex',
+              background: 'rgba(0, 0, 0, 0.4)',
+              borderRadius: '8px',
+              padding: '3px',
+              border: '1px solid var(--border-color)'
+            }}
+          >
+            <button
+              onClick={() => setViewMode('active')}
+              style={{
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: 700,
+                borderRadius: '6px',
+                background: viewMode === 'active' ? 'linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(0, 242, 254, 0.05))' : 'transparent',
+                color: viewMode === 'active' ? '#00f2fe' : '#94a3b8',
+                border: viewMode === 'active' ? '1px solid rgba(0, 242, 254, 0.4)' : 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isRunning ? '#00f2fe' : '#00ff88', display: 'inline-block' }} />
+              Active Assessment
+            </button>
+            <button
+              onClick={() => setViewMode('history')}
+              style={{
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: 700,
+                borderRadius: '6px',
+                background: viewMode === 'history' ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03))' : 'transparent',
+                color: viewMode === 'history' ? '#f8fafc' : '#94a3b8',
+                border: viewMode === 'history' ? '1px solid rgba(255, 255, 255, 0.2)' : 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Scan History Archive
+            </button>
+          </div>
+
+          <button
+            onClick={() => setShowNewModal(true)}
+            className="btn btn-primary"
+            style={{ fontSize: '12px', padding: '8px 16px', gap: '6px' }}
+          >
+            <Play size={14} />
+            <span>Launch Assessment</span>
+          </button>
+        </div>
       </div>
 
-      {/* Selected Assessment Cockpit */}
-      {selectedAssessment && (
-        <div style={{ marginBottom: '20px' }}>
+      {viewMode === 'active' ? (
+        <ActiveAssessmentDashboard
+          assessment={selectedAssessment}
+          findings={scanFindings}
+          onCancel={async (id) => {
+            await dashboardService.cancelActiveScan(id);
+          }}
+          onStartNewScan={() => setShowNewModal(true)}
+          onSelectFinding={handleOpenFinding}
+        />
+      ) : (
+        <>
+          {/* Selected Assessment Cockpit */}
+          {selectedAssessment && (
+            <div style={{ marginBottom: '20px' }}>
           {/* Active Live Scanner Banner if running */}
           {isRunning && (
             <div
@@ -1553,6 +1615,8 @@ export function Assessments({ onSelectFinding }) {
           </table>
         </div>
       </div>
+    </>
+  )}
 
       {/* New Assessment Modal */}
       <NewAssessmentModal

@@ -14,6 +14,8 @@ import { SeverityBadge } from '../components/SeverityBadge';
 import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
 export function SCAView() {
+  const [scaRepoInput, setSastRepoInput] = useState('https://github.com/company/core-api');
+  const [isStarting, setIsStarting] = useState(false);
   const [findings, setFindings] = useState(() => filterModuleFindings('sca', dashboardService.getInitialFindings({ module: 'sca' })));
   const [selectedSeverity, setSelectedSeverity] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,6 +24,32 @@ export function SCAView() {
     return init.length > 0 ? init[0] : null;
   });
   const [activeDrawerFinding, setActiveDrawerFinding] = useState(null);
+
+  const handleStartSCA = async () => {
+    if (!scaRepoInput.trim()) return;
+    setIsStarting(true);
+    try {
+      await dashboardService.triggerNewScan({
+        targetType: 'source',
+        repoUrl: scaRepoInput.trim(),
+        scanners: {
+          sast: false,
+          sca: true,
+          secrets: false,
+          discovery: false,
+          dast: false,
+          nuclei: false,
+          wapiti: false,
+          headers: false,
+          ssl: false
+        }
+      });
+    } catch (e) {
+      console.warn('Start SCA error:', e);
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
   useEffect(() => {
     async function loadSCA() {
@@ -113,6 +141,68 @@ export function SCAView() {
         >
           {findings.length} Vulnerable Dependencies Detected
         </span>
+      </div>
+
+      {/* Quick SCA Assessment Launcher Card */}
+      <div
+        className="cyber-card"
+        style={{
+          padding: '16px 20px',
+          background: 'rgba(15, 23, 42, 0.85)',
+          border: '1px solid rgba(0, 255, 136, 0.3)',
+          borderRadius: '10px',
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '280px' }}>
+          <Boxes size={22} color="#00ff88" />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, marginBottom: '4px' }}>
+              TARGET REPOSITORY FOR DEPENDENCY & CVE AUDIT
+            </div>
+            <input
+              type="text"
+              placeholder="https://github.com/company/project"
+              value={scaRepoInput}
+              onChange={e => setSastRepoInput(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                background: 'rgba(0, 0, 0, 0.3)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                color: '#f8fafc',
+                fontSize: '13px',
+                outline: 'none'
+              }}
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handleStartSCA}
+          disabled={isStarting}
+          style={{
+            padding: '10px 20px',
+            fontSize: '13px',
+            fontWeight: 800,
+            borderRadius: '6px',
+            background: 'linear-gradient(135deg, #00ff88, #00c6ff)',
+            color: '#020617',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          {isStarting ? 'Initiating SCA...' : 'Start SCA Assessment'}
+        </button>
       </div>
 
       {/* KPI Stats */}

@@ -270,6 +270,43 @@ export const apiClient = {
     });
   },
 
+  // Scans (Dedicated Real-time Live Scan API Contract)
+  startScan(payload) {
+    return this.request('/scans', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  getScan(scanId) {
+    return this.request(`/scans/${scanId}`);
+  },
+
+  getScanStatus(scanId) {
+    return this.request(`/scans/${scanId}/status`);
+  },
+
+  getScanFindings(scanId, params = {}) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, val]) => {
+      if (val !== undefined && val !== null && val !== '') {
+        query.append(key, val);
+      }
+    });
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return this.request(`/scans/${scanId}/findings${qs}`);
+  },
+
+  getScanReport(scanId) {
+    return this.request(`/scans/${scanId}/report`);
+  },
+
+  cancelScan(scanId) {
+    return this.request(`/scans/${scanId}/cancel`, {
+      method: 'POST'
+    });
+  },
+
   // Assessments
   startAssessment(assessment) {
     return this.request('/assessments', {
