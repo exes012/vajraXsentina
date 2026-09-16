@@ -1413,49 +1413,51 @@ Entropy: 5.12 (High)`,
   }
 
   getInitialFindings(params = {}) {
-    const currentList = this.findings && this.findings.length > 0 ? this.findings : mockFindings;
-    if (params && params.module) {
-      return filterModuleFindings(params.module, currentList).map(formatFinding);
-    }
     const targetAssessmentId = params.assessment_id;
     if (targetAssessmentId) {
-      const filtered = currentList.filter(f => String(f.assessment_id) === String(targetAssessmentId) || String(f.assessmentId) === String(targetAssessmentId));
-      if (filtered.length > 0) {
-        return filtered.map(formatFinding);
+      // If temporary scan or active in-flight scan, return empty list strictly
+      if (String(targetAssessmentId).startsWith('temp-') || String(targetAssessmentId).startsWith('scan-temp-')) {
+        return [];
       }
+      const currentList = this.findings || [];
+      const filtered = currentList.filter(f => String(f.assessment_id) === String(targetAssessmentId) || String(f.assessmentId) === String(targetAssessmentId));
+      return filtered.map(formatFinding);
     }
+    if (params && params.module) {
+      const currentList = this.findings && this.findings.length > 0 ? this.findings : mockFindings;
+      return filterModuleFindings(params.module, currentList).map(formatFinding);
+    }
+    const currentList = this.findings && this.findings.length > 0 ? this.findings : mockFindings;
     return currentList.map(formatFinding);
   }
 
   async getFindings(params = {}) {
-    const queryParams = { ...params };
     const explicitlyTargetedId = params.assessment_id;
 
-    try {
-      // 1. If explicit assessment_id requested, query that specific assessment
-      if (explicitlyTargetedId) {
-        const serverFindings = await apiClient.getFindings({ assessment_id: explicitlyTargetedId, limit: 500 });
-        if (serverFindings && Array.isArray(serverFindings) && serverFindings.length > 0) {
-          const formatted = serverFindings.map(formatFinding);
-          // Merge into this.findings without losing other findings
-          this.findings = [
-            ...this.findings.filter(f => String(f.assessment_id) !== String(explicitlyTargetedId) && String(f.assessmentId) !== String(explicitlyTargetedId)),
-            ...formatted
-          ];
-          return formatted;
-        }
+    // 1. If explicit assessment_id requested, query strictly that specific assessment
+    if (explicitlyTargetedId) {
+      if (String(explicitlyTargetedId).startsWith('temp-') || String(explicitlyTargetedId).startsWith('scan-temp-')) {
+        return [];
       }
+      try {
+        const serverFindings = await apiClient.getFindings({ assessment_id: explicitlyTargetedId, limit: 500 });
+        if (serverFindings && Array.isArray(serverFindings)) {
+          return serverFindings.map(formatFinding);
+        }
+      } catch (e) {
+        console.warn(`Could not fetch findings for scan ${explicitlyTargetedId}:`, e);
+      }
+      // Strictly filter local cache for this specific assessment only — NO GLOBAL FALLBACK!
+      const local = (this.findings || []).filter(f => String(f.assessment_id) === String(explicitlyTargetedId) || String(f.assessmentId) === String(explicitlyTargetedId));
+      return local.map(formatFinding);
+    }
 
-      // 2. Fetch all platform findings
+    // 2. Fetch all platform findings for global overview
+    try {
       const allServerFindings = await apiClient.getFindings({ limit: 500 });
       if (allServerFindings && Array.isArray(allServerFindings) && allServerFindings.length > 0) {
         const formattedServer = allServerFindings.map(formatFinding);
-        
-        // Ensure baseline DAST / Threat Intel / Secrets are present if live backend only had SAST/SCA
-        const existingModules = new Set(formattedServer.map(f => getFindingModule(f)));
-        const missingBaseline = mockFindings.filter(f => !existingModules.has(getFindingModule(f))).map(formatFinding);
-        
-        this.findings = [...formattedServer, ...missingBaseline];
+        this.findings = formattedServer;
         return this.findings;
       }
     } catch (e) {

@@ -44,15 +44,15 @@ export function Assessments({ onSelectFinding }) {
   });
 
   const [selectedAssessment, setSelectedAssessment] = useState(() => {
-    const list = (dashboardService.assessments && dashboardService.assessments.length > 0)
-      ? dashboardService.assessments
-      : mockAssessments.map(a => dashboardService._formatAssessment(a));
-    const activeId = dashboardService.getActiveAssessmentId();
+    const list = dashboardService.assessments || [];
+    const activeId = dashboardService.getActiveAssessmentId() || dashboardService.getActiveScanId();
     if (activeId) {
       const found = list.find(a => String(a.id) === String(activeId));
       if (found) return found;
     }
-    return list.find(a => (a.status === 'COMPLETED' || a.status === 'SUCCESS') && a.counts?.total > 0) || list[0] || null;
+    const running = list.find(a => a.status === 'RUNNING' || a.status === 'QUEUED' || a.status === 'INITIALIZING' || a.status === 'SCANNING' || a.status === 'DISCOVERING');
+    if (running) return running;
+    return null;
   });
   const [scanFindings, setScanFindings] = useState([]);
   const [selectedModuleFilter, setSelectedModuleFilter] = useState('ALL');
@@ -71,20 +71,25 @@ export function Assessments({ onSelectFinding }) {
     async function loadAssessments() {
       const data = await dashboardService.getAssessments();
       if (isMounted) {
-        const asms = (data && data.length > 0) ? data : (dashboardService.assessments && dashboardService.assessments.length > 0 ? dashboardService.assessments : mockAssessments.map(a => dashboardService._formatAssessment(a)));
+        const asms = (data && data.length > 0) ? data : (dashboardService.assessments || []);
         setAssessments(asms);
         if (asms && asms.length > 0) {
           setSelectedAssessment(prev => {
-            const activeId = dashboardService.getActiveAssessmentId();
+            // 1. Look for currently active running scan
+            const runningScan = asms.find(a => a.status === 'RUNNING' || a.status === 'QUEUED' || a.status === 'INITIALIZING' || a.status === 'SCANNING' || a.status === 'DISCOVERING');
+            if (runningScan) return runningScan;
+
+            // 2. Check active scan ID
+            const activeId = dashboardService.getActiveAssessmentId() || dashboardService.getActiveScanId();
             if (activeId) {
               const matched = asms.find(a => String(a.id) === String(activeId));
               if (matched) return matched;
             }
-            if (!prev) {
-              return asms.find(a => (a.status === 'COMPLETED' || a.status === 'SUCCESS') && a.counts?.total > 0) || asms[0];
+            if (prev) {
+              const updated = asms.find(a => String(a.id) === String(prev.id));
+              if (updated) return updated;
             }
-            const updated = asms.find(a => String(a.id) === String(prev.id));
-            return updated || asms[0];
+            return null;
           });
 
           // Check if any in-flight scan transitioned from RUNNING/QUEUED to FAILED

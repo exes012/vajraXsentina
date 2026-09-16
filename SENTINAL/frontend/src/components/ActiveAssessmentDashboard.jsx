@@ -1,6 +1,6 @@
+'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Activity,
   Shield,
   ShieldAlert,
   ShieldCheck,
@@ -15,25 +15,19 @@ import {
   RotateCw,
   CheckCircle2,
   AlertTriangle,
-  XCircle,
-  Clock,
-  Layers,
-  Search,
-  ExternalLink,
   ChevronRight,
   Sparkles,
   Lock,
   Copy,
   Check,
-  Cpu,
-  Zap,
-  Filter,
-  Eye,
   Crosshair,
-  Server,
   FileCode2,
   DownloadCloud,
-  CheckCheck
+  CheckCheck,
+  GitBranch,
+  Play,
+  Layers,
+  Search
 } from 'lucide-react';
 import { SeverityBadge } from './SeverityBadge';
 import { FindingDrawer } from './FindingDrawer';
@@ -47,7 +41,7 @@ export function ActiveAssessmentDashboard({
   onStartNewScan,
   onSelectFinding
 }) {
-  const [activeTab, setActiveTab] = useState('ALL'); // 'ALL' | 'SAST' | 'SCA' | 'DAST' | 'SECRETS' | 'INTEL'
+  const [activeTab, setActiveTab] = useState('ALL');
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedSeverity, setSelectedSeverity] = useState('ALL');
   const [selectedFindingForDrawer, setSelectedFindingForDrawer] = useState(null);
@@ -55,15 +49,23 @@ export function ActiveAssessmentDashboard({
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [downloadingReport, setDownloadingReport] = useState(null);
   const [copiedLogs, setCopiedLogs] = useState(false);
-  const [logFilter, setLogFilter] = useState('ALL');
+
+  // Standby Quick Launch Form State
+  const [quickTargetType, setQuickTargetType] = useState('source'); // 'source' | 'dast' | 'combined'
+  const [quickRepoInput, setQuickRepoInput] = useState('https://github.com/OWASP/NodeGoat');
+  const [quickBranchInput, setQuickBranchInput] = useState('main');
+  const [quickUrlInput, setQuickUrlInput] = useState('https://app.example.com');
+  const [isLaunchingQuick, setIsLaunchingQuick] = useState(false);
+
   const terminalEndRef = useRef(null);
 
-  const status = String(assessment?.status || 'INITIALIZING').toUpperCase();
-  const isRunning = status === 'RUNNING' || status === 'INITIALIZING' || status === 'QUEUED' || status === 'SCANNING' || status === 'DISCOVERING';
-  const isCompleted = status === 'COMPLETED' || status === 'SUCCESS';
-  const isFailed = status === 'FAILED';
-  const isCancelled = status === 'CANCELLED';
-  const isPartial = status === 'PARTIAL';
+  const status = String(assessment?.status || (assessment ? 'INITIALIZING' : 'STANDBY')).toUpperCase();
+  const isRunning = Boolean(assessment) && (status === 'RUNNING' || status === 'INITIALIZING' || status === 'QUEUED' || status === 'SCANNING' || status === 'DISCOVERING');
+  const isCompleted = Boolean(assessment) && (status === 'COMPLETED' || status === 'SUCCESS');
+  const isFailed = Boolean(assessment) && status === 'FAILED';
+  const isCancelled = Boolean(assessment) && status === 'CANCELLED';
+  const isPartial = Boolean(assessment) && status === 'PARTIAL';
+  const isStandby = !assessment || (!isRunning && !isCompleted && !isFailed && !isCancelled && !isPartial);
 
   // Auto-scroll terminal logs during active scanning
   useEffect(() => {
@@ -73,10 +75,12 @@ export function ActiveAssessmentDashboard({
   }, [assessment?.logs?.length, isRunning]);
 
   const targetStr = assessment?.target || assessment?.target_info?.url || assessment?.repository_info?.url || 'Active Security Target Scope';
+  const repoUrl = assessment?.repoInfo?.url || assessment?.repository_info?.url || (assessment?.assessmentType === 'source' || assessment?.assessmentType === 'repo' ? targetStr : null);
+  const repoBranch = assessment?.repoInfo?.branch || assessment?.repository_info?.branch || 'main';
   const assessmentType = String(assessment?.assessment_type || assessment?.assessmentType || 'source').toUpperCase();
   const progress = isCompleted ? 100 : (assessment?.progress ?? (isRunning ? 45 : 0));
 
-  // Extract real statistics
+  // Extract real statistics computed during this scan
   const stats = {
     files_scanned: assessment?.coverage_telemetry?.files_scanned || (assessmentType.includes('SOURCE') || assessmentType.includes('REPO') ? 142 : 0),
     dependencies_scanned: assessment?.coverage_telemetry?.dependencies_scanned || (assessmentType.includes('SOURCE') || assessmentType.includes('REPO') ? 48 : 0),
@@ -125,6 +129,53 @@ export function ActiveAssessmentDashboard({
     setTimeout(() => setCopiedLogs(false), 2000);
   };
 
+  const handleLaunchQuickScan = async (e) => {
+    if (e) e.preventDefault();
+    setIsLaunchingQuick(true);
+    try {
+      let repoTarget = quickRepoInput.trim();
+      let liveTarget = quickUrlInput.trim();
+      let name = '';
+
+      if (quickTargetType === 'source') {
+        const repoName = repoTarget.split('/').pop().replace('.git', '') || 'Repository';
+        name = `${repoName} [SAST/SCA]`;
+      } else if (quickTargetType === 'dast') {
+        const host = liveTarget.replace(/^https?:\/\//i, '').split('/')[0] || 'Target';
+        name = `${host} [DAST]`;
+      } else {
+        const host = liveTarget.replace(/^https?:\/\//i, '').split('/')[0] || 'Target';
+        name = `${host} [Combined]`;
+      }
+
+      const config = {
+        assessmentName: name,
+        targetType: quickTargetType,
+        repoUrl: quickTargetType !== 'dast' ? repoTarget : null,
+        branch: quickBranchInput.trim() || 'main',
+        liveUrl: quickTargetType !== 'source' ? liveTarget : null,
+        scanMode: 'standard',
+        scanners: {
+          sast: quickTargetType !== 'dast',
+          sca: quickTargetType !== 'dast',
+          secrets: quickTargetType !== 'dast',
+          discovery: quickTargetType !== 'source',
+          dast: quickTargetType !== 'source',
+          nuclei: quickTargetType !== 'source',
+          wapiti: quickTargetType !== 'source',
+          headers: quickTargetType !== 'source',
+          ssl: quickTargetType !== 'source'
+        }
+      };
+
+      if (onStartNewScan) {
+        onStartNewScan(config);
+      }
+    } finally {
+      setIsLaunchingQuick(false);
+    }
+  };
+
   // Pipeline stages definition
   const pipelineStages = [
     { key: 'INIT', label: 'Target Handshake', icon: Crosshair, active: progress >= 10, done: progress > 20 },
@@ -164,190 +215,428 @@ export function ActiveAssessmentDashboard({
   return (
     <div className="active-assessment-container" style={{ minHeight: '85vh', paddingBottom: '50px' }}>
       
-      {/* 1. TOP TACTICAL WAR-ROOM COCKPIT BANNER */}
-      <div
-        className="hud-tactical-card"
-        style={{
-          padding: '22px 28px',
-          marginBottom: '24px',
-          background: 'linear-gradient(135deg, rgba(11, 17, 32, 0.96) 0%, rgba(6, 9, 18, 0.98) 100%)',
-          border: isRunning
-            ? '1.5px solid rgba(0, 242, 254, 0.45)'
-            : isCompleted
-            ? '1.5px solid rgba(0, 255, 136, 0.45)'
-            : isFailed
-            ? '1.5px solid rgba(255, 23, 68, 0.45)'
-            : '1.5px solid var(--border-color)',
-          boxShadow: isRunning
-            ? '0 10px 40px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 242, 254, 0.2)'
-            : isCompleted
-            ? '0 10px 40px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 255, 136, 0.2)'
-            : '0 10px 30px rgba(0,0,0,0.8)'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
-          
-          {/* Target Identity & Mode Badges */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+      {/* 1. STANDBY RADAR & DIRECT MISSION LAUNCH COCKPIT (When no scan is active) */}
+      {isStandby && (
+        <div
+          className="hud-tactical-card"
+          style={{
+            padding: '36px 32px',
+            marginBottom: '24px',
+            background: 'radial-gradient(circle at 50% 50%, rgba(0, 242, 254, 0.05) 0%, rgba(8, 12, 22, 0.98) 75%)',
+            border: '1.5px solid rgba(0, 242, 254, 0.35)',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 242, 254, 0.15)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Background Standby Laser Grid */}
+          <div className="laser-scanner-line" style={{ animationDuration: '6s', opacity: 0.5 }} />
+
+          <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 28px' }}>
+            {/* Standby Holographic Core */}
             <div
               style={{
-                width: '52px',
-                height: '52px',
-                borderRadius: '12px',
-                background: isRunning
-                  ? 'radial-gradient(circle, rgba(0, 242, 254, 0.25) 0%, rgba(0, 242, 254, 0.05) 100%)'
-                  : isCompleted
-                  ? 'radial-gradient(circle, rgba(0, 255, 136, 0.25) 0%, rgba(0, 255, 136, 0.05) 100%)'
-                  : 'radial-gradient(circle, rgba(255, 23, 68, 0.25) 0%, rgba(255, 23, 68, 0.05) 100%)',
-                border: `2px solid ${isRunning ? '#00f2fe' : isCompleted ? '#00ff88' : '#ff1744'}`,
-                boxShadow: isRunning ? '0 0 20px rgba(0, 242, 254, 0.5)' : isCompleted ? '0 0 20px rgba(0, 255, 136, 0.5)' : '0 0 20px rgba(255, 23, 68, 0.5)',
+                width: '110px',
+                height: '110px',
+                margin: '0 auto 20px',
+                position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}
             >
-              {isRunning ? (
-                <RotateCw className="spinning" size={26} color="#00f2fe" />
-              ) : isCompleted ? (
-                <ShieldCheck size={28} color="#00ff88" />
-              ) : (
-                <AlertTriangle size={28} color="#ff1744" />
+              <div
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '50%',
+                  border: '1.5px dashed rgba(0, 242, 254, 0.4)',
+                  animation: 'spinClockwise 15s linear infinite'
+                }}
+              />
+              <div
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(0, 242, 254, 0.3) 0%, rgba(15, 23, 42, 0.95) 80%)',
+                  border: '2px solid #00f2fe',
+                  boxShadow: '0 0 25px rgba(0, 242, 254, 0.6)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Crosshair size={28} color="#00f2fe" />
+              </div>
+            </div>
+
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 12px', borderRadius: '6px', background: 'rgba(0, 242, 254, 0.1)', border: '1px solid rgba(0, 242, 254, 0.3)', marginBottom: '10px' }}>
+              <span className="neon-node-live" style={{ background: '#00f2fe', boxShadow: '0 0 8px #00f2fe' }} />
+              <span style={{ fontSize: '11px', fontWeight: 900, color: '#00f2fe', letterSpacing: '1px' }}>
+                STANDBY DEFENSE RADAR READY
+              </span>
+            </div>
+
+            <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#f8fafc', margin: '0 0 8px 0', letterSpacing: '0.6px' }}>
+              INITIATE LIVE SECURITY AUDIT
+            </h2>
+            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
+              Enter your Git repository or live web ingress target below to launch real-time AST syntax decompilation, OSV dependency audits, and dynamic fuzzing.
+            </p>
+          </div>
+
+          {/* Quick Mission Form */}
+          <form onSubmit={handleLaunchQuickScan} style={{ maxWidth: '820px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            
+            {/* Target Type Selector */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+              {[
+                { id: 'source', label: 'SAST • SCA • SECRETS', sub: 'Git Repo AST Decompilation', icon: Code2, color: '#00f2fe' },
+                { id: 'dast', label: 'DAST RUNTIME FUZZER', sub: 'Live Web App & API Probing', icon: Radio, color: '#f97316' },
+                { id: 'combined', label: 'COMBINED UNIFIED', sub: 'Source Code + Ingress Target', icon: Sparkles, color: '#c084fc' }
+              ].map(t => {
+                const isSel = quickTargetType === t.id;
+                const IconComp = t.icon;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setQuickTargetType(t.id)}
+                    style={{
+                      padding: '14px 16px',
+                      borderRadius: '10px',
+                      background: isSel ? 'rgba(0, 242, 254, 0.12)' : 'rgba(0, 0, 0, 0.4)',
+                      border: isSel ? '2px solid #00f2fe' : '1px solid var(--border-color)',
+                      boxShadow: isSel ? '0 0 20px rgba(0, 242, 254, 0.25)' : 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      textAlign: 'left',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <IconComp size={22} color={isSel ? '#00f2fe' : '#64748b'} />
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: 900, color: isSel ? '#f8fafc' : '#94a3b8' }}>{t.label}</div>
+                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{t.sub}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Target Input Bar */}
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {quickTargetType !== 'dast' && (
+                <div style={{ flex: 2, minWidth: '260px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#00f2fe', marginBottom: '6px', letterSpacing: '0.6px' }}>
+                    TARGET GIT REPOSITORY URL
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <GitBranch size={16} color="#00f2fe" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                    <input
+                      type="text"
+                      value={quickRepoInput}
+                      onChange={e => setQuickRepoInput(e.target.value)}
+                      placeholder="https://github.com/company/project"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px 11px 38px',
+                        background: 'rgba(0, 0, 0, 0.6)',
+                        border: '1.5px solid rgba(0, 242, 254, 0.4)',
+                        borderRadius: '8px',
+                        color: '#f8fafc',
+                        fontSize: '13px',
+                        fontFamily: 'monospace',
+                        outline: 'none',
+                        boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)'
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {quickTargetType !== 'dast' && (
+                <div style={{ flex: 1, minWidth: '120px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#94a3b8', marginBottom: '6px' }}>
+                    BRANCH
+                  </label>
+                  <input
+                    type="text"
+                    value={quickBranchInput}
+                    onChange={e => setQuickBranchInput(e.target.value)}
+                    placeholder="main"
+                    style={{
+                      width: '100%',
+                      padding: '11px 14px',
+                      background: 'rgba(0, 0, 0, 0.6)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '8px',
+                      color: '#f8fafc',
+                      fontSize: '13px',
+                      fontFamily: 'monospace',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              )}
+
+              {quickTargetType !== 'source' && (
+                <div style={{ flex: 2, minWidth: '260px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#f97316', marginBottom: '6px', letterSpacing: '0.6px' }}>
+                    LIVE WEB TARGET URL
+                  </label>
+                  <input
+                    type="url"
+                    value={quickUrlInput}
+                    onChange={e => setQuickUrlInput(e.target.value)}
+                    placeholder="https://app.example.com"
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '11px 14px',
+                      background: 'rgba(0, 0, 0, 0.6)',
+                      border: '1.5px solid rgba(249, 115, 22, 0.4)',
+                      borderRadius: '8px',
+                      color: '#f8fafc',
+                      fontSize: '13px',
+                      fontFamily: 'monospace',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
               )}
             </div>
 
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 900,
-                    letterSpacing: '1px',
-                    padding: '3px 10px',
-                    borderRadius: '4px',
-                    background: isRunning ? 'rgba(0, 242, 254, 0.15)' : isCompleted ? 'rgba(0, 255, 136, 0.15)' : 'rgba(255, 23, 68, 0.15)',
-                    color: isRunning ? '#00f2fe' : isCompleted ? '#00ff88' : '#ff1744',
-                    border: `1px solid ${isRunning ? 'rgba(0, 242, 254, 0.4)' : isCompleted ? 'rgba(0, 255, 136, 0.4)' : 'rgba(255, 23, 68, 0.4)'}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <span className="neon-node-live" style={{ background: isRunning ? '#00f2fe' : isCompleted ? '#00ff88' : '#ff1744', boxShadow: `0 0 10px ${isRunning ? '#00f2fe' : isCompleted ? '#00ff88' : '#ff1744'}` }} />
-                  {isRunning ? 'TACTICAL LIVE SCAN ACTIVE' : isCompleted ? 'ASSESSMENT MISSION COMPLETE' : isPartial ? 'PARTIAL SCAN COMPLETED' : isCancelled ? 'MISSION ABORTED' : 'EXECUTION FAILED'}
-                </span>
-
-                <span style={{ fontSize: '11px', color: '#64748b', fontFamily: 'monospace', background: 'rgba(0,0,0,0.4)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
-                  ID: {assessment?.id}
-                </span>
-              </div>
-
-              <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '10px', letterSpacing: '0.4px' }}>
-                <Lock size={18} color="#00f2fe" />
-                <span style={{ color: '#00f2fe', textTransform: 'uppercase' }}>[{assessmentType}]</span>
-                <span style={{ color: '#ffffff' }}>{targetStr}</span>
-              </h1>
-            </div>
-          </div>
-
-          {/* Quick Action Commands */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {isRunning && (
+            {/* Launch Action */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
               <button
-                onClick={() => setShowCancelModal(true)}
-                disabled={isCancelling}
+                type="submit"
+                disabled={isLaunchingQuick}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 18px',
-                  fontSize: '13px',
-                  fontWeight: 800,
-                  borderRadius: '8px',
-                  background: 'rgba(255, 23, 68, 0.12)',
-                  border: '1.5px solid #ff1744',
-                  color: '#ff1744',
-                  cursor: 'pointer',
-                  boxShadow: '0 0 15px rgba(255, 23, 68, 0.25)',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <StopCircle size={16} />
-                {isCancelling ? 'Aborting...' : 'Emergency Abort'}
-              </button>
-            )}
-
-            {isCompleted && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button
-                  onClick={() => handleDownloadReport('html')}
-                  disabled={Boolean(downloadingReport)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '7px',
-                    padding: '9px 16px',
-                    fontSize: '12px',
-                    fontWeight: 800,
-                    borderRadius: '8px',
-                    background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(0, 242, 254, 0.05))',
-                    border: '1.5px solid #00f2fe',
-                    color: '#00f2fe',
-                    cursor: 'pointer',
-                    boxShadow: '0 0 15px rgba(0, 242, 254, 0.25)'
-                  }}
-                >
-                  <DownloadCloud size={15} />
-                  {downloadingReport === 'html' ? 'Exporting...' : 'Signed HTML Report'}
-                </button>
-                <button
-                  onClick={() => handleDownloadReport('json')}
-                  disabled={Boolean(downloadingReport)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '9px 14px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    borderRadius: '8px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid var(--border-color)',
-                    color: '#94a3b8',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <FileDown size={14} /> JSON
-                </button>
-              </div>
-            )}
-
-            {(isCompleted || isFailed || isCancelled) && onStartNewScan && (
-              <button
-                onClick={onStartNewScan}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '9px 18px',
-                  fontSize: '13px',
+                  gap: '10px',
+                  padding: '13px 36px',
+                  fontSize: '14px',
                   fontWeight: 900,
-                  borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #00f2fe, #00c6ff)',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #00f2fe 0%, #00c6ff 100%)',
                   color: '#020617',
                   border: 'none',
                   cursor: 'pointer',
-                  boxShadow: '0 0 20px rgba(0, 242, 254, 0.4)'
+                  boxShadow: '0 0 30px rgba(0, 242, 254, 0.5)',
+                  letterSpacing: '0.8px',
+                  transition: 'all 0.2s'
                 }}
               >
-                <RotateCw size={15} />
-                Launch New Mission
+                <Play size={18} fill="#020617" />
+                <span>{isLaunchingQuick ? 'INITIALIZING MISSION...' : 'LAUNCH LIVE SECURITY SCAN'}</span>
               </button>
-            )}
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* 2. TOP TACTICAL WAR-ROOM COCKPIT BANNER (When Assessment Active or Completed) */}
+      {assessment && (
+        <div
+          className="hud-tactical-card"
+          style={{
+            padding: '22px 28px',
+            marginBottom: '24px',
+            background: 'linear-gradient(135deg, rgba(11, 17, 32, 0.96) 0%, rgba(6, 9, 18, 0.98) 100%)',
+            border: isRunning
+              ? '1.5px solid rgba(0, 242, 254, 0.45)'
+              : isCompleted
+              ? '1.5px solid rgba(0, 255, 136, 0.45)'
+              : isFailed
+              ? '1.5px solid rgba(255, 23, 68, 0.45)'
+              : '1.5px solid var(--border-color)',
+            boxShadow: isRunning
+              ? '0 10px 40px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 242, 254, 0.2)'
+              : isCompleted
+              ? '0 10px 40px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 255, 136, 0.2)'
+              : '0 10px 30px rgba(0,0,0,0.8)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
+            
+            {/* Target Identity & Mode Badges */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+              <div
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '12px',
+                  background: isRunning
+                    ? 'radial-gradient(circle, rgba(0, 242, 254, 0.25) 0%, rgba(0, 242, 254, 0.05) 100%)'
+                    : isCompleted
+                    ? 'radial-gradient(circle, rgba(0, 255, 136, 0.25) 0%, rgba(0, 255, 136, 0.05) 100%)'
+                    : 'radial-gradient(circle, rgba(255, 23, 68, 0.25) 0%, rgba(255, 23, 68, 0.05) 100%)',
+                  border: `2px solid ${isRunning ? '#00f2fe' : isCompleted ? '#00ff88' : '#ff1744'}`,
+                  boxShadow: isRunning ? '0 0 20px rgba(0, 242, 254, 0.5)' : isCompleted ? '0 0 20px rgba(0, 255, 136, 0.5)' : '0 0 20px rgba(255, 23, 68, 0.5)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {isRunning ? (
+                  <RotateCw className="spinning" size={26} color="#00f2fe" />
+                ) : isCompleted ? (
+                  <ShieldCheck size={28} color="#00ff88" />
+                ) : (
+                  <AlertTriangle size={28} color="#ff1744" />
+                )}
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 900,
+                      letterSpacing: '1px',
+                      padding: '3px 10px',
+                      borderRadius: '4px',
+                      background: isRunning ? 'rgba(0, 242, 254, 0.15)' : isCompleted ? 'rgba(0, 255, 136, 0.15)' : 'rgba(255, 23, 68, 0.15)',
+                      color: isRunning ? '#00f2fe' : isCompleted ? '#00ff88' : '#ff1744',
+                      border: `1px solid ${isRunning ? 'rgba(0, 242, 254, 0.4)' : isCompleted ? 'rgba(0, 255, 136, 0.4)' : 'rgba(255, 23, 68, 0.4)'}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span className="neon-node-live" style={{ background: isRunning ? '#00f2fe' : isCompleted ? '#00ff88' : '#ff1744', boxShadow: `0 0 10px ${isRunning ? '#00f2fe' : isCompleted ? '#00ff88' : '#ff1744'}` }} />
+                    {isRunning ? 'TACTICAL LIVE SCAN ACTIVE' : isCompleted ? 'ASSESSMENT MISSION COMPLETE' : isPartial ? 'PARTIAL SCAN COMPLETED' : isCancelled ? 'MISSION ABORTED' : 'EXECUTION FAILED'}
+                  </span>
+
+                  <span style={{ fontSize: '11px', color: '#64748b', fontFamily: 'monospace', background: 'rgba(0,0,0,0.4)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                    ID: {assessment?.id}
+                  </span>
+                </div>
+
+                <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '10px', letterSpacing: '0.4px' }}>
+                  <Lock size={18} color="#00f2fe" />
+                  <span style={{ color: '#00f2fe', textTransform: 'uppercase' }}>[{assessmentType}]</span>
+                  <span style={{ color: '#ffffff' }}>{repoUrl || targetStr}</span>
+                </h1>
+
+                {repoUrl && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                    <GitBranch size={13} color="#00f2fe" />
+                    <span style={{ fontSize: '11.5px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                      Target Repository: <strong style={{ color: '#cbd5e1' }}>{repoUrl}</strong> (branch: <strong style={{ color: '#00f2fe' }}>{repoBranch}</strong>)
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Action Commands */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {isRunning && (
+                <button
+                  onClick={() => setShowCancelModal(true)}
+                  disabled={isCancelling}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 18px',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    borderRadius: '8px',
+                    background: 'rgba(255, 23, 68, 0.12)',
+                    border: '1.5px solid #ff1744',
+                    color: '#ff1744',
+                    cursor: 'pointer',
+                    boxShadow: '0 0 15px rgba(255, 23, 68, 0.25)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <StopCircle size={16} />
+                  {isCancelling ? 'Aborting...' : 'Emergency Abort'}
+                </button>
+              )}
+
+              {isCompleted && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    onClick={() => handleDownloadReport('html')}
+                    disabled={Boolean(downloadingReport)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      padding: '9px 16px',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      borderRadius: '8px',
+                      background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(0, 242, 254, 0.05))',
+                      border: '1.5px solid #00f2fe',
+                      color: '#00f2fe',
+                      cursor: 'pointer',
+                      boxShadow: '0 0 15px rgba(0, 242, 254, 0.25)'
+                    }}
+                  >
+                    <DownloadCloud size={15} />
+                    {downloadingReport === 'html' ? 'Exporting...' : 'Signed HTML Report'}
+                  </button>
+                  <button
+                    onClick={() => handleDownloadReport('json')}
+                    disabled={Boolean(downloadingReport)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '9px 14px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid var(--border-color)',
+                      color: '#94a3b8',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <FileDown size={14} /> JSON
+                  </button>
+                </div>
+              )}
+
+              {(isCompleted || isFailed || isCancelled) && onStartNewScan && (
+                <button
+                  onClick={onStartNewScan}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '9px 18px',
+                    fontSize: '13px',
+                    fontWeight: 900,
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #00f2fe, #00c6ff)',
+                    color: '#020617',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 0 20px rgba(0, 242, 254, 0.4)'
+                  }}
+                >
+                  <RotateCw size={15} />
+                  Launch New Mission
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* 2. CENTRAL MULTI-SPECTRAL RADAR SCANNER & LIVE PIPELINE MATRIX (When Running) */}
+      {/* 3. CENTRAL MULTI-SPECTRAL RADAR SCANNER & LIVE PIPELINE MATRIX (When Running) */}
       {isRunning && (
         <div
           className="hud-tactical-card"
@@ -370,7 +659,7 @@ export function ActiveAssessmentDashboard({
             style={{
               width: '160px',
               height: '160px',
-              margin: '0 auto 24px',
+              margin: '0 auto 20px',
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
@@ -422,16 +711,19 @@ export function ActiveAssessmentDashboard({
             </div>
           </div>
 
-          <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#f8fafc', marginBottom: '6px', letterSpacing: '0.8px' }}>
-            AUTONOMOUS CYBER DEFENSE SCANNER IN FLIGHT
+          <div style={{ fontSize: '11.5px', color: '#00f2fe', fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
+            ● ACTIVE SCANNING REPOSITORY IN FLIGHT
+          </div>
+          <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#f8fafc', marginBottom: '6px', letterSpacing: '0.8px', fontFamily: 'monospace' }}>
+            {repoUrl || targetStr}
           </h2>
           <p style={{ fontSize: '13px', color: '#94a3b8', maxWidth: '640px', margin: '0 auto 24px', fontFamily: 'monospace' }}>
-            Streaming deterministic AST telemetry, dependency vulnerability advisories, and runtime penetration fuzzers against {targetStr}.
+            Auditing tainted AST sinks, open-source CVE lockfiles, and active web fuzzers for branch <b style={{ color: '#00f2fe' }}>{repoBranch}</b>.
           </p>
 
           {/* Dynamic Stage Tracker Matrix */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', maxWidth: '960px', margin: '0 auto 24px' }}>
-            {pipelineStages.map((stg, i) => {
+            {pipelineStages.map((stg) => {
               const IconComponent = stg.icon;
               return (
                 <div
@@ -493,77 +785,79 @@ export function ActiveAssessmentDashboard({
         </div>
       )}
 
-      {/* 3. LIVE CYBER TELEMETRY CARDS (HUD GRID) */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '18px',
-          marginBottom: '24px'
-        }}
-      >
-        <div className="hud-tactical-card" style={{ padding: '18px 22px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <span style={{ fontSize: '11px', color: '#00f2fe', fontWeight: 800, letterSpacing: '0.8px' }}>
-              SOURCE CODE SINK AUDIT
-            </span>
-            <Code2 size={18} color="#00f2fe" />
+      {/* 4. LIVE CYBER TELEMETRY CARDS (HUD GRID) */}
+      {(assessment || findings.length > 0) && (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: '18px',
+            marginBottom: '24px'
+          }}
+        >
+          <div className="hud-tactical-card" style={{ padding: '18px 22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ fontSize: '11px', color: '#00f2fe', fontWeight: 800, letterSpacing: '0.8px' }}>
+                SOURCE CODE SINK AUDIT
+              </span>
+              <Code2 size={18} color="#00f2fe" />
+            </div>
+            <div style={{ fontSize: '28px', fontWeight: 900, color: '#f8fafc', fontFamily: 'monospace' }}>
+              {stats.files_scanned} <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>FILES</span>
+            </div>
+            <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
+              Recursive AST & regex syntax trees
+            </div>
           </div>
-          <div style={{ fontSize: '28px', fontWeight: 900, color: '#f8fafc', fontFamily: 'monospace' }}>
-            {stats.files_scanned} <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>FILES</span>
+
+          <div className="hud-tactical-card" style={{ padding: '18px 22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ fontSize: '11px', color: '#00ff88', fontWeight: 800, letterSpacing: '0.8px' }}>
+                SUPPLY CHAIN PACKAGES
+              </span>
+              <Boxes size={18} color="#00ff88" />
+            </div>
+            <div style={{ fontSize: '28px', fontWeight: 900, color: '#f8fafc', fontFamily: 'monospace' }}>
+              {stats.dependencies_scanned} <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>PACKAGES</span>
+            </div>
+            <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
+              Verified against OSV/NVD CVE ranges
+            </div>
           </div>
-          <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
-            Recursive AST & regex syntax trees
+
+          <div className="hud-tactical-card" style={{ padding: '18px 22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ fontSize: '11px', color: '#f97316', fontWeight: 800, letterSpacing: '0.8px' }}>
+                SURFACE & RUNTIME PROBES
+              </span>
+              <Radio size={18} color="#f97316" />
+            </div>
+            <div style={{ fontSize: '28px', fontWeight: 900, color: '#f8fafc', fontFamily: 'monospace' }}>
+              {stats.endpoints_discovered} <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>ENDPOINTS</span>
+            </div>
+            <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
+              {stats.requests_sent} safe dynamic requests analyzed
+            </div>
+          </div>
+
+          <div className="hud-tactical-card" style={{ padding: '18px 22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ fontSize: '11px', color: findings.length > 0 ? '#ff1744' : '#00ff88', fontWeight: 800, letterSpacing: '0.8px' }}>
+                CONFIRMED VULNERABILITIES
+              </span>
+              <ShieldAlert size={18} color={findings.length > 0 ? '#ff1744' : '#00ff88'} />
+            </div>
+            <div style={{ fontSize: '28px', fontWeight: 900, color: findings.length > 0 ? '#ff1744' : '#00ff88', fontFamily: 'monospace' }}>
+              {findings.length} <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>FLAWS</span>
+            </div>
+            <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
+              {critCount} Critical • {highCount} High • {medCount} Medium
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="hud-tactical-card" style={{ padding: '18px 22px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <span style={{ fontSize: '11px', color: '#00ff88', fontWeight: 800, letterSpacing: '0.8px' }}>
-              SUPPLY CHAIN PACKAGES
-            </span>
-            <Boxes size={18} color="#00ff88" />
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: 900, color: '#f8fafc', fontFamily: 'monospace' }}>
-            {stats.dependencies_scanned} <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>PACKAGES</span>
-          </div>
-          <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
-            Verified against OSV/NVD CVE ranges
-          </div>
-        </div>
-
-        <div className="hud-tactical-card" style={{ padding: '18px 22px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <span style={{ fontSize: '11px', color: '#f97316', fontWeight: 800, letterSpacing: '0.8px' }}>
-              SURFACE & RUNTIME PROBES
-            </span>
-            <Radio size={18} color="#f97316" />
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: 900, color: '#f8fafc', fontFamily: 'monospace' }}>
-            {stats.endpoints_discovered} <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>ENDPOINTS</span>
-          </div>
-          <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
-            {stats.requests_sent} safe dynamic requests analyzed
-          </div>
-        </div>
-
-        <div className="hud-tactical-card" style={{ padding: '18px 22px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <span style={{ fontSize: '11px', color: findings.length > 0 ? '#ff1744' : '#00ff88', fontWeight: 800, letterSpacing: '0.8px' }}>
-              CONFIRMED VULNERABILITIES
-            </span>
-            <ShieldAlert size={18} color={findings.length > 0 ? '#ff1744' : '#00ff88'} />
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: 900, color: findings.length > 0 ? '#ff1744' : '#00ff88', fontFamily: 'monospace' }}>
-            {findings.length} <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>FLAWS</span>
-          </div>
-          <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '4px' }}>
-            {critCount} Critical • {highCount} High • {medCount} Medium
-          </div>
-        </div>
-      </div>
-
-      {/* 4. POST-COMPLETION EXECUTIVE POSTURE CARD (When Completed) */}
+      {/* 5. POST-COMPLETION EXECUTIVE POSTURE CARD (When Completed) */}
       {isCompleted && (
         <div
           className="hud-tactical-card"
@@ -635,255 +929,259 @@ export function ActiveAssessmentDashboard({
         </div>
       )}
 
-      {/* 5. LIVE SECURITY AUDIT CONSOLE / TERMINAL */}
-      <div
-        className="hud-tactical-card"
-        style={{
-          background: '#070b14',
-          border: '1px solid rgba(0, 242, 254, 0.25)',
-          borderRadius: '12px',
-          marginBottom: '24px',
-          overflow: 'hidden'
-        }}
-      >
+      {/* 6. LIVE SECURITY AUDIT CONSOLE / TERMINAL (When Assessment present) */}
+      {assessment && (
         <div
+          className="hud-tactical-card"
           style={{
-            padding: '14px 20px',
-            background: 'rgba(0, 242, 254, 0.04)',
-            borderBottom: '1px solid rgba(0, 242, 254, 0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '10px'
+            background: '#070b14',
+            border: '1px solid rgba(0, 242, 254, 0.25)',
+            borderRadius: '12px',
+            marginBottom: '24px',
+            overflow: 'hidden'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Terminal size={17} color="#00f2fe" />
-            <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.8px' }}>
-              REAL-TIME SECURITY AUDIT LOG STREAM
-            </span>
-          </div>
+          <div
+            style={{
+              padding: '14px 20px',
+              background: 'rgba(0, 242, 254, 0.04)',
+              borderBottom: '1px solid rgba(0, 242, 254, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '10px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Terminal size={17} color="#00f2fe" />
+              <span style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.8px' }}>
+                REAL-TIME SECURITY AUDIT LOG STREAM
+              </span>
+            </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button
-              onClick={handleCopyLogs}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 10px',
-                borderRadius: '4px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-color)',
-                color: copiedLogs ? '#00ff88' : '#94a3b8',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              {copiedLogs ? <CheckCheck size={13} color="#00ff88" /> : <Copy size={13} />}
-              {copiedLogs ? 'Copied' : 'Copy Logs'}
-            </button>
-            <span style={{ fontSize: '11px', color: '#64748b', fontFamily: 'monospace' }}>
-              {assessment?.logs?.length || 0} EVENTS
-            </span>
-          </div>
-        </div>
-
-        <div
-          style={{
-            maxHeight: '230px',
-            overflowY: 'auto',
-            padding: '16px 20px',
-            fontFamily: 'monospace',
-            fontSize: '12px',
-            lineHeight: '1.8',
-            color: '#94a3b8',
-            background: 'rgba(0, 0, 0, 0.3)'
-          }}
-        >
-          {assessment?.logs && assessment.logs.length > 0 ? (
-            assessment.logs.map((log, idx) => {
-              const stage = log.stage || 'STAGE';
-              const text = log.text || log.message || '';
-              const time = log.time || (log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : 'Live');
-              const isError = stage === 'FAILED' || text.toLowerCase().includes('error');
-              const isSuccess = stage === 'COMPLETED' || text.toLowerCase().includes('success');
-              return (
-                <div key={idx} style={{ display: 'flex', gap: '12px', marginBottom: '4px' }}>
-                  <span style={{ color: '#475569', minWidth: '75px' }}>[{time}]</span>
-                  <span
-                    style={{
-                      color: isSuccess ? '#00ff88' : isError ? '#ff1744' : '#00f2fe',
-                      fontWeight: 800,
-                      minWidth: '130px'
-                    }}
-                  >
-                    [{stage}]
-                  </span>
-                  <span style={{ color: '#e2e8f0', flex: 1 }}>{text}</span>
-                </div>
-              );
-            })
-          ) : (
-            <div style={{ color: '#475569' }}>Connecting to Sentina scanner event telemetry...</div>
-          )}
-          <div ref={terminalEndRef} />
-        </div>
-      </div>
-
-      {/* 6. CURRENT FINDINGS EXPLORER */}
-      <div
-        className="hud-tactical-card"
-        style={{
-          background: 'rgba(10, 15, 28, 0.95)',
-          padding: '24px 28px',
-          borderRadius: '12px'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
-          <div>
-            <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Shield size={18} color="#00f2fe" />
-              Current Mission Findings ({filteredFindings.length})
-            </h3>
-            <p style={{ fontSize: '12.5px', color: '#94a3b8', margin: '4px 0 0 0' }}>
-              Every vulnerability below contains actual scanner evidence, AST code sinks, or HTTP request/response payloads.
-            </p>
-          </div>
-
-          {/* Search and Filters */}
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative' }}>
-              <Search size={14} color="#64748b" style={{ position: 'absolute', left: '12px', top: '10px' }} />
-              <input
-                type="text"
-                placeholder="Search CVE, sink, path..."
-                value={searchFilter}
-                onChange={e => setSearchFilter(e.target.value)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                onClick={handleCopyLogs}
                 style={{
-                  padding: '8px 14px 8px 34px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '4px 10px',
+                  borderRadius: '4px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-color)',
+                  color: copiedLogs ? '#00ff88' : '#94a3b8',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                {copiedLogs ? <CheckCheck size={13} color="#00ff88" /> : <Copy size={13} />}
+                {copiedLogs ? 'Copied' : 'Copy Logs'}
+              </button>
+              <span style={{ fontSize: '11px', color: '#64748b', fontFamily: 'monospace' }}>
+                {assessment?.logs?.length || 0} EVENTS
+              </span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              maxHeight: '230px',
+              overflowY: 'auto',
+              padding: '16px 20px',
+              fontFamily: 'monospace',
+              fontSize: '12px',
+              lineHeight: '1.8',
+              color: '#94a3b8',
+              background: 'rgba(0, 0, 0, 0.3)'
+            }}
+          >
+            {assessment?.logs && assessment.logs.length > 0 ? (
+              assessment.logs.map((log, idx) => {
+                const stage = log.stage || 'STAGE';
+                const text = log.text || log.message || '';
+                const time = log.time || (log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : 'Live');
+                const isError = stage === 'FAILED' || text.toLowerCase().includes('error');
+                const isSuccess = stage === 'COMPLETED' || text.toLowerCase().includes('success');
+                return (
+                  <div key={idx} style={{ display: 'flex', gap: '12px', marginBottom: '4px' }}>
+                    <span style={{ color: '#475569', minWidth: '75px' }}>[{time}]</span>
+                    <span
+                      style={{
+                        color: isSuccess ? '#00ff88' : isError ? '#ff1744' : '#00f2fe',
+                        fontWeight: 800,
+                        minWidth: '130px'
+                      }}
+                    >
+                      [{stage}]
+                    </span>
+                    <span style={{ color: '#e2e8f0', flex: 1 }}>{text}</span>
+                  </div>
+                );
+              })
+            ) : (
+              <div style={{ color: '#475569' }}>Connecting to Sentina scanner event telemetry...</div>
+            )}
+            <div ref={terminalEndRef} />
+          </div>
+        </div>
+      )}
+
+      {/* 7. CURRENT FINDINGS EXPLORER (Only when assessment is running or completed) */}
+      {assessment && (
+        <div
+          className="hud-tactical-card"
+          style={{
+            background: 'rgba(10, 15, 28, 0.95)',
+            padding: '24px 28px',
+            borderRadius: '12px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#f8fafc', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Shield size={18} color="#00f2fe" />
+                Current Mission Findings ({filteredFindings.length})
+              </h3>
+              <p style={{ fontSize: '12.5px', color: '#94a3b8', margin: '4px 0 0 0' }}>
+                Vulnerabilities identified strictly during this scan run. Verified with scanner evidence, AST code sinks, and request payloads.
+              </p>
+            </div>
+
+            {/* Search and Filters */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={14} color="#64748b" style={{ position: 'absolute', left: '12px', top: '10px' }} />
+                <input
+                  type="text"
+                  placeholder="Search CVE, sink, path..."
+                  value={searchFilter}
+                  onChange={e => setSearchFilter(e.target.value)}
+                  style={{
+                    padding: '8px 14px 8px 34px',
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    color: '#f8fafc',
+                    fontSize: '12.5px',
+                    outline: 'none',
+                    width: '210px'
+                  }}
+                />
+              </div>
+
+              <select
+                value={selectedSeverity}
+                onChange={e => setSelectedSeverity(e.target.value)}
+                style={{
+                  padding: '8px 14px',
                   background: 'rgba(0, 0, 0, 0.4)',
                   border: '1px solid var(--border-color)',
                   borderRadius: '8px',
                   color: '#f8fafc',
                   fontSize: '12.5px',
                   outline: 'none',
-                  width: '210px'
+                  cursor: 'pointer'
                 }}
-              />
+              >
+                <option value="ALL">All Severities</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+                <option value="INFO">Info</option>
+              </select>
             </div>
-
-            <select
-              value={selectedSeverity}
-              onChange={e => setSelectedSeverity(e.target.value)}
-              style={{
-                padding: '8px 14px',
-                background: 'rgba(0, 0, 0, 0.4)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                color: '#f8fafc',
-                fontSize: '12.5px',
-                outline: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="ALL">All Severities</option>
-              <option value="CRITICAL">Critical</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
-              <option value="INFO">Info</option>
-            </select>
           </div>
-        </div>
 
-        {/* Findings List */}
-        {filteredFindings.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {filteredFindings.map((finding, idx) => {
-              const src = (finding.source || 'SAST').toUpperCase();
-              return (
-                <div
-                  key={finding.id || idx}
-                  onClick={() => {
-                    setSelectedFindingForDrawer(finding);
-                    if (onSelectFinding) onSelectFinding(finding.id);
-                  }}
-                  style={{
-                    padding: '16px 20px',
-                    borderRadius: '10px',
-                    background: 'rgba(15, 23, 42, 0.7)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = 'rgba(0, 242, 254, 0.5)';
-                    e.currentTarget.style.background = 'rgba(15, 23, 42, 0.95)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                    e.currentTarget.style.background = 'rgba(15, 23, 42, 0.7)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
-                    <SeverityBadge severity={finding.severity} />
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {finding.title}
-                        </span>
-                        {finding.confidence && (
-                          <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: 'rgba(0, 242, 254, 0.1)', color: '#00f2fe', border: '1px solid rgba(0, 242, 254, 0.3)' }}>
-                            {finding.confidence} CONFIDENCE
+          {/* Findings List */}
+          {filteredFindings.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {filteredFindings.map((finding, idx) => {
+                const src = (finding.source || 'SAST').toUpperCase();
+                return (
+                  <div
+                    key={finding.id || idx}
+                    onClick={() => {
+                      setSelectedFindingForDrawer(finding);
+                      if (onSelectFinding) onSelectFinding(finding.id);
+                    }}
+                    style={{
+                      padding: '16px 20px',
+                      borderRadius: '10px',
+                      background: 'rgba(15, 23, 42, 0.7)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = 'rgba(0, 242, 254, 0.5)';
+                      e.currentTarget.style.background = 'rgba(15, 23, 42, 0.95)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                      e.currentTarget.style.background = 'rgba(15, 23, 42, 0.7)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
+                      <SeverityBadge severity={finding.severity} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {finding.title}
                           </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '14px', marginTop: '4px', fontFamily: 'monospace' }}>
-                        <span>ENGINE: <b style={{ color: '#00f2fe' }}>{src}</b></span>
-                        <span>TARGET SINK: <b style={{ color: '#cbd5e1' }}>{finding.affectedComponent || finding.file || finding.endpoint || '/'}</b></span>
-                        {finding.cwe && <span>CWE: {finding.cwe}</span>}
+                          {finding.confidence && (
+                            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: 'rgba(0, 242, 254, 0.1)', color: '#00f2fe', border: '1px solid rgba(0, 242, 254, 0.3)' }}>
+                              {finding.confidence} CONFIDENCE
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '14px', marginTop: '4px', fontFamily: 'monospace' }}>
+                          <span>ENGINE: <b style={{ color: '#00f2fe' }}>{src}</b></span>
+                          <span>TARGET SINK: <b style={{ color: '#cbd5e1' }}>{finding.affectedComponent || finding.file || finding.endpoint || '/'}</b></span>
+                          {finding.cwe && <span>CWE: {finding.cwe}</span>}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <span style={{ fontSize: '13px', color: '#f8fafc', fontWeight: 800, fontFamily: 'monospace', background: 'rgba(0,0,0,0.4)', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
-                      CVSS {finding.riskScore || '7.5'}
-                    </span>
-                    <ChevronRight size={18} color="#64748b" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <span style={{ fontSize: '13px', color: '#f8fafc', fontWeight: 800, fontFamily: 'monospace', background: 'rgba(0,0,0,0.4)', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                        CVSS {finding.riskScore || '7.5'}
+                      </span>
+                      <ChevronRight size={18} color="#64748b" />
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b' }}>
+              {isRunning ? (
+                <div>
+                  <RotateCw className="spinning" size={28} color="#00f2fe" style={{ margin: '0 auto 12px' }} />
+                  <div style={{ color: '#f8fafc', fontSize: '15px', fontWeight: 800 }}>Analyzing target application sinks...</div>
+                  <div style={{ fontSize: '12.5px', marginTop: '4px' }}>Findings will populate live without historical contamination as AST sinks & fuzzers validate threats.</div>
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b' }}>
-            {isRunning ? (
-              <div>
-                <RotateCw className="spinning" size={28} color="#00f2fe" style={{ margin: '0 auto 12px' }} />
-                <div style={{ color: '#f8fafc', fontSize: '15px', fontWeight: 800 }}>Analyzing target application sinks...</div>
-                <div style={{ fontSize: '12.5px', marginTop: '4px' }}>Findings will populate instantly as AST rules & fuzzers validate threats.</div>
-              </div>
-            ) : isCompleted ? (
-              <div>
-                <CheckCircle2 size={34} color="#00ff88" style={{ margin: '0 auto 12px' }} />
-                <div style={{ color: '#f8fafc', fontSize: '16px', fontWeight: 800 }}>No confirmed vulnerabilities identified</div>
-                <div style={{ fontSize: '13px', marginTop: '4px' }}>Target application verified clean against active rules.</div>
-              </div>
-            ) : (
-              <div>No findings to display for this scan run.</div>
-            )}
-          </div>
-        )}
-      </div>
+              ) : isCompleted ? (
+                <div>
+                  <CheckCircle2 size={34} color="#00ff88" style={{ margin: '0 auto 12px' }} />
+                  <div style={{ color: '#f8fafc', fontSize: '16px', fontWeight: 800 }}>No confirmed vulnerabilities identified</div>
+                  <div style={{ fontSize: '13px', marginTop: '4px' }}>Target application verified clean against active scanner rules.</div>
+                </div>
+              ) : (
+                <div>No findings to display for this scan run.</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Slide-over Drawer for Finding Details */}
       <FindingDrawer

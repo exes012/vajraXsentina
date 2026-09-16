@@ -1,6 +1,5 @@
 'use client';
 import React, { useState } from 'react';
-import './index.css';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
