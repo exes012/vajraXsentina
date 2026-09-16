@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState } from 'react';
 import {
   ShieldAlert,
@@ -37,7 +37,7 @@ function AreaSparkline({ data = [], color = '#ff3366', height = 34 }) {
   }, '');
 
   const areaD = `${pathD} L ${w},${height} L 0,${height} Z`;
-  const gradId = `rating-grad-${Math.random().toString(36).substr(2, 7)}`;
+  const gradId = `sev-grad-${Math.random().toString(36).substr(2, 7)}`;
 
   return (
     <svg width="100%" height={height} viewBox={`0 0 ${w} ${height}`} preserveAspectRatio="none" style={{ overflow: 'visible', marginTop: '4px' }}>
@@ -67,8 +67,8 @@ function AreaSparkline({ data = [], color = '#ff3366', height = 34 }) {
   );
 }
 
-// Custom Shield Rating Icon with neon glow
-function RatingIcon({ icon: Icon, color }) {
+// Custom Shield Severity Icon with neon glow
+function SeverityIcon({ icon: Icon, color }) {
   return (
     <div
       style={{
@@ -102,8 +102,7 @@ export function VulnerabilitiesBySeverity({ breakdown = {}, activeSeverity = 'AL
   const cards = [
     {
       key: 'CRITICAL',
-      label: 'CRITICAL RISK',
-      shortKey: 'F',
+      label: 'CRITICAL',
       count: critCount,
       trend: critCount > 0 ? '↓ 12%' : '0%',
       trendDir: 'down',
@@ -116,8 +115,7 @@ export function VulnerabilitiesBySeverity({ breakdown = {}, activeSeverity = 'AL
     },
     {
       key: 'HIGH',
-      label: 'ELEVATED RISK',
-      shortKey: 'C',
+      label: 'HIGH',
       count: highCount,
       trend: highCount > 0 ? '↓ 8%' : '0%',
       trendDir: 'down',
@@ -130,8 +128,7 @@ export function VulnerabilitiesBySeverity({ breakdown = {}, activeSeverity = 'AL
     },
     {
       key: 'MEDIUM',
-      label: 'MODERATE RISK',
-      shortKey: 'B',
+      label: 'MEDIUM',
       count: medCount,
       trend: medCount > 0 ? '↑ 5%' : '0%',
       trendDir: 'up',
@@ -144,8 +141,7 @@ export function VulnerabilitiesBySeverity({ breakdown = {}, activeSeverity = 'AL
     },
     {
       key: 'LOW',
-      label: 'LOW RISK',
-      shortKey: 'A',
+      label: 'LOW',
       count: lowCount,
       trend: lowCount > 0 ? '↑ 10%' : '0%',
       trendDir: 'up',
@@ -158,8 +154,7 @@ export function VulnerabilitiesBySeverity({ breakdown = {}, activeSeverity = 'AL
     },
     {
       key: 'INFO',
-      label: 'INFORMATIONAL',
-      shortKey: 'A+',
+      label: 'INFO',
       count: infoCount,
       trend: infoCount > 0 ? '↑ 15%' : '0%',
       trendDir: 'up',
@@ -202,7 +197,7 @@ export function VulnerabilitiesBySeverity({ breakdown = {}, activeSeverity = 'AL
               letterSpacing: '0.9px'
             }}
           >
-            THREAT RATINGS & RISK DISTRIBUTION
+            VULNERABILITIES BY SEVERITY
           </div>
           {activeSeverity && activeSeverity !== 'ALL' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -219,7 +214,7 @@ export function VulnerabilitiesBySeverity({ breakdown = {}, activeSeverity = 'AL
                   boxShadow: '0 0 8px rgba(255, 23, 68, 0.5)'
                 }}
               >
-                ● ACTIVE RATING: {activeSeverity}
+                ● FILTER ACTIVE: {activeSeverity}
               </span>
               <button
                 onClick={() => onSelectSeverity && onSelectSeverity('ALL')}
@@ -305,7 +300,7 @@ export function VulnerabilitiesBySeverity({ breakdown = {}, activeSeverity = 'AL
         </div>
       </div>
 
-      {/* 5 Threat Rating Cards Grid */}
+      {/* 5 Severity Cards Grid */}
       <div
         style={{
           display: 'grid',
@@ -314,7 +309,7 @@ export function VulnerabilitiesBySeverity({ breakdown = {}, activeSeverity = 'AL
         }}
       >
         {cards.map((c) => {
-          const isSelected = activeSeverity === c.key || activeSeverity === c.label;
+          const isSelected = activeSeverity === c.key;
 
           return (
             <div
@@ -354,14 +349,14 @@ export function VulnerabilitiesBySeverity({ breakdown = {}, activeSeverity = 'AL
               {/* Top: Icon + Label + Selection indicator */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <RatingIcon icon={c.icon} color={c.color} />
+                  <SeverityIcon icon={c.icon} color={c.color} />
                   <span
                     style={{
-                      fontSize: '10.5px',
+                      fontSize: '11px',
                       fontWeight: 900,
                       fontFamily: 'var(--font-mono)',
                       color: c.color,
-                      letterSpacing: '0.5px',
+                      letterSpacing: '0.6px',
                       textShadow: `0 0 8px ${c.color}`
                     }}
                   >

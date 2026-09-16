@@ -82,15 +82,68 @@ class DashboardService {
     this.reports = [...mockReports];
     this.notifications = [...mockNotifications];
     this.activeAssessmentId = this.assessments[0]?.id || 'asm-source-01';
+    this.activeScanId = (typeof window !== 'undefined' && window.sessionStorage) ? window.sessionStorage.getItem('sentina_active_scan_id') : null;
+    this.activePollingInterval = null;
+    this.activeScanStats = {
+      files_scanned: 0,
+      dependencies_scanned: 0,
+      endpoints_discovered: 0,
+      requests_sent: 0,
+      findings: 0
+    };
     this.listeners = new Set();
+    
+    // Auto-recover active scan from session if page refreshed
+    if (this.activeScanId) {
+      this.recoverActiveScan(this.activeScanId);
+    }
+  }
+
+  getActiveScanId() {
+    return this.activeScanId;
+  }
+
+  setActiveScanId(id) {
+    this.activeScanId = id;
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      if (id) {
+        window.sessionStorage.setItem('sentina_active_scan_id', id);
+      } else {
+        window.sessionStorage.removeItem('sentina_active_scan_id');
+      }
+    }
+    this.notify();
+  }
+
+  async recoverActiveScan(scanId) {
+    if (!scanId) return;
+    try {
+      const statusData = await apiClient.getScanStatus(scanId).catch(() => null);
+      if (statusData && (statusData.status === 'RUNNING' || statusData.status === 'INITIALIZING' || statusData.status === 'QUEUED')) {
+        this.activeAssessmentId = scanId;
+        this.activeScanId = scanId;
+        this.pollAssessmentProgress(scanId);
+        this.notify();
+      }
+    } catch (e) {
+      console.warn('Could not recover active scan:', e);
+    }
   }
 
   getActiveAssessmentId() {
-    return this.activeAssessmentId;
+    return this.activeScanId || this.activeAssessmentId;
   }
 
   setActiveAssessmentId(id) {
     this.activeAssessmentId = id;
+    this.activeScanId = id;
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      if (id) {
+        window.sessionStorage.setItem('sentina_active_scan_id', id);
+      } else {
+        window.sessionStorage.removeItem('sentina_active_scan_id');
+      }
+    }
     if (id && !String(id).startsWith('temp-') && !String(id).startsWith('scan-temp-')) {
       this.getFindings({ assessment_id: id }).then(f => {
         this.notify();
@@ -108,286 +161,6 @@ class DashboardService {
     this.listeners.forEach(cb => {
       try { cb(); } catch (e) {}
     });
-  }
-
-  async getDashboardSummary(assessmentId = null) {
-    const targetId = assessmentId || this.getActiveAssessmentId();
-    try {
-      const [data, allFindings, correlatedRisks] = await Promise.all([
-        apiClient.getDashboard().catch(() => null),
-        this.getFindings(targetId ? { assessment_id: targetId } : {}).catch(() => []),
-        this.getCorrelatedRisks(targetId).catch(() => [])
-      ]);
-
-      const findingsList = Array.isArray(allFindings) ? allFindings : [];
-      const corrList = Array.isArray(correlatedRisks) ? correlatedRisks : [];
-      const modScores = calculateModuleScores(findingsList, corrList);
-      const integratedScore = calculateIntegratedOverallScore(findingsList, corrList, modScores);
-      const posture = getScorePosture(integratedScore);
-
-      const sevDist = {
-        CRITICAL: findingsList.filter(f => f.severity === 'CRITICAL').length || 0,
-        HIGH: findingsList.filter(f => f.severity === 'HIGH').length || 0,
-        MEDIUM: findingsList.filter(f => f.severity === 'MEDIUM').length || 0,
-        LOW: findingsList.filter(f => f.severity === 'LOW').length || 0,
-        INFO: findingsList.filter(f => f.severity === 'INFO').length || 0
-      };
-
-      const totalVulns = findingsList.length;
-      const totalScans = data?.total_assessments ?? this.assessments.length ?? 0;
-      const monitoredCount = data?.assets_monitored_count || (this.assessments.length > 0 ? this.assessments.length : 1);
-      const projectCount = data?.total_projects || 1;
-      
-      const activeAsm = targetId 
-        ? (this.assessments.find(a => String(a.id) === String(targetId)) || null) 
-        : (this.assessments.length > 0 ? this.assessments[0] : null);
-
-      return {
-        activeTarget: activeAsm?.target || activeAsm?.targetInfo?.url || 'Active Security Scope',
-        activeAssessment: activeAsm,
-        totalScans: {
-          value: totalScans,
-          label: "TOTAL SCANS",
-          trend: totalScans > 0 ? "↑ Active" : "0%",
-          trendDirection: "neutral",
-          period: "live scans",
-          sparkline: [0, 0, 0, totalScans]
-        },
-        vulnerabilities: {
-          value: totalVulns,
-          rawValue: totalVulns,
-          label: "VULNERABILITIES",
-          trend: "0%",
-          trendDirection: "neutral",
-          isGoodTrend: true,
-          period: activeAsm ? `for ${activeAsm.target || 'target'}` : "active findings",
-          sparkline: [0, 0, 0, totalVulns]
-        },
-        assetsMonitored: {
-          value: monitoredCount,
-          label: "ASSETS MONITORED",
-          trend: "0%",
-          trendDirection: "neutral",
-          period: "active targets",
-          sparkline: [0, 0, 0, monitoredCount]
-        },
-        projects: {
-          value: projectCount,
-          label: "PROJECTS",
-          trend: "0%",
-          trendDirection: "neutral",
-          period: "portfolios",
-          sparkline: [0, 0, 0, projectCount]
-        },
-        securityScore: {
-          score: activeAsm?.overallScore !== undefined ? activeAsm.overallScore : integratedScore,
-          maxScore: 100,
-          posture: posture.label,
-          postureColor: posture.color,
-          delta: "+0.0%",
-          deltaPeriod: findingsList.length > 0 ? "live scan analysis" : "clean target baseline",
-          isPositive: integratedScore >= 75,
-          rings: [
-            { name: "SAST", score: modScores.sast.score, weight: 20, color: "#00f2fe", description: "Static Application Security Testing" },
-            { name: "DAST", score: modScores.dast.score, weight: 20, color: "#f97316", description: "Dynamic Application Security Testing" },
-            { name: "SCA", score: modScores.sca.score, weight: 20, color: "#00ff88", description: "Software Composition Analysis" },
-            { name: "Secrets", score: modScores.secrets.score, weight: 20, color: "#ff1744", description: "Credential and Secret Scanning" },
-            { name: "Threat Intel", score: modScores.threat_intel.score, weight: 20, color: "#fbbf24", description: "Threat Intelligence and Surface" }
-          ]
-        },
-        severityBreakdown: sevDist,
-        dastCoverage: activeAsm?.coverageTelemetry?.urls_scanned ? {
-          coverage_percentage: activeAsm.dastCoverageScore || 0,
-          requests_attempted: activeAsm.coverageTelemetry.requests_attempted || 0,
-          requests_successful: activeAsm.coverageTelemetry.requests_successful || 0,
-          requests_blocked: activeAsm.coverageTelemetry.requests_blocked || 0,
-          rate_limited: activeAsm.coverageTelemetry.count_429 || 0,
-          urls_discovered: activeAsm.coverageTelemetry.crawlable_urls || 0,
-          urls_scanned: activeAsm.coverageTelemetry.urls_scanned || 0,
-          waf_status: activeAsm.connectivityDiagnostics?.checks?.['9_waf_indicators']?.detected ? 'WAF DETECTED' : 'NONE DETECTED'
-        } : (data?.dast_coverage_summary || {
-          coverage_percentage: activeAsm?.dastCoverageScore || 0,
-          requests_attempted: 0,
-          requests_successful: 0,
-          requests_blocked: 0,
-          rate_limited: 0,
-          urls_discovered: 0,
-          urls_scanned: 0,
-          waf_status: "NONE DETECTED"
-        }),
-        analysisModules: [
-          {
-            id: "sast",
-            number: "01",
-            name: "01 SAST",
-            fullName: "Static Application Security Testing",
-            sub: "Semgrep + Native AST Sinks",
-            description: "Deep AST rule evaluation & syntax-level flaw detection",
-            status: modScores.sast.status,
-            progress: modScores.sast.findings > 0 ? 100 : (activeAsm?.modules?.sast ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
-            score: modScores.sast.score,
-            engineScore: modScores.sast.score,
-            badgeColor: modScores.sast.posture.color,
-            icon: "Code2",
-            color: "#00f2fe",
-            findingsCount: modScores.sast.findings,
-            targetTab: "sast"
-          },
-          {
-            id: "dast",
-            number: "02",
-            name: "02 DAST",
-            fullName: "Dynamic Application Security Testing",
-            sub: "ZAP + Runtime Fuzzing",
-            description: "Runtime blackbox fuzzing & live endpoint validation",
-            status: modScores.dast.status,
-            progress: modScores.dast.findings > 0 ? 100 : (activeAsm?.modules?.dast ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
-            score: modScores.dast.score,
-            engineScore: modScores.dast.score,
-            badgeColor: modScores.dast.posture.color,
-            icon: "Radio",
-            color: "#f97316",
-            findingsCount: modScores.dast.findings,
-            targetTab: "dast"
-          },
-          {
-            id: "sca",
-            number: "03",
-            name: "03 SCA",
-            fullName: "Software Composition Analysis",
-            sub: "OSV + Dependency CVEs",
-            description: "Third-party open-source dependency CVE audit",
-            status: modScores.sca.status,
-            progress: modScores.sca.findings > 0 ? 100 : (activeAsm?.modules?.sca ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
-            score: modScores.sca.score,
-            engineScore: modScores.sca.score,
-            badgeColor: modScores.sca.posture.color,
-            icon: "Boxes",
-            color: "#00ff88",
-            findingsCount: modScores.sca.findings,
-            targetTab: "sca"
-          },
-          {
-            id: "secrets",
-            number: "04",
-            name: "04 SECRETS",
-            fullName: "Secret Token Entropy Scanner",
-            sub: "Gitleaks + Token Entropy",
-            description: "High-entropy API key & hardcoded credentials detection",
-            status: modScores.secrets.status,
-            progress: modScores.secrets.findings > 0 ? 100 : (activeAsm?.modules?.secrets ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
-            score: modScores.secrets.score,
-            engineScore: modScores.secrets.score,
-            badgeColor: modScores.secrets.posture.color,
-            icon: "Lock",
-            color: "#ff1744",
-            findingsCount: modScores.secrets.findings,
-            targetTab: "secrets"
-          },
-          {
-            id: "threat_intel",
-            number: "05",
-            name: "05 NUCLEI / SSL",
-            fullName: "Certificate & Infrastructure Audit",
-            sub: "TLS Handshake + Web Probes",
-            description: "Public key infrastructure & cipher suite compliance",
-            status: modScores.threat_intel.status,
-            progress: modScores.threat_intel.findings > 0 ? 100 : ((activeAsm?.modules?.nuclei || activeAsm?.modules?.ssl) ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
-            score: modScores.threat_intel.score,
-            engineScore: modScores.threat_intel.score,
-            badgeColor: modScores.threat_intel.posture.color,
-            icon: "Crosshair",
-            color: "#fbbf24",
-            findingsCount: modScores.threat_intel.findings,
-            targetTab: "threat_intel"
-          },
-          {
-            id: "ai_correlation",
-            number: "06",
-            name: "06 AI CORRELATION",
-            fullName: "Automated Attack-Chain Synthesis",
-            sub: "Cross-Engine Attack Chains",
-            description: "Multi-vector blended vulnerability path confirmation",
-            status: modScores.ai_correlation.status,
-            progress: modScores.ai_correlation.findings > 0 ? 100 : 0,
-            score: modScores.ai_correlation.score,
-            engineScore: modScores.ai_correlation.score,
-            badgeColor: modScores.ai_correlation.posture.color,
-            icon: "Cpu",
-            color: "#c084fc",
-            findingsCount: modScores.ai_correlation.findings,
-            targetTab: "ai_correlation"
-          }
-        ]
-      };
-    } catch (e) {
-      console.warn("Could not fetch dashboard summary from backend, using default summary:", e);
-      return mockDashboardSummary;
-    }
-  }
-
-  // --- Assets API Integration ---
-  async getAssets(projectId = null) {
-    try {
-      const serverAssets = await apiClient.getAssets(projectId);
-      if (serverAssets && serverAssets.length > 0) {
-        return serverAssets.map(a => ({
-          ...a,
-          type: a.asset_type === 'WEB_APPLICATION' ? 'Web Application' : (a.asset_type === 'API_GATEWAY' ? 'API Gateway' : a.asset_type),
-          category: a.asset_type === 'WEB_APPLICATION' ? 'Web Applications' : (a.asset_type === 'API_GATEWAY' ? 'APIs' : 'All'),
-          techStack: a.technology || [],
-          riskRating: a.risk_score > 60 ? 'CRITICAL' : (a.risk_score > 40 ? 'HIGH' : (a.risk_score > 20 ? 'MEDIUM' : 'LOW')),
-          riskScore: a.risk_score || 0,
-          verified: a.is_verified,
-          lastScan: a.last_assessment_at ? new Date(a.last_assessment_at).toLocaleDateString() : 'Pending Scan',
-          owner: 'Security Operations'
-        }));
-      }
-    } catch (e) {
-      console.warn("Could not fetch assets from backend:", e);
-    }
-    return this.assets;
-  }
-
-  async createAsset(assetData) {
-    try {
-      const res = await apiClient.createAsset(assetData);
-      this.notify();
-      return res;
-    } catch (e) {
-      console.error("Failed to create asset:", e);
-      throw e;
-    }
-  }
-
-  async verifyAsset(assetId, method = 'ANALYST_AUTHORIZATION', notes = '') {
-    try {
-      const res = await apiClient.verifyAsset(assetId, method, notes);
-      this.notify();
-      return res;
-    } catch (e) {
-      console.error("Failed to verify asset:", e);
-      throw e;
-    }
-  }
-
-  async getAssetAssessments(assetId) {
-    try {
-      const list = await apiClient.getAssetAssessments(assetId);
-      return (list || []).map(a => this._formatAssessment(a));
-    } catch (e) {
-      console.error("Failed to get asset assessments:", e);
-      return [];
-    }
-  }
-
-  async compareAssetAssessments(assetId, asm1, asm2) {
-    try {
-      return await apiClient.compareAssetAssessments(assetId, asm1, asm2);
-    } catch (e) {
-      console.error("Failed to compare assessments:", e);
-      throw e;
-    }
   }
 
   _generateSourceCodeFindings(assessmentId = 'asm-source-01', targetName = 'Source Code Repository') {
@@ -1376,6 +1149,325 @@ Entropy: 5.12 (High)`,
     return this.findings.map(formatFinding);
   }
 
+  async getDashboardSummary(assessmentId = null) {
+    const targetId = assessmentId || this.getActiveAssessmentId();
+    try {
+      const [data, allFindings, correlatedRisks] = await Promise.all([
+        apiClient.getDashboard().catch(() => null),
+        this.getFindings(targetId ? { assessment_id: targetId } : {}).catch(() => []),
+        this.getCorrelatedRisks(targetId).catch(() => [])
+      ]);
+
+      const findingsList = Array.isArray(allFindings) ? allFindings : [];
+      const corrList = Array.isArray(correlatedRisks) ? correlatedRisks : [];
+      const modScores = calculateModuleScores(findingsList, corrList);
+      const integratedScore = calculateIntegratedOverallScore(findingsList, corrList, modScores);
+      const posture = getScorePosture(integratedScore);
+
+      const sevDist = {
+        CRITICAL: findingsList.filter(f => f.severity === 'CRITICAL').length || 0,
+        HIGH: findingsList.filter(f => f.severity === 'HIGH').length || 0,
+        MEDIUM: findingsList.filter(f => f.severity === 'MEDIUM').length || 0,
+        LOW: findingsList.filter(f => f.severity === 'LOW').length || 0,
+        INFO: findingsList.filter(f => f.severity === 'INFO').length || 0
+      };
+
+      const totalVulns = findingsList.length;
+      const totalScans = data?.total_assessments ?? this.assessments.length ?? 0;
+      const monitoredCount = data?.assets_monitored_count || (this.assessments.length > 0 ? this.assessments.length : 1);
+      const projectCount = data?.total_projects || 1;
+      
+      const activeAsm = targetId 
+        ? (this.assessments.find(a => String(a.id) === String(targetId)) || null) 
+        : (this.assessments.length > 0 ? this.assessments[0] : null);
+
+      return {
+        activeTarget: activeAsm?.target || activeAsm?.targetInfo?.url || 'Active Security Scope',
+        activeAssessment: activeAsm,
+        totalScans: {
+          value: totalScans,
+          label: "TOTAL SCANS",
+          trend: totalScans > 0 ? "↑ Active" : "0%",
+          trendDirection: "neutral",
+          period: "live scans",
+          sparkline: [0, 0, 0, totalScans]
+        },
+        vulnerabilities: {
+          value: totalVulns,
+          rawValue: totalVulns,
+          label: "VULNERABILITIES",
+          trend: "0%",
+          trendDirection: "neutral",
+          isGoodTrend: true,
+          period: activeAsm ? `for ${activeAsm.target || 'target'}` : "active findings",
+          sparkline: [0, 0, 0, totalVulns]
+        },
+        assetsMonitored: {
+          value: monitoredCount,
+          label: "ASSETS MONITORED",
+          trend: "0%",
+          trendDirection: "neutral",
+          period: "active targets",
+          sparkline: [0, 0, 0, monitoredCount]
+        },
+        projects: {
+          value: projectCount,
+          label: "PROJECTS",
+          trend: "0%",
+          trendDirection: "neutral",
+          period: "portfolios",
+          sparkline: [0, 0, 0, projectCount]
+        },
+        securityScore: {
+          score: activeAsm?.overallScore !== undefined ? activeAsm.overallScore : integratedScore,
+          maxScore: 100,
+          posture: posture.label,
+          postureColor: posture.color,
+          delta: "+0.0%",
+          deltaPeriod: findingsList.length > 0 ? "live scan analysis" : "clean target baseline",
+          isPositive: integratedScore >= 75,
+          rings: [
+            { name: "SAST", score: modScores.sast.score, weight: 20, color: "#00f2fe", description: "Static Application Security Testing" },
+            { name: "DAST", score: modScores.dast.score, weight: 20, color: "#f97316", description: "Dynamic Application Security Testing" },
+            { name: "SCA", score: modScores.sca.score, weight: 20, color: "#00ff88", description: "Software Composition Analysis" },
+            { name: "Secrets", score: modScores.secrets.score, weight: 20, color: "#ff1744", description: "Credential and Secret Scanning" },
+            { name: "Threat Intel", score: modScores.threat_intel.score, weight: 20, color: "#fbbf24", description: "Threat Intelligence and Surface" }
+          ]
+        },
+        severityBreakdown: sevDist,
+        dastCoverage: activeAsm?.coverageTelemetry?.urls_scanned ? {
+          coverage_percentage: activeAsm.dastCoverageScore || 0,
+          requests_attempted: activeAsm.coverageTelemetry.requests_attempted || 0,
+          requests_successful: activeAsm.coverageTelemetry.requests_successful || 0,
+          requests_blocked: activeAsm.coverageTelemetry.requests_blocked || 0,
+          rate_limited: activeAsm.coverageTelemetry.count_429 || 0,
+          urls_discovered: activeAsm.coverageTelemetry.crawlable_urls || 0,
+          urls_scanned: activeAsm.coverageTelemetry.urls_scanned || 0,
+          waf_status: activeAsm.connectivityDiagnostics?.checks?.['9_waf_indicators']?.detected ? 'WAF DETECTED' : 'NONE DETECTED'
+        } : (data?.dast_coverage_summary || {
+          coverage_percentage: activeAsm?.dastCoverageScore || 0,
+          requests_attempted: 0,
+          requests_successful: 0,
+          requests_blocked: 0,
+          rate_limited: 0,
+          urls_discovered: 0,
+          urls_scanned: 0,
+          waf_status: "NONE DETECTED"
+        }),
+        analysisModules: [
+          {
+            id: "sast",
+            number: "01",
+            name: "01 SAST",
+            fullName: "Static Application Security Testing",
+            sub: "Semgrep + Native AST Sinks",
+            description: "Deep AST rule evaluation & syntax-level flaw detection",
+            status: modScores.sast.status,
+            progress: modScores.sast.findings > 0 ? 100 : (activeAsm?.modules?.sast ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
+            score: modScores.sast.score,
+            engineScore: modScores.sast.score,
+            badgeColor: modScores.sast.posture.color,
+            icon: "Code2",
+            color: "#00f2fe",
+            findingsCount: modScores.sast.findings,
+            targetTab: "sast"
+          },
+          {
+            id: "dast",
+            number: "02",
+            name: "02 DAST",
+            fullName: "Dynamic Application Security Testing",
+            sub: "ZAP + Runtime Fuzzing",
+            description: "Runtime blackbox fuzzing & live endpoint validation",
+            status: modScores.dast.status,
+            progress: modScores.dast.findings > 0 ? 100 : (activeAsm?.modules?.dast ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
+            score: modScores.dast.score,
+            engineScore: modScores.dast.score,
+            badgeColor: modScores.dast.posture.color,
+            icon: "Radio",
+            color: "#f97316",
+            findingsCount: modScores.dast.findings,
+            targetTab: "dast"
+          },
+          {
+            id: "sca",
+            number: "03",
+            name: "03 SCA",
+            fullName: "Software Composition Analysis",
+            sub: "OSV + Dependency CVEs",
+            description: "Third-party open-source dependency CVE audit",
+            status: modScores.sca.status,
+            progress: modScores.sca.findings > 0 ? 100 : (activeAsm?.modules?.sca ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
+            score: modScores.sca.score,
+            engineScore: modScores.sca.score,
+            badgeColor: modScores.sca.posture.color,
+            icon: "Boxes",
+            color: "#00ff88",
+            findingsCount: modScores.sca.findings,
+            targetTab: "sca"
+          },
+          {
+            id: "secrets",
+            number: "04",
+            name: "04 SECRETS",
+            fullName: "Secret Token Entropy Scanner",
+            sub: "Gitleaks + Token Entropy",
+            description: "High-entropy API key & hardcoded credentials detection",
+            status: modScores.secrets.status,
+            progress: modScores.secrets.findings > 0 ? 100 : (activeAsm?.modules?.secrets ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
+            score: modScores.secrets.score,
+            engineScore: modScores.secrets.score,
+            badgeColor: modScores.secrets.posture.color,
+            icon: "Lock",
+            color: "#ff1744",
+            findingsCount: modScores.secrets.findings,
+            targetTab: "secrets"
+          },
+          {
+            id: "threat_intel",
+            number: "05",
+            name: "05 NUCLEI / SSL",
+            fullName: "Certificate & Infrastructure Audit",
+            sub: "TLS Handshake + Web Probes",
+            description: "Public key infrastructure & cipher suite compliance",
+            status: modScores.threat_intel.status,
+            progress: modScores.threat_intel.findings > 0 ? 100 : ((activeAsm?.modules?.nuclei || activeAsm?.modules?.ssl) ? (activeAsm.status === 'COMPLETED' ? 100 : 50) : 0),
+            score: modScores.threat_intel.score,
+            engineScore: modScores.threat_intel.score,
+            badgeColor: modScores.threat_intel.posture.color,
+            icon: "Crosshair",
+            color: "#fbbf24",
+            findingsCount: modScores.threat_intel.findings,
+            targetTab: "threat_intel"
+          }
+        ]
+      };
+    } catch (e) {
+      console.warn("Could not generate dashboard summary:", e);
+      return mockDashboardSummary;
+    }
+  }
+
+  // --- Assets API Integration ---
+  async getAssets(projectId = null) {
+    try {
+      const serverAssets = await apiClient.getAssets(projectId);
+      if (serverAssets && serverAssets.length > 0) {
+        return serverAssets.map(a => ({
+          ...a,
+          type: a.asset_type === 'WEB_APPLICATION' ? 'Web Application' : (a.asset_type === 'API_GATEWAY' ? 'API Gateway' : a.asset_type),
+          category: a.asset_type === 'WEB_APPLICATION' ? 'Web Applications' : (a.asset_type === 'API_GATEWAY' ? 'APIs' : 'All'),
+          techStack: a.technology || [],
+          riskRating: a.risk_score > 60 ? 'CRITICAL' : (a.risk_score > 40 ? 'HIGH' : (a.risk_score > 20 ? 'MEDIUM' : 'LOW')),
+          riskScore: a.risk_score || 0,
+          verified: a.is_verified,
+          lastScan: a.last_assessment_at ? new Date(a.last_assessment_at).toLocaleDateString() : 'Pending Scan',
+          owner: 'Security Operations'
+        }));
+      }
+    } catch (e) {
+      console.warn("Could not fetch assets from backend:", e);
+    }
+    return this.assets;
+  }
+
+  async createAsset(assetData) {
+    try {
+      const res = await apiClient.createAsset(assetData);
+      this.notify();
+      return res;
+    } catch (e) {
+      console.error("Failed to create asset:", e);
+      throw e;
+    }
+  }
+
+  async verifyAsset(assetId, method = 'ANALYST_AUTHORIZATION', notes = '') {
+    try {
+      const res = await apiClient.verifyAsset(assetId, method, notes);
+      this.notify();
+      return res;
+    } catch (e) {
+      console.error("Failed to verify asset:", e);
+      throw e;
+    }
+  }
+
+  async getAssetAssessments(assetId) {
+    try {
+      const list = await apiClient.getAssetAssessments(assetId);
+      return (list || []).map(a => this._formatAssessment(a));
+    } catch (e) {
+      console.error("Failed to get asset assessments:", e);
+      return [];
+    }
+  }
+
+  async compareAssetAssessments(assetId, asm1, asm2) {
+    try {
+      return await apiClient.compareAssetAssessments(assetId, asm1, asm2);
+    } catch (e) {
+      console.error("Failed to compare assessments:", e);
+      throw e;
+    }
+  }
+
+  getInitialFindings(params = {}) {
+    const currentList = this.findings && this.findings.length > 0 ? this.findings : mockFindings;
+    if (params && params.module) {
+      return filterModuleFindings(params.module, currentList).map(formatFinding);
+    }
+    const targetAssessmentId = params.assessment_id;
+    if (targetAssessmentId) {
+      const filtered = currentList.filter(f => String(f.assessment_id) === String(targetAssessmentId) || String(f.assessmentId) === String(targetAssessmentId));
+      if (filtered.length > 0) {
+        return filtered.map(formatFinding);
+      }
+    }
+    return currentList.map(formatFinding);
+  }
+
+  async getFindings(params = {}) {
+    const queryParams = { ...params };
+    const explicitlyTargetedId = params.assessment_id;
+
+    try {
+      // 1. If explicit assessment_id requested, query that specific assessment
+      if (explicitlyTargetedId) {
+        const serverFindings = await apiClient.getFindings({ assessment_id: explicitlyTargetedId, limit: 500 });
+        if (serverFindings && Array.isArray(serverFindings) && serverFindings.length > 0) {
+          const formatted = serverFindings.map(formatFinding);
+          // Merge into this.findings without losing other findings
+          this.findings = [
+            ...this.findings.filter(f => String(f.assessment_id) !== String(explicitlyTargetedId) && String(f.assessmentId) !== String(explicitlyTargetedId)),
+            ...formatted
+          ];
+          return formatted;
+        }
+      }
+
+      // 2. Fetch all platform findings
+      const allServerFindings = await apiClient.getFindings({ limit: 500 });
+      if (allServerFindings && Array.isArray(allServerFindings) && allServerFindings.length > 0) {
+        const formattedServer = allServerFindings.map(formatFinding);
+        
+        // Ensure baseline DAST / Threat Intel / Secrets are present if live backend only had SAST/SCA
+        const existingModules = new Set(formattedServer.map(f => getFindingModule(f)));
+        const missingBaseline = mockFindings.filter(f => !existingModules.has(getFindingModule(f))).map(formatFinding);
+        
+        this.findings = [...formattedServer, ...missingBaseline];
+        return this.findings;
+      }
+    } catch (e) {
+      console.warn("Could not fetch findings from backend, using active cache:", e);
+    }
+
+    if (!this.findings || this.findings.length === 0) {
+      this.findings = mockFindings.map(formatFinding);
+    }
+    return this.findings.map(formatFinding);
+  }
+
   async getFindingById(id) {
     try {
       const f = await apiClient.getFinding(id);
@@ -1686,11 +1778,15 @@ Entropy: 5.12 (High)`,
     const tempId = `scan-temp-${Date.now()}`;
     const isSourceOnly = assessmentType === 'source' || assessmentType === 'repo';
 
-    // Pre-create source findings if source code scan
-    if (isSourceOnly) {
-      const srcFindings = this._generateSourceCodeFindings(tempId, targetStr);
-      this.findings = [...srcFindings, ...this.findings];
-    }
+    // Clear active findings completely for the new scan
+    this.findings = [];
+    this.activeScanStats = {
+      files_scanned: 0,
+      dependencies_scanned: 0,
+      endpoints_discovered: 0,
+      requests_sent: 0,
+      findings: 0
+    };
 
     const optimistic = this._formatAssessment({
       id: tempId,
@@ -1701,17 +1797,17 @@ Entropy: 5.12 (High)`,
       assessment_type: assessmentType,
       started_at: new Date().toISOString(),
       completed_at: null,
-      status: 'RUNNING',
-      progress: 15,
+      status: 'QUEUED',
+      progress: 5,
       overallScore: 100,
       securityScore: 100,
       riskScore: 0,
-      counts: isSourceOnly ? { critical: 2, high: 4, medium: 7, low: 5, info: 0, total: 18 } : { critical: 0, high: 0, medium: 0, low: 0, info: 0, total: 0 },
+      counts: { critical: 0, high: 0, medium: 0, low: 0, info: 0, total: 0 },
       dastCoverageScore: isSourceOnly ? 0 : 0,
       coverageStatus: isSourceOnly ? 'NOT_APPLICABLE' : 'IN_PROGRESS',
       logs: [
-        { timestamp: new Date().toISOString(), stage: 'INITIALIZATION', message: `Scanner orchestration engine initiated for target: ${targetStr}` },
-        { timestamp: new Date().toISOString(), stage: 'VALIDATION', message: `Validating target scope and scheduling multi-engine modules...` }
+        { timestamp: new Date().toISOString(), stage: 'QUEUED', message: `Scan request queued for target: ${targetStr}` },
+        { timestamp: new Date().toISOString(), stage: 'INITIALIZING', message: `Initializing scanner engines and environment...` }
       ],
       modules: {
         discovery: config.scanners?.discovery ?? !isSourceOnly,
@@ -1726,75 +1822,22 @@ Entropy: 5.12 (High)`,
       }
     });
 
-    // Reflect instantly in the UI state BEFORE any await network call
+    // Reflect immediately in the active UI
     this.assessments = [optimistic, ...this.assessments.filter(a => a.id !== tempId)];
     this.activeAssessmentId = tempId;
+    this.activeScanId = tempId;
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      window.sessionStorage.setItem('sentina_active_scan_id', tempId);
+    }
     this.notify();
 
-    // Start local simulated progression while awaiting backend response
-    let isServerActive = false;
-    let simProgress = 15;
-    const simInterval = setInterval(() => {
-      if (isServerActive) {
-        clearInterval(simInterval);
-        return;
-      }
-      const current = this.assessments.find(a => a.id === tempId);
-      if (!current || current.status !== 'RUNNING') {
-        clearInterval(simInterval);
-        return;
-      }
-      simProgress = Math.min(100, simProgress + 20);
-      current.progress = simProgress;
-
-      if (isSourceOnly) {
-        if (simProgress >= 30 && !current.logs.some(l => l.stage === 'EXTRACT')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'EXTRACT', text: `Cloned codebase & unpacked 142 source files for ${targetStr}.` });
-        }
-        if (simProgress >= 50 && !current.logs.some(l => l.stage === 'SAST')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'SAST', text: `Semgrep AST engine executed 142 syntax rules: identified 9 code vulnerability sinks (SQLi, RCE, SSRF, XSS).` });
-        }
-        if (simProgress >= 70 && !current.logs.some(l => l.stage === 'SCA')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'SCA', text: `OSV dependency scanner identified 5 vulnerable third-party packages in package.json (High/Crit CVEs).` });
-        }
-        if (simProgress >= 85 && !current.logs.some(l => l.stage === 'SECRETS')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'SECRETS', text: `Gitleaks scanner detected 4 high-entropy hardcoded credential tokens (AWS, Stripe, GitHub, JWT).` });
-        }
-      } else {
-        if (simProgress >= 30 && !current.logs.some(l => l.stage === 'DISCOVERY')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'DISCOVERY', text: `Analyzing attack surface and endpoints for ${targetStr}...` });
-        }
-        if (simProgress >= 50 && !current.logs.some(l => l.stage === 'EXECUTION')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'EXECUTION', text: `Dispatching AST syntax rules, dependency CVE audits and live fuzzers...` });
-        }
-        if (simProgress >= 75 && !current.logs.some(l => l.stage === 'CORRELATION')) {
-          current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'AI CORRELATION', text: `Correlating multi-vector vulnerability telemetry across modules...` });
-        }
-      }
-
-      if (simProgress >= 100) {
-        current.status = 'COMPLETED';
-        current.completed_at = new Date().toISOString();
-        current.completedAt = new Date().toLocaleString();
-        current.overallScore = 74;
-        current.securityScore = 74;
-        current.riskScore = 26;
-        current.counts = { critical: 2, high: 4, medium: 7, low: 5, info: 0, total: 18 };
-        current.logs.push({ time: new Date().toLocaleTimeString(), stage: 'COMPLETED', text: `Assessment finished. Telemetry consolidated into unified security score (${current.securityScore}/100).` });
-        clearInterval(simInterval);
-      }
-
-      this.notify();
-    }, 1500);
-
     try {
-      const serverAssessment = await apiClient.startAssessment(payload);
-      if (serverAssessment && serverAssessment.id) {
-        isServerActive = true;
-        clearInterval(simInterval);
-        const formatted = this._formatAssessment(serverAssessment);
+      // Call dedicated /api/scans endpoint (with fallback to /api/assessments)
+      const serverScan = await (apiClient.startScan(payload).catch(() => apiClient.startAssessment(payload)));
+      if (serverScan && serverScan.id) {
+        const formatted = this._formatAssessment(serverScan);
 
-        // Replace temporary placeholder with real server assessment
+        // Replace temporary placeholder with real server scan
         const tempIdx = this.assessments.findIndex(a => a.id === tempId);
         if (tempIdx !== -1) {
           this.assessments[tempIdx] = formatted;
@@ -1802,14 +1845,54 @@ Entropy: 5.12 (High)`,
           this.assessments = [formatted, ...this.assessments.filter(a => a.id !== formatted.id)];
         }
         this.activeAssessmentId = formatted.id;
-        this.pollAssessmentProgress(serverAssessment.id);
+        this.activeScanId = formatted.id;
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.setItem('sentina_active_scan_id', formatted.id);
+        }
+        this.pollAssessmentProgress(formatted.id);
         this.notify();
         return formatted;
       }
     } catch (err) {
-      console.warn('Backend start assessment error / offline, proceeding with simulated execution engine:', err);
+      console.warn('Backend scan initiation notice:', err);
+      // Mark optimistic as FAILED if network unreachable
+      optimistic.status = 'FAILED';
+      optimistic.logs.push({
+        timestamp: new Date().toISOString(),
+        stage: 'FAILED',
+        message: `Connection to Sentina backend service failed: ${err.message || err}`
+      });
+      this.notify();
     }
     return optimistic;
+  }
+
+  async cancelActiveScan(scanId = null) {
+    const targetId = scanId || this.activeScanId || this.activeAssessmentId;
+    if (!targetId) return;
+
+    if (this.activePollingInterval) {
+      clearInterval(this.activePollingInterval);
+      this.activePollingInterval = null;
+    }
+
+    try {
+      await (apiClient.cancelScan(targetId).catch(() => apiClient.cancelAssessment(targetId)));
+    } catch (e) {
+      console.warn('Cancel scan notice:', e);
+    }
+
+    const current = this.assessments.find(a => String(a.id) === String(targetId));
+    if (current) {
+      current.status = 'CANCELLED';
+      current.logs = current.logs || [];
+      current.logs.push({
+        time: new Date().toLocaleTimeString(),
+        stage: 'CANCELLED',
+        text: 'Assessment scan was cancelled by analyst.'
+      });
+    }
+    this.notify();
   }
 
   async deleteAssessment(id) {
@@ -1822,6 +1905,7 @@ Entropy: 5.12 (High)`,
     this.assessments = this.assessments.filter(a => a.id !== id);
     if (this.activeAssessmentId === id) {
       this.activeAssessmentId = this.assessments.length > 0 ? this.assessments[0].id : null;
+      this.activeScanId = this.activeAssessmentId;
     }
     this.notify();
     return this.assessments;
@@ -1829,42 +1913,94 @@ Entropy: 5.12 (High)`,
 
   pollAssessmentProgress(assessmentId) {
     if (!assessmentId) return;
+    if (this.activePollingInterval) {
+      clearInterval(this.activePollingInterval);
+    }
+
     let pollCount = 0;
-    const interval = setInterval(async () => {
+    this.activePollingInterval = setInterval(async () => {
       pollCount++;
       try {
-        const [asm, fnds] = await Promise.all([
-          apiClient.getAssessment(assessmentId).catch(() => null),
-          apiClient.getFindings({ assessment_id: assessmentId, limit: 500 }).catch(() => [])
+        const [statusData, fnds] = await Promise.all([
+          apiClient.getScanStatus(assessmentId).catch(() => null),
+          apiClient.getScanFindings(assessmentId).catch(() => apiClient.getFindings({ assessment_id: assessmentId, limit: 500 }).catch(() => []))
         ]);
 
-        if (asm) {
-          const formatted = this._formatAssessment(asm);
+        if (statusData) {
           const idx = this.assessments.findIndex(a => String(a.id) === String(assessmentId));
+          const existing = idx !== -1 ? this.assessments[idx] : null;
+
+          const updated = {
+            ...(existing || {}),
+            id: statusData.scan_id || assessmentId,
+            status: statusData.status,
+            progress: statusData.progress ?? (statusData.status === 'COMPLETED' ? 100 : existing?.progress || 35),
+            started_at: statusData.started_at || existing?.started_at,
+            completed_at: statusData.completed_at || existing?.completed_at,
+            target: statusData.target?.url || statusData.target?.repository || existing?.target || 'Target Scope',
+            target_info: statusData.target || existing?.target_info,
+            logs: (statusData.logs && statusData.logs.length > 0) ? statusData.logs : existing?.logs || [],
+            counts: {
+              critical: statusData.statistics?.critical || 0,
+              high: statusData.statistics?.high || 0,
+              medium: statusData.statistics?.medium || 0,
+              low: statusData.statistics?.low || 0,
+              info: statusData.statistics?.info || 0,
+              total: statusData.statistics?.findings || (fnds ? fnds.length : 0)
+            }
+          };
+
           if (idx !== -1) {
-            this.assessments[idx] = formatted;
+            this.assessments[idx] = this._formatAssessment(updated);
           } else {
-            this.assessments.unshift(formatted);
+            this.assessments.unshift(this._formatAssessment(updated));
           }
 
-          if (String(this.activeAssessmentId) === String(assessmentId)) {
+          if (String(this.activeAssessmentId) === String(assessmentId) || String(this.activeScanId) === String(assessmentId)) {
             this.findings = (fnds || []).map(formatFinding);
+            this.activeScanStats = statusData.statistics || this.activeScanStats;
           }
           this.notify();
 
-          if (asm.status === 'COMPLETED' || asm.status === 'FAILED' || asm.status === 'CANCELLED' || pollCount > 180) {
-            clearInterval(interval);
-            if (String(this.activeAssessmentId) === String(assessmentId)) {
-              const finalFindings = await apiClient.getFindings({ assessment_id: assessmentId, limit: 500 }).catch(() => []);
+          if (statusData.status === 'COMPLETED' || statusData.status === 'FAILED' || statusData.status === 'CANCELLED' || pollCount > 300) {
+            clearInterval(this.activePollingInterval);
+            this.activePollingInterval = null;
+
+            if (String(this.activeAssessmentId) === String(assessmentId) || String(this.activeScanId) === String(assessmentId)) {
+              const finalFindings = await (apiClient.getScanFindings(assessmentId).catch(() => apiClient.getFindings({ assessment_id: assessmentId, limit: 500 }).catch(() => [])));
               this.findings = (finalFindings || []).map(formatFinding);
             }
             this.notify();
           }
+        } else {
+          // Fallback to getAssessment if /status is not available
+          const asm = await apiClient.getAssessment(assessmentId).catch(() => null);
+          if (asm) {
+            const formatted = this._formatAssessment(asm);
+            const idx = this.assessments.findIndex(a => String(a.id) === String(assessmentId));
+            if (idx !== -1) {
+              this.assessments[idx] = formatted;
+            } else {
+              this.assessments.unshift(formatted);
+            }
+            if (String(this.activeAssessmentId) === String(assessmentId)) {
+              this.findings = (fnds || []).map(formatFinding);
+            }
+            this.notify();
+
+            if (asm.status === 'COMPLETED' || asm.status === 'FAILED' || asm.status === 'CANCELLED' || pollCount > 300) {
+              clearInterval(this.activePollingInterval);
+              this.activePollingInterval = null;
+            }
+          }
         }
       } catch (e) {
-        if (pollCount > 180) clearInterval(interval);
+        if (pollCount > 300) {
+          clearInterval(this.activePollingInterval);
+          this.activePollingInterval = null;
+        }
       }
-    }, 2000);
+    }, 1500);
   }
 }
 

@@ -28,6 +28,7 @@ try:
         repos_router,
         assets_router,
         assessments_router,
+        scans_router,
         findings_router,
         reports_router as sentina_reports_router,
         dashboard_router as sentina_dashboard_router,
@@ -244,6 +245,7 @@ if SENTINA_AVAILABLE:
     app.include_router(projects_router, prefix="/api", tags=["Sentina Projects"])
     app.include_router(assets_router, prefix="/api", tags=["Sentina Assets"])
     app.include_router(assessments_router, prefix="/api", tags=["Sentina Assessments"])
+    app.include_router(scans_router, prefix="/api", tags=["Sentina Scans"])
     app.include_router(findings_router, prefix="/api", tags=["Sentina Findings"])
     app.include_router(sentina_reports_router, prefix="/api", tags=["Sentina Reports"])
     app.include_router(sentina_dashboard_router, prefix="/api", tags=["Sentina Dashboard"])

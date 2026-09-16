@@ -11,7 +11,7 @@ class User(Base):
     __tablename__ = "users"
     __table_args__ = {'extend_existing': True}
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id = Column(String(36), primary_key=True, default=generate_uuid)
     username = Column(String(128), nullable=True)
     email = Column(String(128), unique=True, index=True, nullable=False)
     name = Column(String(128), nullable=True)

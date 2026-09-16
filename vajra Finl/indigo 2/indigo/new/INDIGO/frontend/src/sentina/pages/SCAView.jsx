@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
 import {
   Boxes,
@@ -8,23 +8,57 @@ import {
   ShieldAlert,
   GitPullRequest,
   CheckCircle2,
-  FolderOpen,
-  Search
+  FolderOpen
 } from 'lucide-react';
 import { dashboardService } from '../services/dashboardService';
-import { SeverityBadge, getRatingMeta } from '../components/SeverityBadge';
-import { FindingDrawer } from '../components/FindingDrawer';
+import { SeverityBadge } from '../components/SeverityBadge';
 import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
-export function SCAView() {
+export function SCAView({ onNavigateTab, onNewAssessment }) {
+  const [scaRepoInput, setSastRepoInput] = useState('https://github.com/company/core-api');
+  const [isStarting, setIsStarting] = useState(false);
   const [findings, setFindings] = useState(() => filterModuleFindings('sca', dashboardService.getInitialFindings({ module: 'sca' })));
-  const [selectedRating, setSelectedRating] = useState('ALL');
+  const [selectedSeverity, setSelectedSeverity] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFinding, setSelectedFinding] = useState(() => {
     const init = filterModuleFindings('sca', dashboardService.getInitialFindings({ module: 'sca' }));
     return init.length > 0 ? init[0] : null;
   });
   const [activeDrawerFinding, setActiveDrawerFinding] = useState(null);
+
+  const handleStartSCA = async () => {
+    if (!scaRepoInput.trim()) return;
+    setIsStarting(true);
+    try {
+      const repoName = scaRepoInput.split('/').pop().replace('.git', '') || 'Repository';
+      const newAsm = await dashboardService.triggerNewScan({
+        assessmentName: `${repoName} [SCA]`,
+        targetType: 'source',
+        repoUrl: scaRepoInput.trim(),
+        scanners: {
+          sast: false,
+          sca: true,
+          secrets: false,
+          discovery: false,
+          dast: false,
+          nuclei: false,
+          wapiti: false,
+          headers: false,
+          ssl: false
+        }
+      });
+      if (newAsm?.id) {
+        dashboardService.setActiveAssessmentId(newAsm.id);
+      }
+      if (onNavigateTab) {
+        onNavigateTab('assessments');
+      }
+    } catch (e) {
+      console.warn('Start SCA error:', e);
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
   useEffect(() => {
     async function loadSCA() {
@@ -42,29 +76,11 @@ export function SCAView() {
 
   const scaScore = calculateFindingsScore(findings);
   const scorePosture = getScorePosture(scaScore);
-  const criticalCount = findings.filter(f => getRatingMeta(f.severity || f.rating).key === 'CRITICAL').length;
-  const highCount = findings.filter(f => getRatingMeta(f.severity || f.rating).key === 'HIGH').length;
-
-  const ratingOptions = [
-    { key: 'ALL', label: 'ALL' },
-    { key: 'CRITICAL', label: 'CRITICAL RISK' },
-    { key: 'HIGH', label: 'ELEVATED RISK' },
-    { key: 'MEDIUM', label: 'MODERATE RISK' },
-    { key: 'LOW', label: 'LOW RISK' },
-    { key: 'INFO', label: 'INFORMATIONAL' }
-  ];
-
-  const getRatingCount = (key) => {
-    if (key === 'ALL') return findings.length;
-    return findings.filter(f => getRatingMeta(f.severity || f.rating).key === key).length;
-  };
+  const criticalCount = findings.filter(f => f.severity?.toUpperCase() === 'CRITICAL').length;
 
   const filteredFindings = findings.filter(f => {
-    if (selectedRating !== 'ALL') {
-      const meta = getRatingMeta(f.severity || f.rating);
-      if (meta.key !== selectedRating && meta.label !== selectedRating) {
-        return false;
-      }
+    if (selectedSeverity !== 'ALL' && f.severity?.toUpperCase() !== selectedSeverity.toUpperCase()) {
+      return false;
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -77,15 +93,20 @@ export function SCAView() {
     return true;
   });
 
+  const getSeverityCount = (sev) => {
+    if (sev === 'ALL') return findings.length;
+    return findings.filter(f => f.severity?.toUpperCase() === sev).length;
+  };
+
   return (
-    <div className="page-container" style={{ maxWidth: '1600px' }}>
+    <div className="page-container">
       {/* Top Banner */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '20px',
+          marginBottom: '24px',
           flexWrap: 'wrap',
           gap: '16px'
         }}
@@ -93,109 +114,135 @@ export function SCAView() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div
             style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '8px',
-              background: 'rgba(0, 255, 136, 0.15)',
-              border: '2px solid #00ff88',
-              boxShadow: '0 0 14px rgba(0, 255, 136, 0.4)',
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: 'rgba(0, 242, 254, 0.15)',
+              border: '1px solid rgba(0, 242, 254, 0.4)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}
           >
-            <Boxes size={20} color="#00ff88" />
+            <Boxes size={22} color="#00f2fe" />
           </div>
           <div>
-            <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#f8fafc', letterSpacing: '0.8px', margin: 0 }}>
-              SCA: SOFTWARE COMPOSITION ANALYSIS
+            <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#f8fafc' }}>
+              SCA: Software Composition Analysis
             </h1>
-            <p style={{ fontSize: '11.5px', color: '#a1a1aa', marginTop: '2px' }}>
-              Third-party dependency scanning, OSV/CVE database correlation, and automated fix version suggestions.
+            <p style={{ fontSize: '13px', color: '#94a3b8', marginTop: '2px' }}>
+              Third-party dependency scanning, CVE database correlation, and automated fix version suggestions.
             </p>
           </div>
         </div>
 
         <span
           style={{
-            fontSize: '11px',
+            fontSize: '11.5px',
             fontFamily: 'var(--font-mono)',
-            padding: '3px 10px',
-            borderRadius: '4px',
-            background: 'rgba(0, 255, 136, 0.15)',
-            color: '#00ff88',
-            border: '1.5px solid #00ff88',
-            fontWeight: 800
+            padding: '4px 10px',
+            borderRadius: '6px',
+            background: 'rgba(0, 242, 254, 0.12)',
+            color: '#00f2fe',
+            border: '1px solid rgba(0, 242, 254, 0.3)',
+            fontWeight: 700
           }}
         >
-          {findings.length} DEPENDENCY VULNERABILITIES DETECTED
+          {findings.length} Vulnerable Dependencies Detected
         </span>
       </div>
 
-      {/* KPI Stats */}
-      <div className="grid-4" style={{ marginBottom: '20px' }}>
-        <div
-          className="cyber-card"
+      {/* Quick SCA Assessment Launcher Card */}
+      <div
+        className="cyber-card"
+        style={{
+          padding: '16px 20px',
+          background: 'rgba(15, 23, 42, 0.85)',
+          border: '1px solid rgba(0, 255, 136, 0.3)',
+          borderRadius: '10px',
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '280px' }}>
+          <Boxes size={22} color="#00ff88" />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, marginBottom: '4px' }}>
+              TARGET REPOSITORY FOR DEPENDENCY & CVE AUDIT
+            </div>
+            <input
+              type="text"
+              placeholder="https://github.com/company/project"
+              value={scaRepoInput}
+              onChange={e => setSastRepoInput(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                background: 'rgba(0, 0, 0, 0.3)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                color: '#f8fafc',
+                fontSize: '13px',
+                outline: 'none'
+              }}
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handleStartSCA}
+          disabled={isStarting}
           style={{
-            padding: '14px 16px',
-            background: '#060108',
-            border: '2.5px solid #360a25',
-            boxShadow: `0 8px 24px rgba(0,0,0,0.8), inset 0 0 12px ${scorePosture.color}15`
+            padding: '10px 20px',
+            fontSize: '13px',
+            fontWeight: 800,
+            borderRadius: '6px',
+            background: 'linear-gradient(135deg, #00ff88, #00c6ff)',
+            color: '#020617',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}
         >
+          {isStarting ? 'Initiating SCA...' : 'Start SCA Assessment'}
+        </button>
+      </div>
+
+      {/* KPI Stats */}
+      <div className="grid-4" style={{ marginBottom: '24px' }}>
+        <div className="cyber-card" style={{ padding: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '10px', fontWeight: 900, color: '#00ff88', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-              SCA SECURITY SCORE
-            </span>
-            <span
-              style={{
-                fontSize: '8.5px',
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 900,
-                color: scorePosture.color,
-                padding: '2px 6px',
-                borderRadius: '4px',
-                background: `${scorePosture.color}20`,
-                border: `1.2px solid ${scorePosture.color}`
-              }}
-            >
-              {findings.length === 0 ? 'OPTIMAL DEFENSE' : scorePosture.label}
+            <span style={{ fontSize: '11px', color: '#64748b' }}>SCA Security Score</span>
+            <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', fontWeight: 800, color: scorePosture.color }}>
+              {findings.length === 0 ? '100% CLEAN' : scorePosture.label}
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '6px' }}>
-            <div
-              style={{
-                fontSize: '28px',
-                fontWeight: 900,
-                color: '#ffffff',
-                fontFamily: 'var(--font-mono)',
-                textShadow: `0 0 12px ${scorePosture.color}70`
-              }}
-            >
-              {scaScore}
-            </div>
-            <div style={{ fontSize: '12px', color: '#71717a', fontFamily: 'var(--font-mono)' }}>/ 100</div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: scorePosture.color, fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
+            {scaScore}/100
           </div>
         </div>
-
-        <div className="cyber-card" style={{ padding: '14px 16px', background: '#060108', border: '2.5px solid #360a25' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, color: '#ff1744', textTransform: 'uppercase' }}>CRITICAL & ELEVATED RISKS</div>
-          <div style={{ fontSize: '24px', fontWeight: 900, color: '#ff1744', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
-            {criticalCount + highCount}
+        <div className="cyber-card" style={{ padding: '16px' }}>
+          <div style={{ fontSize: '11px', color: '#ff3366' }}>Critical CVEs</div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: '#ff3366', fontFamily: 'var(--font-mono)' }}>
+            {criticalCount}
           </div>
         </div>
-
-        <div className="cyber-card" style={{ padding: '14px 16px', background: '#060108', border: '2.5px solid #360a25' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, color: '#00f2fe', textTransform: 'uppercase' }}>VULNERABLE PACKAGES</div>
-          <div style={{ fontSize: '24px', fontWeight: 900, color: '#f8fafc', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
+        <div className="cyber-card" style={{ padding: '16px' }}>
+          <div style={{ fontSize: '11px', color: '#64748b' }}>Vulnerable Packages</div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: '#f8fafc', fontFamily: 'var(--font-mono)' }}>
             {findings.length} Packages
           </div>
         </div>
-
-        <div className="cyber-card" style={{ padding: '14px 16px', background: '#060108', border: '2.5px solid #360a25' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, color: '#00ff88', textTransform: 'uppercase' }}>LICENSE COMPLIANCE</div>
-          <div style={{ fontSize: '13px', fontWeight: 900, color: '#00ff88', marginTop: '10px' }}>
-            ● ZERO INFRINGEMENTS
+        <div className="cyber-card" style={{ padding: '16px' }}>
+          <div style={{ fontSize: '11px', color: '#10b981' }}>License Risk</div>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: '#10b981', marginTop: '6px' }}>
+            0 Infringements
           </div>
         </div>
       </div>
@@ -207,58 +254,58 @@ export function SCAView() {
           style={{
             padding: '48px 24px',
             textAlign: 'center',
-            background: '#060108',
-            border: '2.5px solid #360a25',
-            borderRadius: '8px'
+            background: '#040713',
+            border: '1px dashed #14203a',
+            borderRadius: '12px'
           }}
         >
           <div
             style={{
-              width: '50px',
-              height: '50px',
+              width: '56px',
+              height: '56px',
               borderRadius: '50%',
-              background: 'rgba(0, 255, 136, 0.1)',
-              border: '1.5px solid #00ff88',
+              background: 'rgba(0, 242, 254, 0.1)',
+              border: '1px solid rgba(0, 242, 254, 0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 14px',
-              color: '#00ff88'
+              margin: '0 auto 16px',
+              color: '#00f2fe'
             }}
           >
-            <FolderOpen size={24} />
+            <FolderOpen size={28} />
           </div>
-          <h3 style={{ fontSize: '15px', fontWeight: 900, color: '#f8fafc', marginBottom: '4px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#f8fafc', marginBottom: '6px' }}>
             No Vulnerable Dependencies Found
           </h3>
-          <p style={{ fontSize: '12px', color: '#71717a', maxWidth: '420px', margin: '0 auto', lineHeight: 1.5 }}>
+          <p style={{ fontSize: '13px', color: '#64748b', maxWidth: '420px', margin: '0 auto', lineHeight: 1.5 }}>
             All dependency manifests (package.json, requirements.txt, pom.xml, etc.) have zero known open CVEs.
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '20px' }}>
           {/* Left: SCA Findings List */}
-          <div className="cyber-card" style={{ padding: '14px', background: '#060108', border: '2.5px solid #360a25', maxHeight: '720px', overflowY: 'auto' }}>
+          <div className="cyber-card" style={{ padding: '16px', maxHeight: '720px', overflowY: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
               <div style={{ fontSize: '11px', fontWeight: 900, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
                 VULNERABLE PACKAGES ({filteredFindings.length}/{findings.length})
               </div>
             </div>
 
-            {/* Threat Rating Filter Tabs */}
+            {/* Severity Filter Tabs */}
             <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', marginBottom: '10px', flexWrap: 'wrap' }}>
-              {ratingOptions.map(opt => {
-                const isActive = selectedRating === opt.key;
-                const count = getRatingCount(opt.key);
+              {['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'].map(sev => {
+                const isActive = selectedSeverity === sev;
+                const count = getSeverityCount(sev);
                 return (
                   <button
-                    key={opt.key}
-                    onClick={() => setSelectedRating(opt.key)}
+                    key={sev}
+                    onClick={() => setSelectedSeverity(sev)}
                     className={`filter-pill ${isActive ? 'active' : ''}`}
-                    style={{ fontSize: '9px', padding: '3px 7px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    style={{ fontSize: '9.5px', padding: '3px 7px', display: 'flex', alignItems: 'center', gap: '4px' }}
                   >
-                    <span>{opt.label}</span>
-                    <span style={{ fontSize: '8.5px', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>({count})</span>
+                    <span>{sev}</span>
+                    <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>({count})</span>
                   </button>
                 );
               })}
@@ -273,11 +320,11 @@ export function SCAView() {
                   gap: '6px',
                   padding: '4px 8px',
                   borderRadius: '6px',
-                  background: '#040005',
-                  border: '1.5px solid #28081c'
+                  background: '#040711',
+                  border: '1px solid #141f38'
                 }}
               >
-                <Search size={11} color="#71717a" />
+                <Search size={11} color="#64748b" />
                 <input
                   type="text"
                   placeholder="Filter SCA packages..."
@@ -296,38 +343,38 @@ export function SCAView() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {filteredFindings.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '24px 12px', color: '#71717a', fontSize: '11.5px' }}>
-                  No SCA packages match selected rating filter.
+                <div style={{ textAlign: 'center', padding: '24px 12px', color: '#64748b', fontSize: '11.5px' }}>
+                  No SCA packages match {selectedSeverity} severity.
                 </div>
               ) : (
-                filteredFindings.map((f, idx) => {
-                  const isSelected = selectedFinding?.id === f.id || (selectedFinding == null && idx === 0);
+                filteredFindings.map(f => {
+                  const isSelected = selectedFinding?.id === f.id;
 
                   return (
                     <div
-                      key={f.id || idx}
+                      key={f.id}
                       onClick={() => setSelectedFinding(f)}
                       style={{
-                        padding: '10px 12px',
-                        borderRadius: '6px',
-                        background: isSelected ? 'rgba(0, 255, 136, 0.15)' : '#040005',
-                        border: isSelected ? '1.5px solid #00ff88' : '1.5px solid #28081c',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        background: isSelected ? '#0a1d2e' : '#080d1c',
+                        border: isSelected ? '1.5px solid #00f2fe' : '1px solid #141f38',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <SeverityBadge severity={f.severity || f.rating} size="sm" />
-                        <span style={{ fontSize: '10px', color: '#71717a', fontFamily: 'var(--font-mono)' }}>{f.id}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <SeverityBadge severity={f.severity} size="sm" />
+                        <span style={{ fontSize: '10.5px', color: '#64748b', fontFamily: 'var(--font-mono)' }}>{f.id}</span>
                       </div>
 
-                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc', lineHeight: 1.3 }}>
+                      <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#f8fafc', lineHeight: 1.3 }}>
                         {f.title}
                       </div>
 
-                      <div style={{ fontSize: '10.5px', color: '#00ff88', marginTop: '3px', fontFamily: 'var(--font-mono)' }}>
+                      <div style={{ fontSize: '10.5px', color: '#00f2fe', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>
                         {f.cve || f.affectedComponent}
                       </div>
                     </div>
@@ -339,17 +386,17 @@ export function SCAView() {
 
           {/* Right: Package Context & Upgrade Path */}
           {selectedFinding && (
-            <div className="cyber-card" style={{ padding: '20px', background: '#060108', border: '3px solid #360a25', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="cyber-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <SeverityBadge severity={selectedFinding.severity || selectedFinding.rating} size="sm" />
-                    <span style={{ fontSize: '11px', color: '#c084fc', fontFamily: 'var(--font-mono)' }}>{selectedFinding.cve}</span>
+                    <SeverityBadge severity={selectedFinding.severity} size="sm" />
+                    <span style={{ fontSize: '11.5px', color: '#64748b' }}>{selectedFinding.cve}</span>
                   </div>
-                  <h2 style={{ fontSize: '16px', fontWeight: 900, color: '#f8fafc', margin: '4px 0' }}>
+                  <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#f8fafc' }}>
                     {selectedFinding.title}
                   </h2>
-                  <div style={{ fontSize: '11.5px', color: '#00ff88', fontFamily: 'var(--font-mono)' }}>
+                  <div style={{ fontSize: '12px', color: '#00f2fe', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
                     Package: {selectedFinding.affectedComponent}
                   </div>
                 </div>
@@ -357,15 +404,14 @@ export function SCAView() {
                 <button
                   onClick={() => setActiveDrawerFinding(selectedFinding)}
                   className="btn btn-primary btn-sm"
-                  style={{ fontSize: '11px', height: '28px', gap: '5px' }}
                 >
                   <span>Full Triage View</span>
-                  <ExternalLink size={12} />
+                  <ExternalLink size={13} />
                 </button>
               </div>
 
               {/* Description */}
-              <div style={{ padding: '10px 14px', borderRadius: '6px', background: '#040005', border: '1.5px solid #28081c', fontSize: '12px', color: '#cbd5e1', lineHeight: 1.5 }}>
+              <div style={{ padding: '12px', borderRadius: '8px', background: '#090e1f', border: '1px solid #141f38', fontSize: '13px', color: '#cbd5e1', lineHeight: 1.5 }}>
                 {selectedFinding.description}
               </div>
 
@@ -376,9 +422,9 @@ export function SCAView() {
                 </div>
                 <div
                   style={{
-                    background: '#020003',
-                    border: '1.5px solid #28081c',
-                    borderRadius: '6px',
+                    background: '#040711',
+                    border: '1px solid #162242',
+                    borderRadius: '8px',
                     padding: '14px',
                     fontFamily: 'var(--font-mono)',
                     fontSize: '11.5px',
@@ -398,20 +444,20 @@ export function SCAView() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '12px 14px',
-                  borderRadius: '6px',
+                  padding: '14px 16px',
+                  borderRadius: '8px',
                   background: 'rgba(16, 185, 129, 0.08)',
-                  border: '1.5px solid #10b981'
+                  border: '1px solid rgba(16, 185, 129, 0.3)'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <GitPullRequest size={16} color="#10b981" />
+                  <GitPullRequest size={18} color="#10b981" />
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#f8fafc' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
                       Remediation Upgrade Available
                     </div>
-                    <div style={{ fontSize: '10.5px', color: '#94a3b8' }}>
-                      Update to safe release to resolve vulnerability exposure.
+                    <div style={{ fontSize: '11.5px', color: '#94a3b8' }}>
+                      Update to safe release to resolve CVE exposure.
                     </div>
                   </div>
                 </div>
@@ -422,7 +468,7 @@ export function SCAView() {
                     fontFamily: 'var(--font-mono)',
                     fontWeight: 800,
                     color: '#10b981',
-                    padding: '3px 8px',
+                    padding: '4px 8px',
                     borderRadius: '4px',
                     background: 'rgba(16, 185, 129, 0.15)'
                   }}
@@ -432,7 +478,7 @@ export function SCAView() {
               </div>
 
               {/* AI Recommendation */}
-              <div style={{ padding: '10px 14px', borderRadius: '6px', background: 'rgba(0, 242, 254, 0.06)', border: '1.5px solid #00f2fe', fontSize: '11.5px', color: '#f8fafc' }}>
+              <div style={{ padding: '12px', borderRadius: '8px', background: 'rgba(0, 242, 254, 0.05)', border: '1px solid rgba(0, 242, 254, 0.2)', fontSize: '12px', color: '#e2e8f0' }}>
                 <strong style={{ color: '#00f2fe' }}>Remediation Guidance: </strong>
                 {getFindingRemediation(selectedFinding)}
               </div>

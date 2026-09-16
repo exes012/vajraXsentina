@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
 import {
   FileText,
@@ -205,7 +205,7 @@ export function Reports() {
               {reports.length === 0 ? (
                 <tr>
                   <td colSpan="7" style={{ textAlign: 'center', padding: '36px', color: '#71717a' }}>
-                    No security reports generated yet. Click &quot;Generate New Report&quot; above to produce an audit report.
+                    No security reports generated yet. Click "Generate New Report" above to produce an audit report.
                   </td>
                 </tr>
               ) : (

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState } from 'react';
 import {
   X,
@@ -137,26 +137,26 @@ export function ReportViewerModal({ report, isOpen, onClose }) {
       </div>
     </div>
 
-    <div class="section-title">Threat Rating & Risk Distribution</div>
+    <div class="section-title">Vulnerability Severity Distribution</div>
     <div class="grid-5">
       <div class="sev-card sev-crit">
-        <div style="font-size: 10px; font-weight: 900;">CRITICAL RISK</div>
+        <div style="font-size: 10px; font-weight: 900;">CRITICAL</div>
         <div style="font-size: 22px; font-weight: 900; margin-top: 4px;">${counts.critical || 0}</div>
       </div>
       <div class="sev-card sev-high">
-        <div style="font-size: 10px; font-weight: 900;">ELEVATED RISK</div>
+        <div style="font-size: 10px; font-weight: 900;">HIGH</div>
         <div style="font-size: 22px; font-weight: 900; margin-top: 4px;">${counts.high || 0}</div>
       </div>
       <div class="sev-card sev-med">
-        <div style="font-size: 10px; font-weight: 900;">MODERATE RISK</div>
+        <div style="font-size: 10px; font-weight: 900;">MEDIUM</div>
         <div style="font-size: 22px; font-weight: 900; margin-top: 4px;">${counts.medium || 0}</div>
       </div>
       <div class="sev-card sev-low">
-        <div style="font-size: 10px; font-weight: 900;">LOW RISK</div>
+        <div style="font-size: 10px; font-weight: 900;">LOW</div>
         <div style="font-size: 22px; font-weight: 900; margin-top: 4px;">${counts.low || 0}</div>
       </div>
       <div class="sev-card sev-info">
-        <div style="font-size: 10px; font-weight: 900;">INFORMATIONAL</div>
+        <div style="font-size: 10px; font-weight: 900;">INFO</div>
         <div style="font-size: 22px; font-weight: 900; margin-top: 4px;">${counts.info || 0}</div>
       </div>
     </div>
@@ -165,7 +165,7 @@ export function ReportViewerModal({ report, isOpen, onClose }) {
     <table>
       <thead>
         <tr>
-          <th style="width: 140px;">Threat Rating & Risk</th>
+          <th style="width: 105px;">Severity & Risk</th>
           <th>Vulnerability & Threat Scenario</th>
           <th>Engine Source</th>
           <th>Impact & Remediation</th>
@@ -395,42 +395,42 @@ export function ReportViewerModal({ report, isOpen, onClose }) {
             </div>
           </div>
 
-          {/* Finding Distribution by Threat Rating */}
+          {/* Finding Distribution by Severity */}
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '11px', fontWeight: 900, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '8px' }}>
-              THREAT RATING & RISK BREAKDOWN ({totalFindings} TOTAL)
+              VULNERABILITY SEVERITY BREAKDOWN ({totalFindings} TOTAL)
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
               <div style={{ padding: '8px', borderRadius: '6px', background: 'rgba(255, 23, 68, 0.15)', border: '1.5px solid #ff1744', textAlign: 'center' }}>
-                <div style={{ fontSize: '9px', color: '#ff2a4d', fontWeight: 900 }}>CRITICAL RISK</div>
+                <div style={{ fontSize: '9px', color: '#ff2a4d', fontWeight: 900 }}>CRITICAL</div>
                 <div style={{ fontSize: '18px', fontWeight: 900, color: '#ff1744', fontFamily: 'var(--font-mono)' }}>
                   {counts.critical || 0}
                 </div>
               </div>
 
               <div style={{ padding: '8px', borderRadius: '6px', background: 'rgba(249, 115, 22, 0.15)', border: '1.5px solid #f97316', textAlign: 'center' }}>
-                <div style={{ fontSize: '9px', color: '#f97316', fontWeight: 900 }}>ELEVATED RISK</div>
+                <div style={{ fontSize: '9px', color: '#f97316', fontWeight: 900 }}>HIGH</div>
                 <div style={{ fontSize: '18px', fontWeight: 900, color: '#f97316', fontFamily: 'var(--font-mono)' }}>
                   {counts.high || 0}
                 </div>
               </div>
 
               <div style={{ padding: '8px', borderRadius: '6px', background: 'rgba(251, 191, 36, 0.15)', border: '1.5px solid #fbbf24', textAlign: 'center' }}>
-                <div style={{ fontSize: '9px', color: '#fbbf24', fontWeight: 900 }}>MODERATE RISK</div>
+                <div style={{ fontSize: '9px', color: '#fbbf24', fontWeight: 900 }}>MEDIUM</div>
                 <div style={{ fontSize: '18px', fontWeight: 900, color: '#fbbf24', fontFamily: 'var(--font-mono)' }}>
                   {counts.medium || 0}
                 </div>
               </div>
 
               <div style={{ padding: '8px', borderRadius: '6px', background: 'rgba(0, 242, 254, 0.15)', border: '1.5px solid #00f2fe', textAlign: 'center' }}>
-                <div style={{ fontSize: '9px', color: '#00f2fe', fontWeight: 900 }}>LOW RISK</div>
+                <div style={{ fontSize: '9px', color: '#00f2fe', fontWeight: 900 }}>LOW</div>
                 <div style={{ fontSize: '18px', fontWeight: 900, color: '#00f2fe', fontFamily: 'var(--font-mono)' }}>
                   {counts.low || 0}
                 </div>
               </div>
 
               <div style={{ padding: '8px', borderRadius: '6px', background: 'rgba(0, 255, 136, 0.15)', border: '1.5px solid #00ff88', textAlign: 'center' }}>
-                <div style={{ fontSize: '9px', color: '#00ff88', fontWeight: 900 }}>INFORMATIONAL</div>
+                <div style={{ fontSize: '9px', color: '#00ff88', fontWeight: 900 }}>INFO</div>
                 <div style={{ fontSize: '18px', fontWeight: 900, color: '#00ff88', fontFamily: 'var(--font-mono)' }}>
                   {counts.info || 0}
                 </div>

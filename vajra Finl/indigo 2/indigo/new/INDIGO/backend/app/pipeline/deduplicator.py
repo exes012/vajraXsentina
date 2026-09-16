@@ -10,6 +10,7 @@ SEVERITY_WEIGHT = {
 }
 
 CONFIDENCE_WEIGHT = {
+    "CONFIRMED": 4,
     "HIGH": 3,
     "MEDIUM": 2,
     "LOW": 1

@@ -1,7 +1,6 @@
-'use client'
-
+'use client';
 import React, { useEffect, useRef, useState } from 'react'
-import { Shield, Flame } from 'lucide-react'
+import { Shield } from 'lucide-react'
 
 // ============================================================================
 // 3D HOLOGRAPHIC DOTTED DIGITAL GLOBE & SOC RADAR CANVAS (VAJRA RADAR ENGINE)
@@ -310,8 +309,6 @@ function HolographicThreatRadarCanvas() {
   )
 }
 
-// ============================================================================
-// MAIN ENERGY SECURITY SCORE COMPONENT (MATCHING VAJRA 3D RADAR HUD)
 import { getScorePosture } from '../../utils/securityScore'
 
 // ============================================================================

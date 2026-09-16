@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Search,
@@ -9,7 +9,6 @@ import {
   Plus
 } from 'lucide-react';
 import { mockNotifications } from '../api/mockData';
-import PlatformToggle from '@/components/PlatformToggle';
 
 export function Navbar({
   onNewAssessmentClick,
@@ -41,96 +40,84 @@ export function Navbar({
   return (
     <header
       style={{
-        height: '50px',
-        backgroundColor: 'rgba(5, 1, 7, 0.97)',
+        height: '46px',
+        backgroundColor: 'var(--bg-topbar)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        borderBottom: '2px solid #360a25',
+        borderBottom: '1px solid var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 16px',
+        padding: '0 18px',
         position: 'sticky',
         top: 0,
-        zIndex: 40,
-        gap: '12px'
+        zIndex: 40
       }}
     >
       {/* Left: Scope Selector / Status Chip */}
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            padding: '4px 10px',
-            borderRadius: '10px',
+            padding: '3px 9px',
+            borderRadius: '16px',
             background: 'rgba(255, 23, 68, 0.1)',
-            border: '1.5px solid rgba(255, 23, 68, 0.4)',
+            border: '1px solid rgba(255, 23, 68, 0.4)',
             fontSize: '10.5px',
-            fontWeight: 900,
+            fontWeight: 700,
             color: '#ff2a4d',
-            boxShadow: '0 0 10px rgba(255, 23, 68, 0.15)',
-            fontFamily: 'var(--font-mono)',
-            whiteSpace: 'nowrap'
+            boxShadow: '0 0 10px rgba(255, 23, 68, 0.2)'
           }}
         >
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ff1744', boxShadow: '0 0 8px #ff1744', flexShrink: 0 }} className="animate-pulse" />
-          <span className="hidden xl:inline">SENTINA: THREAT MONITORING</span>
-          <span className="hidden sm:inline xl:hidden">SENTINA SECOPS</span>
-          <span className="sm:hidden">SENTINA</span>
+          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#ff1744', boxShadow: '0 0 6px #ff1744' }} />
+          <span>BLOOD SOC: ACTIVE THREAT MONITORING</span>
         </div>
       </div>
 
-      {/* Center: Unified Platform Switcher Toggle */}
-      <div className="flex items-center justify-center flex-shrink-0">
-        <PlatformToggle />
-      </div>
-
       {/* Right: Search + New Assessment + Notification Bell + User Avatar */}
-      <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         {/* Search Bar */}
         <div
           onClick={onOpenSearch}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
-            padding: '3px 8px',
-            borderRadius: '14px',
-            background: '#040005',
-            border: '1.5px solid #360a25',
+            gap: '8px',
+            padding: '4px 10px',
+            borderRadius: '18px',
+            background: '#060108',
+            border: '1px solid var(--border-card)',
             color: '#71717a',
             cursor: 'pointer',
-            width: '135px',
+            width: '200px',
             height: '28px',
             transition: 'all 0.15s',
             userSelect: 'none'
           }}
-          className="lg:w-[165px]"
           onMouseEnter={e => {
             e.currentTarget.style.borderColor = '#ff1744';
-            e.currentTarget.style.boxShadow = '0 0 10px rgba(255, 23, 68, 0.3)';
+            e.currentTarget.style.boxShadow = '0 0 12px rgba(255, 23, 68, 0.3)';
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.borderColor = '#360a25';
+            e.currentTarget.style.borderColor = 'var(--border-card)';
             e.currentTarget.style.boxShadow = 'none';
           }}
         >
-          <Search size={11} color="#71717a" className="flex-shrink-0" />
-          <span style={{ fontSize: '10.5px', flex: 1, color: '#a1a1aa' }}>
+          <Search size={12} color="#71717a" />
+          <span style={{ fontSize: '11px', flex: 1, color: '#a1a1aa' }}>
             Quick Search...
           </span>
           <span
             style={{
-              fontSize: '9px',
+              fontSize: '9.5px',
               fontFamily: 'var(--font-mono)',
               padding: '1px 4px',
               borderRadius: '3px',
-              background: '#0e0212',
+              background: '#0d020e',
               color: '#71717a',
-              border: '1px solid #28081c',
-              flexShrink: 0
+              border: '1px solid #22071a'
             }}
           >
             /
@@ -141,27 +128,11 @@ export function Navbar({
         {onNewAssessmentClick && (
           <button
             onClick={onNewAssessmentClick}
-            style={{
-              height: '28px',
-              padding: '0 8px',
-              fontSize: '10px',
-              fontWeight: 900,
-              letterSpacing: '0.4px',
-              borderRadius: '10px',
-              background: 'linear-gradient(90deg, #ff1744 0%, #be123c 100%)',
-              border: '1.5px solid #ff1744',
-              color: '#ffffff',
-              boxShadow: '0 0 12px rgba(255, 23, 68, 0.45)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              cursor: 'pointer',
-              flexShrink: 0
-            }}
-            className="hover:brightness-110 transition-all"
+            className="btn btn-primary btn-sm"
+            style={{ height: '28px', padding: '0 10px', fontSize: '11px', gap: '4px' }}
           >
-            <Plus size={12} />
-            <span className="hidden sm:inline">New Scan</span>
+            <Plus size={13} />
+            <span>New Scan</span>
           </button>
         )}
 

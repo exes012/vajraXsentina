@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
 import {
   Server,
@@ -30,7 +30,16 @@ import { SeverityBadge } from '../components/SeverityBadge';
 import { NewAssessmentModal } from '../components/NewAssessmentModal';
 import { ReportViewerModal } from '../components/ReportViewerModal';
 import { FindingDrawer } from '../components/FindingDrawer';
-import { calculateFindingsScore, getScorePosture } from '../utils/securityScore';
+
+const getGradeFromScore = (score) => {
+  const s = Math.max(0, Math.min(100, Math.round(score)));
+  if (s >= 95) return { grade: 'A+', risk: 'LOW', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', border: '#10b981' };
+  if (s >= 85) return { grade: 'A', risk: 'LOW', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', border: '#10b981' };
+  if (s >= 70) return { grade: 'B', risk: 'MEDIUM', color: '#00f2fe', bg: 'rgba(0, 242, 254, 0.15)', border: '#00f2fe' };
+  if (s >= 50) return { grade: 'C', risk: 'HIGH', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', border: '#f59e0b' };
+  if (s >= 30) return { grade: 'D', risk: 'HIGH', color: '#f97316', bg: 'rgba(249, 115, 22, 0.15)', border: '#f97316' };
+  return { grade: 'F', risk: 'CRITICAL', color: '#ff1744', bg: 'rgba(255, 23, 68, 0.15)', border: '#ff1744' };
+};
 
 export function Assets({ onSelectFinding, onNavigateTab }) {
   const [assets, setAssets] = useState([]);
@@ -72,8 +81,10 @@ export function Assets({ onSelectFinding, onNavigateTab }) {
       setLoading(true);
       const data = await dashboardService.getAssets();
       setAssets(data || []);
-      if (data && data.length > 0 && !selectedAsset) {
-        setSelectedAsset(data[0]);
+      if (data && data.length > 0) {
+        setSelectedAsset(prev => (prev ? (data.find(a => a.id === prev.id) || data[0]) : data[0]));
+      } else {
+        setSelectedAsset(null);
       }
     } catch (err) {
       console.error('Error loading assets:', err);
@@ -276,13 +287,15 @@ export function Assets({ onSelectFinding, onNavigateTab }) {
             </div>
           ) : filteredAssets.length === 0 ? (
             <div style={{ padding: '24px', textAlign: 'center', color: '#71717a', fontSize: '12px' }}>
-              No target assets registered yet. Click &quot;Add Target Asset&quot; to register one.
+              No target assets registered yet. Click "Add Target Asset" to register one.
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {filteredAssets.map(asset => {
                 const isSelected = selectedAsset?.id === asset.id;
                 const isVer = Boolean(asset.verified || asset.is_verified);
+                const score = Math.max(0, Math.min(100, Math.round(100 - (asset.risk_score || 0))));
+                const gradeInfo = getGradeFromScore(score);
 
                 return (
                   <div
@@ -298,22 +311,39 @@ export function Assets({ onSelectFinding, onNavigateTab }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <div style={{ fontWeight: 800, fontSize: '13px', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
+                      <div style={{ fontWeight: 800, fontSize: '13px', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
                         {asset.name || asset.hostname}
                       </div>
-                      <span
-                        style={{
-                          fontSize: '8.5px',
-                          fontWeight: 800,
-                          padding: '2px 6px',
-                          borderRadius: '3px',
-                          background: isVer ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                          color: isVer ? '#10b981' : '#f59e0b',
-                          border: `1px solid ${isVer ? '#10b981' : '#f59e0b'}`
-                        }}
-                      >
-                        {isVer ? 'VERIFIED' : 'UNVERIFIED'}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        {/* Rating Badge */}
+                        <span
+                          style={{
+                            fontSize: '9px',
+                            fontWeight: 900,
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            background: gradeInfo.bg,
+                            color: gradeInfo.color,
+                            border: `1px solid ${gradeInfo.border}`,
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          {gradeInfo.grade}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '8.5px',
+                            fontWeight: 800,
+                            padding: '2px 6px',
+                            borderRadius: '3px',
+                            background: isVer ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                            color: isVer ? '#10b981' : '#f59e0b',
+                            border: `1px solid ${isVer ? '#10b981' : '#f59e0b'}`
+                          }}
+                        >
+                          {isVer ? 'VERIFIED' : 'UNVERIFIED'}
+                        </span>
+                      </div>
                     </div>
 
                     <div style={{ fontSize: '11px', color: '#38bdf8', fontFamily: 'monospace', marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -321,12 +351,7 @@ export function Assets({ onSelectFinding, onNavigateTab }) {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10.5px', color: '#94a3b8' }}>
-                      {(() => {
-                        const rawRisk = Number(asset.risk_score || 0);
-                        const score = asset.securityScore !== undefined ? asset.securityScore : (asset.risk_score !== undefined ? Math.max(10, Math.min(100, Math.round(100 - rawRisk))) : 100);
-                        const posture = getScorePosture(score);
-                        return <span>Score: <strong style={{ color: posture.color }}>{score}/100</strong></span>;
-                      })()}
+                      <span>Score: <strong style={{ color: gradeInfo.color, fontFamily: 'monospace' }}>{score}/100</strong></span>
                       <span>Status: <strong style={{ color: asset.status === 'REACHABLE' ? '#10b981' : '#f59e0b' }}>{asset.status || 'ONLINE'}</strong></span>
                     </div>
                   </div>
@@ -390,18 +415,22 @@ export function Assets({ onSelectFinding, onNavigateTab }) {
                   </div>
                 </div>
 
-                {/* Score & Flaws Quick KPI */}
-                <div style={{ display: 'flex', gap: '12px' }}>
+                {/* Score & Rating & Flaws Quick KPI */}
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                   {(() => {
-                    const assetScore = assetFindings.length > 0
-                      ? calculateFindingsScore(assetFindings)
-                      : (selectedAsset.securityScore !== undefined ? selectedAsset.securityScore : (selectedAsset.risk_score !== undefined ? Math.max(10, Math.min(100, Math.round(100 - Number(selectedAsset.risk_score)))) : 100));
-                    const posture = getScorePosture(assetScore);
+                    const selScore = Math.max(0, Math.min(100, Math.round(100 - (selectedAsset.risk_score || 0))));
+                    const selGrade = getGradeFromScore(selScore);
                     return (
-                      <div style={{ padding: '8px 14px', borderRadius: '6px', background: '#040714', border: '1.5px solid #1e293b', textAlign: 'center' }}>
-                        <div style={{ fontSize: '9.5px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800 }}>SECURITY SCORE</div>
-                        <div style={{ fontSize: '20px', fontWeight: 900, fontFamily: 'monospace', color: posture.color }}>
-                          {assetScore}
+                      <div style={{ padding: '8px 12px', borderRadius: '6px', background: '#040714', border: `1.5px solid ${selGrade.border}`, textAlign: 'center', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '6px', background: selGrade.bg, border: `1.5px solid ${selGrade.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 900, color: selGrade.color, lineHeight: 1, fontFamily: 'monospace' }}>{selGrade.grade}</span>
+                          <span style={{ fontSize: '6px', textTransform: 'uppercase', color: selGrade.color, fontWeight: 800, marginTop: '2px' }}>Rating</span>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '8.5px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800 }}>SECURITY SCORE</div>
+                          <div style={{ fontSize: '18px', fontWeight: 900, fontFamily: 'monospace', color: selGrade.color }}>
+                            {selScore}/100
+                          </div>
                         </div>
                       </div>
                     );
@@ -409,7 +438,7 @@ export function Assets({ onSelectFinding, onNavigateTab }) {
 
                   <div style={{ padding: '8px 14px', borderRadius: '6px', background: '#040714', border: '1.5px solid #1e293b', textAlign: 'center' }}>
                     <div style={{ fontSize: '9.5px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800 }}>TOTAL FINDINGS</div>
-                    <div style={{ fontSize: '20px', fontWeight: 900, fontFamily: 'monospace', color: assetFindings.length > 0 ? '#ff1744' : '#00ff88' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 900, fontFamily: 'monospace', color: '#ff1744' }}>
                       {assetFindings.length}
                     </div>
                   </div>
@@ -606,9 +635,9 @@ export function Assets({ onSelectFinding, onNavigateTab }) {
                             <div style={{ fontSize: '10px', color: '#71717a' }}>SCORE</div>
                             {(() => {
                               const s = asm.overallScore !== undefined ? asm.overallScore : (asm.risk_score !== undefined ? Math.round(100 - asm.risk_score) : 85);
-                              const pos = getScorePosture(s);
+                              const g = getGradeFromScore(s);
                               return (
-                                <div style={{ fontSize: '15px', fontWeight: 900, color: pos.color, fontFamily: 'monospace' }}>
+                                <div style={{ fontSize: '15px', fontWeight: 900, color: g.color, fontFamily: 'monospace' }}>
                                   {s}
                                 </div>
                               );

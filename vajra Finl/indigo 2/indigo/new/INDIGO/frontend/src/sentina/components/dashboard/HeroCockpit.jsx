@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React from 'react'
 import {
   Scan,
@@ -39,51 +39,64 @@ function CyberHexIcon({ icon: Icon, color = '#ff1744', size = 32, iconSize = 14 
         }}
       >
         <polygon
-          points="22,2 40,12 40,32 22,42 4,32 4,12"
-          fill="rgba(4, 0, 5, 0.95)"
+          points="22,3 39,12 39,32 22,41 5,32 5,12"
+          fill={`${color}18`}
           stroke={color}
           strokeWidth="2.5"
+          strokeLinejoin="round"
         />
+        <circle cx="22" cy="22" r="13" fill="none" stroke={`${color}40`} strokeWidth="1.2" strokeDasharray="3 3" />
       </svg>
       <Icon
         size={iconSize}
         color={color}
-        strokeWidth={2.5}
+        strokeWidth={2.4}
         style={{
           position: 'relative',
           zIndex: 2,
-          filter: `drop-shadow(0 0 4px ${color})`
+          filter: `drop-shadow(0 0 6px ${color})`
         }}
       />
     </div>
   )
 }
 
-function InlineSparkline({ data = [1, 2, 3, 2, 4], color = '#00f2fe', width = 60, height = 20 }) {
-  if (!data || data.length < 2) return null
-  const min = Math.min(...data)
-  const max = Math.max(...data)
+// Inline Wave Sparkline with vivid stroke
+function InlineSparkline({ data = [], color = '#00f2fe', width = 46, height = 16 }) {
+  const safeData = (!data || data.length < 2) ? [0, 0, 0, 0, 0] : data
+  const min = Math.min(...safeData)
+  const max = Math.max(...safeData)
   const range = max - min || 1
+  const step = width / (safeData.length - 1)
 
-  const points = data
-    .map((val, idx) => {
-      const x = (idx / (data.length - 1)) * width
-      const y = height - ((val - min) / range) * (height - 4) - 2
-      return `${x},${y}`
-    })
-    .join(' ')
+  const points = safeData.map((val, idx) => {
+    const x = idx * step
+    const y = (max === 0 && min === 0)
+      ? height / 2
+      : height - ((val - min) / range) * (height - 4) - 2
+    return { x, y }
+  })
+
+  const pathD = points.reduce((acc, pt, idx, arr) => {
+    if (idx === 0) return `M ${pt.x},${pt.y}`
+    const prev = arr[idx - 1]
+    const cp1x = prev.x + (pt.x - prev.x) / 2
+    const cp1y = prev.y
+    const cp2x = prev.x + (pt.x - prev.x) / 2
+    const cp2y = pt.y
+    return `${acc} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${pt.x},${pt.y}`
+  }, '')
 
   return (
     <svg width={width} height={height} style={{ overflow: 'visible', flexShrink: 0 }}>
-      <polyline
+      <path
+        d={pathD}
         fill="none"
         stroke={color}
-        strokeWidth="1.8"
+        strokeWidth="2.2"
         strokeLinecap="round"
-        strokeLinejoin="round"
-        points={points}
         style={{
-          filter: `drop-shadow(0 0 3px ${color})`
+          filter: `drop-shadow(0 0 6px ${color})`
         }}
       />
     </svg>

@@ -70,21 +70,18 @@ def get_current_user(
     username = str(payload.get("username", email.split("@")[0] if "@" in email else (sub or "admin"))).strip()
 
     user = None
-    # 1. Try finding by ID only if sub is purely numeric digits
     if sub and sub.isdigit():
         try:
             user = db.query(User).filter(User.id == int(sub)).first()
         except Exception:
             db.rollback()
 
-    # 2. Try finding by email
     if not user and email:
         try:
             user = db.query(User).filter(User.email == email).first()
         except Exception:
             db.rollback()
 
-    # 3. Try finding by username
     if not user and username:
         try:
             user = db.query(User).filter(User.username == username).first()
@@ -150,4 +147,3 @@ def login_user(payload: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     return UserResponse.model_validate(current_user)
-

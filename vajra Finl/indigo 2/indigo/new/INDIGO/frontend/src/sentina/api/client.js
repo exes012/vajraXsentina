@@ -1,4 +1,4 @@
-'use client'
+'use client';
 const RAW_API_URL = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_URL) ? process.env.NEXT_PUBLIC_API_URL : 'https://vajraxsentina-i7r5.onrender.com';
 const API_BASE = RAW_API_URL.replace(/\/+$/, '').replace(/\/api$/, '') + '/api';
 const BACKEND_FALLBACK = 'https://vajraxsentina-i7r5.onrender.com/api';
@@ -9,7 +9,6 @@ export const apiClient = {
     const sentinaToken = localStorage.getItem('sentinal_token');
     if (sentinaToken) return sentinaToken;
 
-    // Check unified auth-storage from VAJRA authStore
     try {
       const authStorage = localStorage.getItem('auth-storage');
       if (authStorage) {
@@ -41,7 +40,7 @@ export const apiClient = {
     };
 
     if (options.body instanceof FormData) {
-      delete headers['Content-Type']; // Let browser set boundary
+      delete headers['Content-Type'];
     }
 
     const controller = new AbortController();
@@ -51,6 +50,9 @@ export const apiClient = {
     const urlsToTry = [
       `${API_BASE}${endpoint}`,
       `${BACKEND_FALLBACK}${endpoint}`,
+      `https://vajraxsentina-i7r5.onrender.com/api${endpoint}`,
+      `https://vajraxsentina-1.onrender.com/api${endpoint}`,
+      `https://vajraxsentina.onrender.com/api${endpoint}`,
       ...(isLocalhost ? [
         `http://127.0.0.1:8000/api${endpoint}`,
         `http://localhost:8000/api${endpoint}`
@@ -105,7 +107,6 @@ export const apiClient = {
       } catch (err) {
         clearTimeout(timeoutId);
         lastError = err;
-        // Try next URL fallback
       }
     }
 
@@ -270,6 +271,43 @@ export const apiClient = {
         token: token || null,
         custom_context: customContext
       })
+    });
+  },
+
+  // Scans (Dedicated Real-time Live Scan API Contract)
+  startScan(payload) {
+    return this.request('/scans', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  getScan(scanId) {
+    return this.request(`/scans/${scanId}`);
+  },
+
+  getScanStatus(scanId) {
+    return this.request(`/scans/${scanId}/status`);
+  },
+
+  getScanFindings(scanId, params = {}) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, val]) => {
+      if (val !== undefined && val !== null && val !== '') {
+        query.append(key, val);
+      }
+    });
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return this.request(`/scans/${scanId}/findings${qs}`);
+  },
+
+  getScanReport(scanId) {
+    return this.request(`/scans/${scanId}/report`);
+  },
+
+  cancelScan(scanId) {
+    return this.request(`/scans/${scanId}/cancel`, {
+      method: 'POST'
     });
   },
 

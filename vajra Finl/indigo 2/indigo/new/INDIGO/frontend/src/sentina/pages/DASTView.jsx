@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
 import {
   Radio,
@@ -14,23 +14,58 @@ import {
   Code2,
   Lock,
   Sparkles,
-  GitBranch,
-  Search
+  GitBranch
 } from 'lucide-react';
 import { dashboardService } from '../services/dashboardService';
-import { SeverityBadge, getRatingMeta } from '../components/SeverityBadge';
+import { SeverityBadge } from '../components/SeverityBadge';
 import { FindingDrawer } from '../components/FindingDrawer';
-import { calculateFindingsScore, getScorePosture, filterModuleFindings, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
+import { calculateFindingsScore, filterModuleFindings, getScorePosture, getFindingCodeSnippet, getFindingRemediation } from '../utils/securityScore';
 
-export function DASTView() {
+export function DASTView({ onNavigateTab, onNewAssessment }) {
+  const [dastUrlInput, setDastUrlInput] = useState('https://example.com');
+  const [isStarting, setIsStarting] = useState(false);
   const [findings, setFindings] = useState(() => filterModuleFindings('dast', dashboardService.getInitialFindings({ module: 'dast' })));
-  const [selectedRating, setSelectedRating] = useState('ALL');
+  const [selectedSeverity, setSelectedSeverity] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFinding, setSelectedFinding] = useState(() => {
     const init = filterModuleFindings('dast', dashboardService.getInitialFindings({ module: 'dast' }));
     return init.length > 0 ? init[0] : null;
   });
   const [activeDrawerFinding, setActiveDrawerFinding] = useState(null);
+
+  const handleStartDAST = async () => {
+    if (!dastUrlInput.trim()) return;
+    setIsStarting(true);
+    try {
+      const hostName = dastUrlInput.replace(/^https?:\/\//i, '').split('/')[0] || 'Target';
+      const newAsm = await dashboardService.triggerNewScan({
+        assessmentName: `${hostName} [DAST]`,
+        targetType: 'dast',
+        liveUrl: dastUrlInput.trim(),
+        scanners: {
+          sast: false,
+          sca: false,
+          secrets: false,
+          discovery: true,
+          dast: true,
+          nuclei: true,
+          wapiti: true,
+          headers: true,
+          ssl: true
+        }
+      });
+      if (newAsm?.id) {
+        dashboardService.setActiveAssessmentId(newAsm.id);
+      }
+      if (onNavigateTab) {
+        onNavigateTab('assessments');
+      }
+    } catch (e) {
+      console.warn('Start DAST error:', e);
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
   useEffect(() => {
     async function loadDAST() {
@@ -48,29 +83,13 @@ export function DASTView() {
 
   const dastScore = calculateFindingsScore(findings);
   const scorePosture = getScorePosture(dastScore);
-  const criticalCount = findings.filter(f => getRatingMeta(f.severity || f.rating).key === 'CRITICAL').length;
-  const highCount = findings.filter(f => getRatingMeta(f.severity || f.rating).key === 'HIGH').length;
-
-  const ratingOptions = [
-    { key: 'ALL', label: 'ALL' },
-    { key: 'CRITICAL', label: 'CRITICAL RISK' },
-    { key: 'HIGH', label: 'ELEVATED RISK' },
-    { key: 'MEDIUM', label: 'MODERATE RISK' },
-    { key: 'LOW', label: 'LOW RISK' },
-    { key: 'INFO', label: 'INFORMATIONAL' }
-  ];
-
-  const getRatingCount = (key) => {
-    if (key === 'ALL') return findings.length;
-    return findings.filter(f => getRatingMeta(f.severity || f.rating).key === key).length;
-  };
+  const criticalCount = findings.filter(f => f.severity?.toUpperCase() === 'CRITICAL').length;
+  const highCount = findings.filter(f => f.severity?.toUpperCase() === 'HIGH').length;
+  const medCount = findings.filter(f => f.severity?.toUpperCase() === 'MEDIUM').length;
 
   const filteredFindings = findings.filter(f => {
-    if (selectedRating !== 'ALL') {
-      const meta = getRatingMeta(f.severity || f.rating);
-      if (meta.key !== selectedRating && meta.label !== selectedRating) {
-        return false;
-      }
+    if (selectedSeverity !== 'ALL' && f.severity?.toUpperCase() !== selectedSeverity.toUpperCase()) {
+      return false;
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -82,6 +101,11 @@ export function DASTView() {
     }
     return true;
   });
+
+  const getSeverityCount = (sev) => {
+    if (sev === 'ALL') return findings.length;
+    return findings.filter(f => f.severity?.toUpperCase() === sev).length;
+  };
 
   return (
     <div className="page-container" style={{ maxWidth: '1600px' }}>
@@ -163,6 +187,68 @@ export function DASTView() {
         </span>
       </div>
 
+      {/* Quick DAST Assessment Launcher Card */}
+      <div
+        className="cyber-card"
+        style={{
+          padding: '16px 20px',
+          background: 'rgba(15, 23, 42, 0.85)',
+          border: '1px solid rgba(249, 115, 22, 0.3)',
+          borderRadius: '10px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '280px' }}>
+          <Radio size={22} color="#f97316" />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, marginBottom: '4px' }}>
+              AUTHORIZED PRODUCTION TARGET URL FOR DAST AUDIT
+            </div>
+            <input
+              type="text"
+              placeholder="https://example.com"
+              value={dastUrlInput}
+              onChange={e => setDastUrlInput(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                background: 'rgba(0, 0, 0, 0.3)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                color: '#f8fafc',
+                fontSize: '13px',
+                outline: 'none'
+              }}
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handleStartDAST}
+          disabled={isStarting}
+          style={{
+            padding: '10px 20px',
+            fontSize: '13px',
+            fontWeight: 800,
+            borderRadius: '6px',
+            background: 'linear-gradient(135deg, #f97316, #fbbf24)',
+            color: '#020617',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          {isStarting ? 'Initiating DAST...' : 'Start DAST Assessment'}
+        </button>
+      </div>
+
       {/* KPI Stats */}
       <div className="grid-4" style={{ marginBottom: '20px' }}>
         <div
@@ -190,7 +276,7 @@ export function DASTView() {
                 border: `1.2px solid ${scorePosture.color}`
               }}
             >
-              {scorePosture.label}
+              {findings.length === 0 ? '100% CLEAN' : scorePosture.label}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '6px' }}>
@@ -209,13 +295,13 @@ export function DASTView() {
           </div>
         </div>
         <div className="cyber-card" style={{ padding: '14px 16px', background: '#060108', border: '2.5px solid #360a25' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, color: '#ff1744', textTransform: 'uppercase' }}>CRITICAL & ELEVATED RISKS</div>
+          <div style={{ fontSize: '10px', fontWeight: 900, color: '#ff1744', textTransform: 'uppercase' }}>CRITICAL / HIGH FLAWS</div>
           <div style={{ fontSize: '24px', fontWeight: 900, color: '#ff1744', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
             {criticalCount + highCount}
           </div>
         </div>
         <div className="cyber-card" style={{ padding: '14px 16px', background: '#060108', border: '2.5px solid #360a25' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, color: '#00f2fe', textTransform: 'uppercase' }}>FUZZED TARGETS</div>
+          <div style={{ fontSize: '10px', fontWeight: 900, color: '#00f2fe', textTransform: 'uppercase' }}>FUZZED ENDPOINTS</div>
           <div style={{ fontSize: '24px', fontWeight: 900, color: '#f8fafc', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
             {findings.length} Flaws
           </div>
@@ -260,7 +346,7 @@ export function DASTView() {
             No DAST Findings Recorded
           </h3>
           <p style={{ fontSize: '12px', color: '#71717a', maxWidth: '420px', margin: '0 auto', lineHeight: 1.5 }}>
-            No runtime vulnerabilities detected. All assessed endpoints are secure.
+            No runtime vulnerabilities detected yet. Launch an assessment targeting a live web application URL or API endpoint.
           </p>
         </div>
       ) : (
@@ -273,20 +359,20 @@ export function DASTView() {
               </div>
             </div>
 
-            {/* Threat Rating Filter Tabs */}
+            {/* Severity Filter Tabs */}
             <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', marginBottom: '10px', flexWrap: 'wrap' }}>
-              {ratingOptions.map(opt => {
-                const isActive = selectedRating === opt.key;
-                const count = getRatingCount(opt.key);
+              {['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'].map(sev => {
+                const isActive = selectedSeverity === sev;
+                const count = getSeverityCount(sev);
                 return (
                   <button
-                    key={opt.key}
-                    onClick={() => setSelectedRating(opt.key)}
+                    key={sev}
+                    onClick={() => setSelectedSeverity(sev)}
                     className={`filter-pill ${isActive ? 'active' : ''}`}
-                    style={{ fontSize: '9px', padding: '3px 7px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    style={{ fontSize: '9.5px', padding: '3px 7px', display: 'flex', alignItems: 'center', gap: '4px' }}
                   >
-                    <span>{opt.label}</span>
-                    <span style={{ fontSize: '8.5px', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>({count})</span>
+                    <span>{sev}</span>
+                    <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>({count})</span>
                   </button>
                 );
               })}
@@ -327,7 +413,7 @@ export function DASTView() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {filteredFindings.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '24px 12px', color: '#71717a', fontSize: '11.5px' }}>
-                  No DAST findings match selected rating filter.
+                  No DAST findings match {selectedSeverity} severity.
                 </div>
               ) : (
                 filteredFindings.map((f, idx) => {
@@ -348,7 +434,7 @@ export function DASTView() {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <SeverityBadge severity={f.severity || f.rating} size="sm" />
+                        <SeverityBadge severity={f.severity} size="sm" />
                         <span style={{ fontSize: '10px', color: '#71717a', fontFamily: 'var(--font-mono)' }}>{f.id}</span>
                       </div>
 
@@ -372,7 +458,7 @@ export function DASTView() {
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <SeverityBadge severity={selectedFinding.severity || selectedFinding.rating} size="sm" />
+                    <SeverityBadge severity={selectedFinding.severity} size="sm" />
                     <span style={{ fontSize: '11px', color: '#c084fc', fontFamily: 'var(--font-mono)' }}>{selectedFinding.cwe}</span>
                     <span style={{ fontSize: '10px', color: '#f97316', fontFamily: 'var(--font-mono)', padding: '1px 6px', background: 'rgba(249, 115, 22, 0.12)', borderRadius: '3px', border: '1px solid #f97316' }}>OWASP ZAP</span>
                   </div>

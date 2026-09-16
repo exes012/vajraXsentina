@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState } from 'react';
 import {
   Search,
@@ -15,7 +15,7 @@ import {
   Cpu,
   ArrowRight
 } from 'lucide-react';
-import { SeverityBadge, getRatingMeta } from '../SeverityBadge';
+import { SeverityBadge } from '../SeverityBadge';
 
 export function FindingTable({
   findings = [],
@@ -31,37 +31,28 @@ export function FindingTable({
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [sortBy, setSortBy] = useState('risk_desc');
 
-  // Keep internal rating synchronized with prop
+  // Keep internal severity synchronized with prop
   React.useEffect(() => {
     setInternalSeverity(propSelectedSeverity || 'ALL');
   }, [propSelectedSeverity]);
 
   const activeSeverity = onSelectSeverity ? propSelectedSeverity : internalSeverity;
 
-  const handleRatingClick = (ratingKey) => {
-    const nextRating = activeSeverity === ratingKey ? 'ALL' : ratingKey;
-    setInternalSeverity(nextRating);
+  const handleSeverityClick = (sev) => {
+    const nextSev = activeSeverity === sev ? 'ALL' : sev;
+    setInternalSeverity(nextSev);
     if (onSelectSeverity) {
-      onSelectSeverity(nextRating);
+      onSelectSeverity(nextSev);
     }
   };
 
   const sources = ['ALL', 'SAST', 'DAST', 'SCA', 'Secrets', 'Threat Intelligence'];
-  const ratingOptions = [
-    { key: 'ALL', label: 'ALL RATINGS' },
-    { key: 'CRITICAL', label: 'CRITICAL RISK', color: '#ff1744' },
-    { key: 'HIGH', label: 'ELEVATED RISK', color: '#f97316' },
-    { key: 'MEDIUM', label: 'MODERATE RISK', color: '#fbbf24' },
-    { key: 'LOW', label: 'LOW RISK', color: '#00f2fe' },
-    { key: 'INFO', label: 'INFORMATIONAL', color: '#00ff88' }
-  ];
+  const severities = ['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'];
+  const statuses = ['ALL', 'Open', 'In Triage', 'Resolved'];
 
-  const getRatingCount = (key) => {
-    if (key === 'ALL') return findings.length;
-    return findings.filter(f => {
-      const meta = getRatingMeta(f.severity || f.rating);
-      return meta.key === key;
-    }).length;
+  const getSeverityCount = (sev) => {
+    if (sev === 'ALL') return findings.length;
+    return findings.filter(f => f.severity?.toUpperCase() === sev).length;
   };
 
   const getSourceIcon = (source) => {
@@ -88,11 +79,8 @@ export function FindingTable({
 
   // Filter and sort findings
   const filtered = findings.filter((f) => {
-    if (activeSeverity !== 'ALL') {
-      const meta = getRatingMeta(f.severity || f.rating);
-      if (meta.key !== activeSeverity && meta.label !== activeSeverity && f.severity?.toUpperCase() !== activeSeverity.toUpperCase()) {
-        return false;
-      }
+    if (activeSeverity !== 'ALL' && f.severity?.toUpperCase() !== activeSeverity.toUpperCase()) {
+      return false;
     }
     if (selectedSource !== 'ALL' && f.source?.toLowerCase() !== selectedSource.toLowerCase()) {
       return false;
@@ -116,11 +104,9 @@ export function FindingTable({
   filtered.sort((a, b) => {
     if (sortBy === 'risk_desc') return (b.riskScore || 0) - (a.riskScore || 0);
     if (sortBy === 'risk_asc') return (a.riskScore || 0) - (b.riskScore || 0);
-    if (sortBy === 'severity' || sortBy === 'rating') {
+    if (sortBy === 'severity') {
       const rank = { CRITICAL: 5, HIGH: 4, MEDIUM: 3, LOW: 2, INFO: 1 };
-      const aMeta = getRatingMeta(a.severity || a.rating);
-      const bMeta = getRatingMeta(b.severity || b.rating);
-      return (rank[bMeta.key] || 0) - (rank[aMeta.key] || 0);
+      return (rank[b.severity] || 0) - (rank[a.severity] || 0);
     }
     return 0;
   });
@@ -174,8 +160,8 @@ export function FindingTable({
           </div>
           <div style={{ fontSize: '11px', color: '#71717a', marginTop: '2px' }}>
             {isLimited
-              ? `Showing top ${Math.min(limit, displayedFindings.length)} prioritized threats (Click row for full triage)`
-              : `Complete unified findings database (${filtered.length} findings across all scanner engines)`}
+              ? `Showing top ${Math.min(limit, displayedFindings.length)} critical & prioritized threats (Click row for full triage)`
+              : `Complete unified vulnerability database (${filtered.length} findings across all scanner engines)`}
           </div>
         </div>
 
@@ -226,21 +212,21 @@ export function FindingTable({
         </div>
       </div>
 
-      {/* Threat Rating Filter Tabs with Live Counts */}
+      {/* Severity Filter Tabs with Live Counts */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px', flexWrap: 'wrap' }}>
-          {ratingOptions.map((opt) => {
-            const isActive = activeSeverity === opt.key;
-            const count = getRatingCount(opt.key);
+          {severities.map((sev) => {
+            const isActive = activeSeverity === sev;
+            const count = getSeverityCount(sev);
             return (
               <button
-                key={opt.key}
-                onClick={() => handleRatingClick(opt.key)}
+                key={sev}
+                onClick={() => handleSeverityClick(sev)}
                 className={`filter-pill ${isActive ? 'active' : ''}`}
-                style={{ fontSize: '10px', padding: '4px 9px', display: 'flex', alignItems: 'center', gap: '5px' }}
+                style={{ fontSize: '10.5px', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '5px' }}
               >
-                {opt.key !== 'ALL' && <SeverityBadge severity={opt.key} size="sm" showIcon={true} />}
-                {opt.key === 'ALL' && <span>{opt.label}</span>}
+                {sev !== 'ALL' && <SeverityBadge severity={sev} size="sm" showIcon={false} />}
+                <span>{sev}</span>
                 <span
                   style={{
                     fontSize: '9.5px',
@@ -261,7 +247,7 @@ export function FindingTable({
 
         {activeSeverity !== 'ALL' && (
           <button
-            onClick={() => handleRatingClick('ALL')}
+            onClick={() => handleSeverityClick('ALL')}
             style={{
               fontSize: '10.5px',
               fontWeight: 800,
@@ -273,7 +259,7 @@ export function FindingTable({
               cursor: 'pointer'
             }}
           >
-            ✕ Reset Rating Filter
+            ✕ Reset Filter ({activeSeverity})
           </button>
         )}
       </div>
@@ -283,20 +269,20 @@ export function FindingTable({
         <table className="data-table">
           <thead>
             <tr>
-              <th style={{ width: '135px' }}>Threat Rating</th>
+              <th style={{ width: '105px' }}>Severity</th>
               <th>Finding Title</th>
               <th>Affected Asset / Path</th>
               <th>Engine Source</th>
               <th>Detected</th>
               <th>Status</th>
-              <th style={{ textAlign: 'right', width: '75px' }}>Risk Score</th>
+              <th style={{ textAlign: 'right', width: '75px' }}>Risk</th>
             </tr>
           </thead>
           <tbody>
             {displayedFindings.length === 0 ? (
               <tr>
                 <td colSpan="7" style={{ textAlign: 'center', padding: '32px', color: '#71717a' }}>
-                  No findings matching current threat rating filter.
+                  No findings matching current filters.
                 </td>
               </tr>
             ) : (
@@ -310,9 +296,9 @@ export function FindingTable({
                     className="interactive-row"
                     onClick={() => onSelectFinding && onSelectFinding(finding.id)}
                   >
-                    {/* Threat Rating Badge */}
+                    {/* Severity */}
                     <td>
-                      <SeverityBadge severity={finding.severity || finding.rating} size="sm" />
+                      <SeverityBadge severity={finding.severity} size="sm" />
                     </td>
 
                     {/* Title */}

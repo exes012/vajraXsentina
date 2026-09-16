@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, ShieldAlert, Server, FileText, ArrowRight, CornerDownLeft } from 'lucide-react';
 import { SeverityBadge } from './SeverityBadge';
@@ -286,7 +286,7 @@ export function GlobalSearchModal({ isOpen, onClose, onSelectFinding, onSelectAs
           {filteredFindings.length === 0 && filteredAssets.length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
               <Search size={36} color="#334155" style={{ marginBottom: '12px' }} />
-              <p style={{ fontSize: '14px', color: '#94a3b8' }}>No results matching &quot;{query}&quot;</p>
+              <p style={{ fontSize: '14px', color: '#94a3b8' }}>No results matching "{query}"</p>
               <p style={{ fontSize: '12px', marginTop: '4px' }}>Try searching for SQLi, CVE-2024, API endpoints, or repository names</p>
             </div>
           )}

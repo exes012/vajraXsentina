@@ -8,7 +8,7 @@ from pydantic import BaseModel
 class DependencyItem(BaseModel):
     name: str
     version: str
-    ecosystem: str  # npm, PyPI, Maven, Go, RubyGems, Packagist, crates.io
+    ecosystem: str  # npm, PyPI, Maven, Go, RubyGems, Packagist, crates.io, NuGet
     file_path: str
     is_direct: bool = True
 
@@ -22,7 +22,7 @@ def parse_package_json(path: Path, base_dir: Path) -> List[DependencyItem]:
         
         for name, ver in {**deps, **dev_deps}.items():
             clean_ver = re.sub(r'[\^~>=<]', '', ver).strip()
-            if clean_ver:
+            if clean_ver and not clean_ver.startswith("file:") and not clean_ver.startswith("http"):
                 items.append(DependencyItem(name=name, version=clean_ver, ecosystem="npm", file_path=rel_path, is_direct=True))
     except Exception:
         pass
@@ -33,7 +33,6 @@ def parse_package_lock_json(path: Path, base_dir: Path) -> List[DependencyItem]:
     try:
         data = json.loads(path.read_text(encoding="utf-8", errors="ignore"))
         rel_path = str(path.relative_to(base_dir)).replace("\\", "/")
-        # npm lock v2/v3 has "packages"
         packages = data.get("packages", {})
         if packages:
             for pkg_path, pkg_info in packages.items():
@@ -62,7 +61,6 @@ def parse_yarn_lock(path: Path, base_dir: Path) -> List[DependencyItem]:
         for line in content.splitlines():
             line_str = line.strip()
             if line_str and not line_str.startswith("#") and ":" in line_str and not line.startswith(" "):
-                # Package header line like `"@babel/core@^7.0.0":`
                 match = re.match(r'^"?(@?[^@]+)@', line_str)
                 if match:
                     current_pkg = match.group(1).strip('"')
@@ -76,6 +74,27 @@ def parse_yarn_lock(path: Path, base_dir: Path) -> List[DependencyItem]:
         pass
     return items
 
+def parse_pnpm_lock_yaml(path: Path, base_dir: Path) -> List[DependencyItem]:
+    items = []
+    try:
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        rel_path = str(path.relative_to(base_dir)).replace("\\", "/")
+        packages_section = False
+        for line in content.splitlines():
+            if line.startswith("packages:"):
+                packages_section = True
+                continue
+            if packages_section:
+                # Format: '  /@babel/core@7.24.0:' or '  /lodash@4.17.21:'
+                match = re.match(r'^\s+[\'"]?/?(@?[^@/]+(?:/[^@/]+)?)@([^:\'"\(]+)', line)
+                if match:
+                    name = match.group(1).strip()
+                    ver = match.group(2).strip()
+                    items.append(DependencyItem(name=name, version=ver, ecosystem="npm", file_path=rel_path, is_direct=False))
+    except Exception:
+        pass
+    return items
+
 def parse_requirements_txt(path: Path, base_dir: Path) -> List[DependencyItem]:
     items = []
     try:
@@ -83,13 +102,12 @@ def parse_requirements_txt(path: Path, base_dir: Path) -> List[DependencyItem]:
         rel_path = str(path.relative_to(base_dir)).replace("\\", "/")
         for line in content.splitlines():
             line_str = line.strip()
-            if not line_str or line_str.startswith("#") or line_str.startswith("-r"):
+            if not line_str or line_str.startswith("#") or line_str.startswith("-r") or line_str.startswith("-i"):
                 continue
             match = re.match(r'^([a-zA-Z0-9_\-\.]+)\s*(?:==|>=|<=|~=|===)\s*([a-zA-Z0-9_\-\.]+)', line_str)
             if match:
                 items.append(DependencyItem(name=match.group(1), version=match.group(2), ecosystem="PyPI", file_path=rel_path, is_direct=True))
             else:
-                # Package name without pinned version
                 pkg_match = re.match(r'^([a-zA-Z0-9_\-\.]+)', line_str)
                 if pkg_match:
                     items.append(DependencyItem(name=pkg_match.group(1), version="latest", ecosystem="PyPI", file_path=rel_path, is_direct=True))
@@ -112,6 +130,34 @@ def parse_poetry_lock(path: Path, base_dir: Path) -> List[DependencyItem]:
         pass
     return items
 
+def parse_pipfile_lock(path: Path, base_dir: Path) -> List[DependencyItem]:
+    items = []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8", errors="ignore"))
+        rel_path = str(path.relative_to(base_dir)).replace("\\", "/")
+        for section in ["default", "develop"]:
+            for name, details in data.get(section, {}).items():
+                ver = details.get("version", "").lstrip("=")
+                if ver:
+                    items.append(DependencyItem(name=name, version=ver, ecosystem="PyPI", file_path=rel_path, is_direct=True))
+    except Exception:
+        pass
+    return items
+
+def parse_pyproject_toml(path: Path, base_dir: Path) -> List[DependencyItem]:
+    items = []
+    try:
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        rel_path = str(path.relative_to(base_dir)).replace("\\", "/")
+        # Look for dependencies array under [tool.poetry.dependencies] or [project.dependencies]
+        matches = re.findall(r'([a-zA-Z0-9_\-\.]+)\s*=\s*[\'"](?:\^|~=|>=|==)?([0-9a-zA-Z\.\-_]+)[\'"]', content)
+        for name, ver in matches:
+            if name.lower() != "python":
+                items.append(DependencyItem(name=name, version=ver, ecosystem="PyPI", file_path=rel_path, is_direct=True))
+    except Exception:
+        pass
+    return items
+
 def parse_go_mod(path: Path, base_dir: Path) -> List[DependencyItem]:
     items = []
     try:
@@ -119,7 +165,7 @@ def parse_go_mod(path: Path, base_dir: Path) -> List[DependencyItem]:
         rel_path = str(path.relative_to(base_dir)).replace("\\", "/")
         for line in content.splitlines():
             line_str = line.strip()
-            if line_str.startswith("require ("):
+            if line_str.startswith("require (") or line_str.startswith(")"):
                 continue
             match = re.match(r'^\s*([a-zA-Z0-9\.\-_/]+)\s+v?([a-zA-Z0-9\.\-_+]+)', line_str)
             if match and not line_str.startswith("module") and not line_str.startswith("go "):
@@ -127,6 +173,24 @@ def parse_go_mod(path: Path, base_dir: Path) -> List[DependencyItem]:
                 ver = match.group(2)
                 is_indirect = "// indirect" in line_str
                 items.append(DependencyItem(name=name, version=ver, ecosystem="Go", file_path=rel_path, is_direct=not is_indirect))
+    except Exception:
+        pass
+    return items
+
+def parse_go_sum(path: Path, base_dir: Path) -> List[DependencyItem]:
+    items = []
+    try:
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        rel_path = str(path.relative_to(base_dir)).replace("\\", "/")
+        seen = set()
+        for line in content.splitlines():
+            parts = line.strip().split()
+            if len(parts) >= 2:
+                name = parts[0]
+                ver = parts[1].split("/")[0].lstrip("v")
+                if (name, ver) not in seen:
+                    seen.add((name, ver))
+                    items.append(DependencyItem(name=name, version=ver, ecosystem="Go", file_path=rel_path, is_direct=False))
     except Exception:
         pass
     return items
@@ -144,6 +208,18 @@ def parse_pom_xml(path: Path, base_dir: Path) -> List[DependencyItem]:
             if group_m and artifact_m and version_m:
                 full_name = f"{group_m.group(1).strip()}:{artifact_m.group(1).strip()}"
                 items.append(DependencyItem(name=full_name, version=version_m.group(1).strip(), ecosystem="Maven", file_path=rel_path, is_direct=True))
+    except Exception:
+        pass
+    return items
+
+def parse_build_gradle(path: Path, base_dir: Path) -> List[DependencyItem]:
+    items = []
+    try:
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        rel_path = str(path.relative_to(base_dir)).replace("\\", "/")
+        matches = re.findall(r'(?:implementation|api|compile|testImplementation)\s*[\'"]([a-zA-Z0-9_\-\.]+):([a-zA-Z0-9_\-\.]+):([a-zA-Z0-9_\-\.]+)[\'"]', content)
+        for group, artifact, ver in matches:
+            items.append(DependencyItem(name=f"{group}:{artifact}", version=ver, ecosystem="Maven", file_path=rel_path, is_direct=True))
     except Exception:
         pass
     return items
@@ -195,13 +271,37 @@ def parse_composer_lock(path: Path, base_dir: Path) -> List[DependencyItem]:
         pass
     return items
 
+def parse_csproj(path: Path, base_dir: Path) -> List[DependencyItem]:
+    items = []
+    try:
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        rel_path = str(path.relative_to(base_dir)).replace("\\", "/")
+        matches = re.findall(r'<PackageReference\s+Include=[\'"]([^\'"]+)[\'"]\s+Version=[\'"]([^\'"]+)[\'"]', content, re.IGNORECASE)
+        for name, ver in matches:
+            items.append(DependencyItem(name=name, version=ver, ecosystem="NuGet", file_path=rel_path, is_direct=True))
+    except Exception:
+        pass
+    return items
+
+def parse_packages_config(path: Path, base_dir: Path) -> List[DependencyItem]:
+    items = []
+    try:
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        rel_path = str(path.relative_to(base_dir)).replace("\\", "/")
+        matches = re.findall(r'<package\s+id=[\'"]([^\'"]+)[\'"]\s+version=[\'"]([^\'"]+)[\'"]', content, re.IGNORECASE)
+        for name, ver in matches:
+            items.append(DependencyItem(name=name, version=ver, ecosystem="NuGet", file_path=rel_path, is_direct=True))
+    except Exception:
+        pass
+    return items
+
 def discover_all_dependencies(root_dir: Path) -> List[DependencyItem]:
+    """Scan and parse all supported manifests and lockfiles recursively."""
     deps: List[DependencyItem] = []
     if not root_dir.exists():
         return deps
 
     for root, _, files in os.walk(root_dir):
-        # Ignore nested dependency folders
         rel_root = str(Path(root).relative_to(root_dir)).replace("\\", "/")
         if any(ignored in rel_root for ignored in ["node_modules", "vendor", ".git", ".venv", "__pycache__"]):
             continue
@@ -216,27 +316,42 @@ def discover_all_dependencies(root_dir: Path) -> List[DependencyItem]:
                 deps.extend(parse_package_lock_json(file_path, root_dir))
             elif lower_name == "yarn.lock":
                 deps.extend(parse_yarn_lock(file_path, root_dir))
+            elif lower_name in ["pnpm-lock.yaml", "pnpm-lock.yml"]:
+                deps.extend(parse_pnpm_lock_yaml(file_path, root_dir))
             elif lower_name == "requirements.txt" or lower_name.endswith(".requirements.txt"):
                 deps.extend(parse_requirements_txt(file_path, root_dir))
             elif lower_name == "poetry.lock":
                 deps.extend(parse_poetry_lock(file_path, root_dir))
+            elif lower_name == "pipfile.lock":
+                deps.extend(parse_pipfile_lock(file_path, root_dir))
+            elif lower_name == "pyproject.toml":
+                deps.extend(parse_pyproject_toml(file_path, root_dir))
             elif lower_name == "go.mod":
                 deps.extend(parse_go_mod(file_path, root_dir))
+            elif lower_name == "go.sum":
+                deps.extend(parse_go_sum(file_path, root_dir))
             elif lower_name == "pom.xml":
                 deps.extend(parse_pom_xml(file_path, root_dir))
+            elif lower_name in ["build.gradle", "build.gradle.kts"]:
+                deps.extend(parse_build_gradle(file_path, root_dir))
             elif lower_name == "cargo.lock":
                 deps.extend(parse_cargo_lock(file_path, root_dir))
             elif lower_name == "gemfile.lock":
                 deps.extend(parse_gemfile_lock(file_path, root_dir))
             elif lower_name == "composer.lock":
                 deps.extend(parse_composer_lock(file_path, root_dir))
+            elif lower_name.endswith(".csproj"):
+                deps.extend(parse_csproj(file_path, root_dir))
+            elif lower_name == "packages.config":
+                deps.extend(parse_packages_config(file_path, root_dir))
 
-    # Deduplicate dependencies
-    seen = set()
-    unique_deps = []
+    # Deduplicate dependencies preserving direct status
+    seen: Dict[tuple, DependencyItem] = {}
     for d in deps:
-        key = (d.ecosystem, d.name, d.version)
+        key = (d.ecosystem, d.name.lower(), d.version)
         if key not in seen:
-            seen.add(key)
-            unique_deps.append(d)
-    return unique_deps
+            seen[key] = d
+        elif d.is_direct and not seen[key].is_direct:
+            seen[key] = d
+
+    return list(seen.values())

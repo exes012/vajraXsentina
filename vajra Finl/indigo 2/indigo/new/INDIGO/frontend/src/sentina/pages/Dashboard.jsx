@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
 import {
   Menu,
@@ -67,8 +67,8 @@ export function Dashboard({
     // Subscribe to immediate event notifications
     const unsubscribe = dashboardService.subscribe(loadData);
 
-    // Periodic live-poll every 15s for real-time background scans
-    const pollInterval = setInterval(loadData, 15000);
+    // Periodic live-poll every 3.5s for real-time background scans
+    const pollInterval = setInterval(loadData, 3500);
 
     return () => {
       isMounted = false;

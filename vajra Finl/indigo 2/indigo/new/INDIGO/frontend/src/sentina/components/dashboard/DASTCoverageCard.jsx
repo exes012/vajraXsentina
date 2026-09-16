@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React from 'react';
 import { Activity, ShieldAlert, Globe, Server, CheckCircle2, XCircle, AlertTriangle, ExternalLink } from 'lucide-react';
 

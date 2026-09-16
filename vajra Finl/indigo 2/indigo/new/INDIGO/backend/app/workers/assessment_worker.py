@@ -475,6 +475,25 @@ async def run_assessment_job(assessment_id: str):
 
         # Aggregate DAST Telemetry & Calculate DAST Coverage Score
         dast_telemetry = orchestrator.aggregate_dast_telemetry(raw_results)
+
+        # Count actual scanned files and dependencies
+        files_scanned_count = 0
+        if repo_or_code_target and Path(repo_or_code_target).exists():
+            try:
+                target_p = Path(repo_or_code_target)
+                if target_p.is_dir():
+                    files_scanned_count = len([f for f in target_p.rglob("*") if f.is_file() and not any(part.startswith('.') or part in ['node_modules', 'venv', '__pycache__', 'dist', 'build'] for part in f.parts)])
+                else:
+                    files_scanned_count = 1
+            except Exception:
+                files_scanned_count = 0
+
+        sca_job = next((r for r in raw_results if r.source == "SCA" or r.scanner_name.lower() in ["sca", "osv", "osv-scanner"]), None)
+        dependencies_count = len(sca_job.findings) if sca_job else 0
+        dast_telemetry["files_scanned"] = files_scanned_count
+        dast_telemetry["dependencies_scanned"] = dependencies_count
+        dast_telemetry["endpoints_discovered"] = dast_telemetry.get("crawlable_urls", dast_telemetry.get("urls_scanned", 0))
+        dast_telemetry["requests_sent"] = dast_telemetry.get("requests_attempted", 0)
         
         dast_coverage_score = 100.0
         coverage_status = "NOT_APPLICABLE"

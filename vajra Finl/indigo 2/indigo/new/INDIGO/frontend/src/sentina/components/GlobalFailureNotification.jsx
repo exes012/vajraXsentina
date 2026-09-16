@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ShieldAlert,
@@ -111,7 +111,7 @@ export function GlobalFailureNotification({ onInspectFailure }) {
 
     checkAssessments();
     const unsubscribe = dashboardService.subscribe(checkAssessments);
-    const interval = setInterval(checkAssessments, 15000);
+    const interval = setInterval(checkAssessments, 1500);
 
     // Custom event listener for instant notification trigger
     const handleCustomFailureEvent = (e) => {

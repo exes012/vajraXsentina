@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
 import {
   AlertTriangle,
@@ -16,7 +16,7 @@ import { FindingDrawer } from '../components/FindingDrawer';
 
 export function FindingsExplorer() {
   const [findings, setFindings] = useState(() => dashboardService.getInitialFindings());
-  const [selectedRating, setSelectedRating] = useState('ALL');
+  const [selectedSeverity, setSelectedSeverity] = useState('ALL');
   const [activeFinding, setActiveFinding] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,8 +27,6 @@ export function FindingsExplorer() {
       setLoading(false);
     }
     loadFindings();
-    const unsubscribe = dashboardService.subscribe(loadFindings);
-    return () => unsubscribe();
   }, []);
 
   const handleOpenFinding = async (id) => {
@@ -98,12 +96,12 @@ export function FindingsExplorer() {
         </button>
       </div>
 
-      {/* Main Table with Threat Rating Filter & Synchronization */}
+      {/* Main Table with Live Filter & Synchronization */}
       <FindingTable
         findings={findings}
         limit={null}
-        selectedSeverity={selectedRating}
-        onSelectSeverity={setSelectedRating}
+        selectedSeverity={selectedSeverity}
+        onSelectSeverity={setSelectedSeverity}
         onSelectFinding={handleOpenFinding}
       />
 
