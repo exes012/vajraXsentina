@@ -259,7 +259,7 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
       </div>
 
       {/* TARGET PROFILE CARD */}
-      <div className="w-full tech-border-card rounded-xl p-5 bg-[#060108] border border-cyan-500/30 shadow-[0_0_25px_rgba(6,182,212,0.15)] font-sans text-white mb-6">
+      <div className="w-full tech-border-card rounded-xl p-5 bg-[#060108] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_25px_rgba(6,182,212,0.15)] font-main text-white mb-6">
         <div className="pb-3 border-b border-[#360a25] mb-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="w-2.5 h-2.5 rounded-sm bg-cyan-400 shadow-[0_0_8px_#38bdf8]"></span>
@@ -275,7 +275,7 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
 
         <div className="space-y-3 font-mono text-xs">
           {/* Field 1: Target Scope */}
-          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
+          <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
             <span className="text-[11px] text-slate-400 font-bold">Target Scope</span>
             <span className="text-sm font-bold text-white tracking-wide truncate">
               {assessment.target_info?.url || assessment.repository_info?.url || 'https://www.goindigo.in'}
@@ -283,7 +283,7 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
           </div>
 
           {/* Field 2: Target Type */}
-          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
+          <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
             <span className="text-[11px] text-slate-400 font-bold">Target Type</span>
             <span className="text-sm font-bold text-cyan-300 drop-shadow-[0_0_6px_#38bdf8]">
               {assessment.assessment_type === 'dast' ? 'Web Application (DAST)' : (assessment.assessment_type === 'source' ? 'Source Code Archive' : 'Unified Security Assessment (DAST + SAST + SCA)')}
@@ -291,7 +291,7 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
           </div>
 
           {/* Field 3: Security Score */}
-          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
+          <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
             <span className="text-[11px] text-slate-400 font-bold">Security Score</span>
             <span className={`text-xl font-hud font-black ${assessment.overall_risk_score >= 70 ? 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]' : (assessment.overall_risk_score >= 40 ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]')}`}>
               {assessment.overall_risk_score || 24.2} / 100
@@ -299,7 +299,7 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
           </div>
 
           {/* Field 4: DAST Coverage Status */}
-          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
+          <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-slate-400 font-bold">DAST Coverage Status</span>
               <span className="text-xs font-bold text-cyan-300 font-hud">40%</span>
@@ -318,7 +318,7 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
           </div>
 
           {/* Field 5: Detected Flaws */}
-          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
+          <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] flex flex-col space-y-1 hover:border-cyan-500/40 transition-colors shadow-inner">
             <span className="text-[11px] text-slate-400 font-bold">Detected Flaws</span>
             <span className="text-base font-hud font-bold text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]">
               {assessment.total_findings !== undefined ? assessment.total_findings : findings.length} Findings
@@ -369,7 +369,7 @@ export const AssessmentDetails = ({ assessmentId, onBack, onViewAllFindings }) =
             <div className="flex items-center justify-between gap-2 pt-1">
               <button 
                 onClick={() => loadAssessmentData(true)}
-                className="flex-1 py-2 px-3 rounded-lg bg-[#0b020e] border border-[#360a25]/80 hover:border-cyan-400 text-slate-300 hover:text-white font-mono text-xs font-bold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+                className="flex-1 py-2 px-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25]/80 hover:border-cyan-400 text-slate-300 hover:text-white font-mono text-xs font-bold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
               >
                 <RefreshCw size={16} className="text-cyan-400" />
                 <span>Re-scan</span>

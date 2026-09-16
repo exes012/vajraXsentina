@@ -10,11 +10,11 @@ export const RiskGauge = ({ score = 0, size = 180 }) => {
   const strokeDashoffset = circumference - (cleanScore / 100) * circumference;
 
   const getColor = (s) => {
-    if (s >= 75) return '#ff3366'; // Critical Red
+    if (s >= 75) return '#ff1744'; // Vajra Critical Red
     if (s >= 50) return '#f59e0b'; // High Amber
-    if (s >= 25) return '#eab308'; // Medium Yellow
-    if (s > 0) return '#38bdf8';   // Low Blue
-    return '#10b981';              // Safe Green
+    if (s >= 25) return '#fbbf24'; // Medium Yellow
+    if (s > 0) return '#00f2fe';   // Low Cyan Glow
+    return '#00ff88';              // Optimal Emerald
   };
 
   const getLabel = (s) => {
@@ -32,7 +32,7 @@ export const RiskGauge = ({ score = 0, size = 180 }) => {
       <div style={{ position: 'relative', width: size, height: size }}>
         <svg height={size} width={size} viewBox="0 0 160 160">
           <circle
-            stroke="#360a25"
+            stroke="#28081c"
             fill="transparent"
             strokeWidth={stroke}
             r={normalizedRadius}
@@ -44,7 +44,11 @@ export const RiskGauge = ({ score = 0, size = 180 }) => {
             fill="transparent"
             strokeWidth={stroke}
             strokeDasharray={`${circumference} ${circumference}`}
-            style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.8s ease-in-out' }}
+            style={{ 
+              strokeDashoffset, 
+              transition: 'stroke-dashoffset 0.8s ease-in-out',
+              filter: `drop-shadow(0 0 8px ${activeColor})`
+            }}
             strokeLinecap="round"
             r={normalizedRadius}
             cx="80"
@@ -63,24 +67,26 @@ export const RiskGauge = ({ score = 0, size = 180 }) => {
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          <span style={{ fontSize: '36px', fontWeight: '800', color: activeColor, fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: '36px', fontWeight: '900', color: activeColor, fontFamily: 'var(--font-mono)' }}>
             {cleanScore}
           </span>
-          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          <span style={{ fontSize: '10px', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)', fontWeight: '700' }}>
             / 100
           </span>
         </div>
       </div>
       <div style={{
         marginTop: '8px',
-        fontSize: '12px',
-        fontWeight: '700',
-        letterSpacing: '1px',
+        fontSize: '11px',
+        fontWeight: '900',
+        letterSpacing: '0.8px',
         color: activeColor,
-        background: `${activeColor}15`,
-        padding: '4px 12px',
+        background: `${activeColor}18`,
+        padding: '3px 12px',
         borderRadius: '9999px',
-        border: `1px solid ${activeColor}40`
+        border: `1.5px solid ${activeColor}50`,
+        fontFamily: 'var(--font-mono)',
+        boxShadow: `0 0 10px ${activeColor}30`
       }}>
         {getLabel(cleanScore)}
       </div>

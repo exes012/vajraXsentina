@@ -131,8 +131,8 @@ export const FindingDrawer = ({ finding, onClose, onStatusUpdated }) => {
       width: '100%',
       maxWidth: '680px',
       background: '#040005',
-      borderLeft: '1px solid #360a25',
-      boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.8)',
+      borderLeft: '2.5px solid #360a25',
+      boxShadow: '-10px 0 50px rgba(0, 0, 0, 0.95), 0 0 24px rgba(0, 242, 254, 0.15)',
       zIndex: 100,
       display: 'flex',
       flexDirection: 'column',
@@ -141,36 +141,40 @@ export const FindingDrawer = ({ finding, onClose, onStatusUpdated }) => {
       {/* Header */}
       <div style={{
         padding: '24px',
-        borderBottom: '1px solid #360a25',
+        borderBottom: '2.5px solid #360a25',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'space-between',
-        background: '#0d1322'
+        background: '#060108'
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <SeverityBadge severity={finding.severity} />
             <span style={{
-              background: '#360a25',
-              color: '#38bdf8',
+              background: '#0e0212',
+              border: '1.5px solid #360a25',
+              color: '#00f2fe',
               fontSize: '11px',
               padding: '2px 8px',
-              borderRadius: '4px',
-              fontFamily: 'var(--font-mono)'
+              borderRadius: '6px',
+              fontFamily: 'var(--font-mono)',
+              fontWeight: '800'
             }}>
               {finding.source}
             </span>
             <span style={{
-              background: '#360a25',
-              color: '#94a3b8',
+              background: '#0e0212',
+              border: '1.5px solid #360a25',
+              color: '#a1a1aa',
               fontSize: '11px',
               padding: '2px 8px',
-              borderRadius: '4px'
+              borderRadius: '6px',
+              fontFamily: 'var(--font-mono)'
             }}>
               {finding.scanner}
             </span>
           </div>
-          <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#f8fafc', lineHeight: 1.3 }}>
+          <h2 style={{ fontSize: '18px', fontWeight: '900', color: '#ffffff', lineHeight: 1.3, fontFamily: 'var(--font-main)' }}>
             {finding.title}
           </h2>
         </div>

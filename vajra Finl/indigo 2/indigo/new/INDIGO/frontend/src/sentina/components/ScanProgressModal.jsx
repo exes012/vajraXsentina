@@ -58,8 +58,8 @@ export const ScanProgressModal = ({ assessment, onClose, onCancel, onViewDetails
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(5, 8, 15, 0.85)',
-      backdropFilter: 'blur(10px)',
+      background: 'rgba(3, 0, 4, 0.92)',
+      backdropFilter: 'blur(14px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -70,43 +70,47 @@ export const ScanProgressModal = ({ assessment, onClose, onCancel, onViewDetails
         width: '100%',
         maxWidth: '780px',
         background: '#060108',
-        border: '1px solid #360a25',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.9)'
+        border: '2.5px solid #360a25',
+        borderRadius: '16px',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.95), 0 0 24px rgba(0, 242, 254, 0.25)'
       }}>
         {/* Header */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid #360a25',
+          borderBottom: '2.5px solid #360a25',
           paddingBottom: '16px',
           marginBottom: '20px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
               background: 'rgba(0, 242, 254, 0.15)',
+              border: '1.5px solid rgba(0, 242, 254, 0.4)',
               color: '#00f2fe',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              boxShadow: '0 0 12px rgba(0, 242, 254, 0.3)'
             }}>
-              {isCompleted ? <CheckCircle2 size={18} color="#10b981" /> : (isFailed ? <AlertCircle size={18} color="#ff3366" /> : <Loader2 size={18} className="scanning-pulse" />)}
+              {isCompleted ? <CheckCircle2 size={20} color="#00ff88" /> : (isFailed ? <AlertCircle size={20} color="#ff1744" /> : <Loader2 size={20} className="scanning-pulse" color="#00f2fe" />)}
             </div>
             <div>
-              <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#f8fafc' }}>
+              <h3 style={{ fontSize: '17px', fontWeight: '900', color: '#ffffff', fontFamily: 'var(--font-main)', letterSpacing: '0.4px' }}>
                 {isCompleted ? 'Assessment Completed' : (isFailed ? 'Assessment Failed' : 'Security Assessment in Progress')}
               </h3>
-              <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+              <div style={{ fontSize: '11px', color: '#a1a1aa', fontFamily: 'var(--font-mono)' }}>
                 ID: {assessment.id.slice(0, 8)}... • Type: {assessment.assessment_type?.toUpperCase()}
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}
+            style={{ background: 'transparent', border: 'none', color: '#71717a', cursor: 'pointer' }}
+            className="hover:text-white transition-colors"
           >
             <X size={20} />
           </button>
@@ -117,11 +121,11 @@ export const ScanProgressModal = ({ assessment, onClose, onCancel, onViewDetails
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '24px',
-          padding: '12px',
-          background: '#030004',
-          borderRadius: '10px',
-          border: '1px solid #360a25'
+          marginBottom: '20px',
+          padding: '12px 16px',
+          background: '#040005',
+          borderRadius: '12px',
+          border: '2px solid #360a25'
         }}>
           {activeStages.map((st, idx) => {
             const isDone = activeStageIdx > idx || isCompleted;
@@ -129,24 +133,27 @@ export const ScanProgressModal = ({ assessment, onClose, onCancel, onViewDetails
             return (
               <div key={st.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                 <div style={{
-                  width: '20px',
-                  height: '20px',
+                  width: '22px',
+                  height: '22px',
                   borderRadius: '50%',
-                  background: isDone ? '#10b981' : (isCurrent ? '#00f2fe' : '#360a25'),
-                  color: isDone || isCurrent ? '#000' : '#64748b',
+                  background: isDone ? '#00ff88' : (isCurrent ? '#00f2fe' : '#28081c'),
+                  color: isDone || isCurrent ? '#030004' : '#71717a',
                   fontSize: '10px',
-                  fontWeight: '800',
+                  fontWeight: '900',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: isCurrent ? '0 0 12px #00f2fe' : 'none'
+                  boxShadow: isCurrent ? '0 0 14px #00f2fe' : (isDone ? '0 0 8px #00ff88' : 'none'),
+                  border: isCurrent ? '1.5px solid #ffffff' : '1.5px solid transparent'
                 }}>
                   {isDone ? '✓' : idx + 1}
                 </div>
                 <span style={{
-                  fontSize: '10px',
-                  fontWeight: isCurrent ? '700' : '500',
-                  color: isCurrent ? '#00f2fe' : (isDone ? '#e2e8f0' : '#475569')
+                  fontSize: '9.5px',
+                  fontWeight: isCurrent ? '800' : '600',
+                  color: isCurrent ? '#00f2fe' : (isDone ? '#f8fafc' : '#71717a'),
+                  fontFamily: 'var(--font-mono)',
+                  textTransform: 'uppercase'
                 }}>
                   {st.label}
                 </span>
@@ -157,20 +164,20 @@ export const ScanProgressModal = ({ assessment, onClose, onCancel, onViewDetails
 
         {/* Terminal Log Stream */}
         <div style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#94a3b8', marginBottom: '8px' }}>
-            <Terminal size={14} color="#38bdf8" />
-            <span>Execution Log Stream</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#a1a1aa', marginBottom: '8px', fontFamily: 'var(--font-mono)', fontWeight: '700' }}>
+            <Terminal size={14} color="#00f2fe" />
+            <span>REAL-TIME ENGINE TELEMETRY LOG</span>
           </div>
-          <div ref={terminalRef} className="terminal-window">
+          <div ref={terminalRef} className="terminal-window" style={{ background: '#030004', border: '2px solid #360a25', borderRadius: '10px' }}>
             {assessment.logs?.map((log, i) => (
               <div key={i} className="terminal-line">
                 <span className="terminal-time">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                <span style={{ color: '#00f2fe', fontWeight: '600' }}>[{log.stage}]</span>
-                <span style={{ color: '#e2e8f0' }}>{log.message}</span>
+                <span style={{ color: '#00f2fe', fontWeight: '700' }}>[{log.stage}]</span>
+                <span style={{ color: '#f8fafc' }}>{log.message}</span>
               </div>
             ))}
             {!isCompleted && !isFailed && (
-              <div className="terminal-line" style={{ color: '#64748b' }}>
+              <div className="terminal-line" style={{ color: '#71717a' }}>
                 <span className="terminal-time">[{new Date().toLocaleTimeString()}]</span>
                 <span style={{ color: '#00f2fe' }}>... processing scan tasks</span>
               </div>
@@ -179,7 +186,7 @@ export const ScanProgressModal = ({ assessment, onClose, onCancel, onViewDetails
         </div>
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
           {!isCompleted && !isFailed && !isCancelled && (
             <button className="btn btn-danger btn-sm" onClick={onCancel}>
               Cancel Scan

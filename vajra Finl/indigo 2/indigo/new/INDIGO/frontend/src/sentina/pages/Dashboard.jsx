@@ -177,14 +177,14 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
   return (
     <div className="space-y-6" data-purpose="telemetry-dashboard">
       {/* Grand Console Container */}
-      <div className="tech-border-card rounded-xl border border-cyan-500/25 bg-[#0b020e] shadow-[0_0_50px_rgba(15,23,42,0.9)] backdrop-blur-md p-8">
+      <div className="tech-border-card rounded-xl border-[2px] border-[#360a25] hover:border-cyan-400/60 bg-[#0b020e] shadow-[0_0_50px_rgba(15,23,42,0.9)] backdrop-blur-md p-8">
 
 
         {/* Main Visual Grid: Left Panels, Center 3D Sphere Core, Right Panels */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* LEFT COLUMN: Secondary Charts & Counters */}
           <div className="lg:col-span-3 space-y-1.5">
-            <div className="tech-border-card rounded-lg bg-[#040005] border border-cyan-500/25 shadow-[0_0_15px_rgba(6,182,212,0.15)] px-2.5 py-1.5">
+            <div className="tech-border-card rounded-lg bg-[#040005] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_15px_rgba(6,182,212,0.15)] px-2.5 py-1.5">
               <div className="flex items-center justify-between pb-1 border-b border-[#360a25] mb-1">
                 <div className="flex items-center space-x-2">
                   <span className="material-symbols-outlined text-[17px] text-cyan-400">radar</span>
@@ -200,29 +200,29 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
                   <span>ACTIVE RATE</span>
                 </span>
               </div>
-              <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-[#360a25]">
+              <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border-[2px] border-[#360a25]">
                 <div className="bg-gradient-to-r from-blue-500 to-cyan-400 h-full w-[82%] shadow-[0_0_6px_#38bdf8]"></div>
               </div>
             </div>
 
-            <div className="tech-border-card rounded-lg bg-[#040005] border border-cyan-500/25 shadow-[0_0_15px_rgba(6,182,212,0.15)] px-2.5 py-1.5">
+            <div className="tech-border-card rounded-lg bg-[#040005] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_15px_rgba(6,182,212,0.15)] px-2.5 py-1.5">
               <div className="flex items-center justify-between pb-1 border-b border-[#360a25] mb-1">
                 <div className="flex items-center space-x-2">
                   <span className="material-symbols-outlined text-[17px] text-rose-400">warning</span>
                   <span className="font-hud font-bold tracking-widest text-[11px] uppercase text-slate-200">OPEN FINDINGS</span>
                 </div>
-                <span className="px-1.5 py-0.2 rounded bg-rose-500/15 border border-rose-500/30 text-[9px] font-mono text-rose-300 font-bold">
+                <span className="px-1.5 py-0.2 rounded bg-rose-500/15 border-[2px] border-[#360a25] hover:border-rose-400/60 text-[9px] font-mono text-rose-300 font-bold">
                   {metrics?.open_findings || ((metrics?.severity_distribution?.CRITICAL || 0) + (metrics?.severity_distribution?.HIGH || 0) + (metrics?.severity_distribution?.MEDIUM || 0) + (metrics?.severity_distribution?.LOW || 0)) || 181} ALERTS
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-1.5 text-center font-mono my-1">
-                <div className="p-1 rounded bg-[#0b020e] border border-rose-500/30">
+                <div className="p-1 rounded bg-[#0b020e] border-[2px] border-[#360a25] hover:border-rose-400/60">
                   <div className="text-rose-400 font-hud font-bold text-sm leading-none">
                     {metrics?.severity_distribution?.CRITICAL ?? 44}
                   </div>
                   <div className="text-[8px] text-rose-300/80 tracking-wider mt-0.5">CRIT</div>
                 </div>
-                <div className="p-1 rounded bg-[#0b020e] border border-amber-500/30">
+                <div className="p-1 rounded bg-[#0b020e] border-[2px] border-[#360a25] hover:border-amber-400/60">
                   <div className="text-amber-400 font-hud font-bold text-sm leading-none">
                     {metrics?.severity_distribution?.HIGH ?? 85}
                   </div>
@@ -241,13 +241,13 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
               </div>
             </div>
 
-            <div className="tech-border-card rounded-lg bg-[#040005] border border-cyan-500/25 shadow-[0_0_15px_rgba(6,182,212,0.15)] px-2.5 py-1.5">
+            <div className="tech-border-card rounded-lg bg-[#040005] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_15px_rgba(6,182,212,0.15)] px-2.5 py-1.5">
               <div className="flex items-center justify-between pb-1 border-b border-[#360a25] mb-1">
                 <div className="flex items-center space-x-2">
                   <span className="material-symbols-outlined text-[17px] text-cyan-300">lan</span>
                   <span className="font-hud font-bold tracking-widest text-[11px] uppercase text-cyan-200">ASSET MONITORED</span>
                 </div>
-                <span className="px-1.5 py-0.2 rounded bg-emerald-400/10 border border-cyan-500/30 text-[9px] font-mono text-emerald-400">96.9% COV</span>
+                <span className="px-1.5 py-0.2 rounded bg-emerald-400/10 border-[2px] border-[#360a25] hover:border-cyan-400/60 text-[9px] font-mono text-emerald-400">96.9% COV</span>
               </div>
               <div className="flex items-baseline justify-between mb-0.5">
                 <div className="text-2xl font-hud font-black text-cyan-300 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)] leading-none">24,650</div>
@@ -261,7 +261,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
               </div>
             </div>
 
-            <div className="tech-border-card rounded-lg bg-[#040005] border border-cyan-500/25 shadow-[0_0_15px_rgba(6,182,212,0.15)] px-2.5 py-1.5">
+            <div className="tech-border-card rounded-lg bg-[#040005] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_15px_rgba(6,182,212,0.15)] px-2.5 py-1.5">
               <div className="flex items-center justify-between pb-1 border-b border-[#360a25] mb-1">
                 <div className="flex items-center space-x-2">
                   <span className="material-symbols-outlined text-[17px] text-purple-400">assured_workload</span>
@@ -277,7 +277,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
                 <span className="text-slate-400 text-[10px]">ACTIVE MICROSERVICES</span>
                 <span className="text-cyan-300 font-hud font-bold text-sm leading-none">142 SERVICES</span>
               </div>
-              <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-[#360a25]">
+              <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border-[2px] border-[#360a25]">
                 <div className="bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-400 h-full w-[92%]"></div>
               </div>
             </div>
@@ -309,7 +309,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
               <canvas ref={canvasRef} className="w-[360px] h-[360px] z-10 relative" data-purpose="holographic-sphere-animation" height="360" width="360"></canvas>
               
               <div className="absolute z-20 flex flex-col items-center justify-center text-center pointer-events-none">
-                <div className="backdrop-blur-md bg-[#040005] p-4 rounded-full border border-cyan-400/40 shadow-[0_0_30px_rgba(6,182,212,0.35)] flex flex-col items-center justify-center w-[180px] h-[180px] relative">
+                <div className="backdrop-blur-md bg-[#040005] p-4 rounded-full border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_30px_rgba(6,182,212,0.35)] flex flex-col items-center justify-center w-[180px] h-[180px] relative">
                   <svg className="w-full h-full -rotate-90 transform absolute inset-0" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" fill="none" r="42" stroke="#28081c" strokeWidth="6"></circle>
                     <circle
@@ -349,7 +349,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
 
           {/* RIGHT COLUMN: SCANNER MATRIX & ENGINE SCORES */}
           <div className="lg:col-span-3 space-y-3">
-            <div className="tech-border-card rounded-xl p-3.5 bg-[#060108] border border-rose-500/30 shadow-[0_0_25px_rgba(244,63,94,0.15)]">
+            <div className="tech-border-card rounded-xl p-3.5 bg-[#060108] border-[2px] border-[#360a25] hover:border-rose-400/60 shadow-[0_0_25px_rgba(244,63,94,0.15)]">
               {/* Header */}
               <div className="flex items-center justify-between pb-2.5 border-b border-[#360a25] mb-3">
                 <div className="flex items-center space-x-2">
@@ -366,7 +366,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
               {/* 6 Engine Sub-Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2.5 font-mono">
                 {/* 1. SAST */}
-                <div className="p-2.5 rounded-lg bg-[#0b020e] border border-rose-500/30 flex flex-col justify-between hover:border-rose-400 transition-colors">
+                <div className="p-2.5 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-rose-400/60 flex flex-col justify-between hover:border-rose-400 transition-colors">
                   <div className="flex items-center justify-between">
                     <span className="font-hud font-black text-xs text-white">SAST</span>
                     <span className="font-hud font-bold text-xs text-rose-400 drop-shadow-[0_0_6px_#f43f5e]">15/100</span>
@@ -378,7 +378,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
                 </div>
 
                 {/* 2. DAST */}
-                <div className="p-2.5 rounded-lg bg-[#0b020e] border border-rose-500/30 flex flex-col justify-between hover:border-rose-400 transition-colors">
+                <div className="p-2.5 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-rose-400/60 flex flex-col justify-between hover:border-rose-400 transition-colors">
                   <div className="flex items-center justify-between">
                     <span className="font-hud font-black text-xs text-white">DAST</span>
                     <span className="font-hud font-bold text-xs text-rose-400 drop-shadow-[0_0_6px_#f43f5e]">15/100</span>
@@ -390,7 +390,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
                 </div>
 
                 {/* 3. SCA */}
-                <div className="p-2.5 rounded-lg bg-[#0b020e] border border-rose-500/30 flex flex-col justify-between hover:border-rose-400 transition-colors">
+                <div className="p-2.5 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-rose-400/60 flex flex-col justify-between hover:border-rose-400 transition-colors">
                   <div className="flex items-center justify-between">
                     <span className="font-hud font-black text-xs text-white">SCA</span>
                     <span className="font-hud font-bold text-xs text-rose-400 drop-shadow-[0_0_6px_#f43f5e]">30/100</span>
@@ -402,7 +402,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
                 </div>
 
                 {/* 4. SECRET SCANNING */}
-                <div className="p-2.5 rounded-lg bg-[#0b020e] border border-rose-500/30 flex flex-col justify-between hover:border-rose-400 transition-colors">
+                <div className="p-2.5 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-rose-400/60 flex flex-col justify-between hover:border-rose-400 transition-colors">
                   <div className="flex items-center justify-between">
                     <span className="font-hud font-black text-[11px] text-white truncate">SECRET SCANNING</span>
                     <span className="font-hud font-bold text-xs text-rose-400 drop-shadow-[0_0_6px_#f43f5e] shrink-0 ml-1">15/100</span>
@@ -414,7 +414,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
                 </div>
 
                 {/* 5. THREAT INTEL */}
-                <div className="p-2.5 rounded-lg bg-[#0b020e] border border-emerald-500/30 flex flex-col justify-between hover:border-emerald-400 transition-colors">
+                <div className="p-2.5 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-emerald-400/60 flex flex-col justify-between hover:border-emerald-400 transition-colors">
                   <div className="flex items-center justify-between">
                     <span className="font-hud font-black text-[11px] text-white truncate">THREAT INTEL</span>
                     <span className="font-hud font-bold text-xs text-emerald-400 drop-shadow-[0_0_6px_#10b981] shrink-0 ml-1">100/100</span>
@@ -426,7 +426,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
                 </div>
 
                 {/* 6. AI CORRELATION */}
-                <div className="p-2.5 rounded-lg bg-[#0b020e] border border-emerald-500/30 flex flex-col justify-between hover:border-emerald-400 transition-colors">
+                <div className="p-2.5 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-emerald-400/60 flex flex-col justify-between hover:border-emerald-400 transition-colors">
                   <div className="flex items-center justify-between">
                     <span className="font-hud font-black text-[11px] text-white truncate">AI CORRELATION</span>
                     <span className="font-hud font-bold text-xs text-emerald-400 drop-shadow-[0_0_6px_#10b981] shrink-0 ml-1">100/100</span>
@@ -441,21 +441,21 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
           </div>
 
           {/* FULL WIDTH HORIZONTAL TELEMETRY TICKER */}
-          <div className="lg:col-span-12 w-full tech-border-card rounded-xl p-4 bg-[#060108] border border-cyan-500/30 shadow-[0_0_25px_rgba(6,182,212,0.2)]">
+          <div className="lg:col-span-12 w-full tech-border-card rounded-xl p-4 bg-[#060108] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_25px_rgba(6,182,212,0.2)]">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center font-mono">
-              <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] shadow-inner">
+              <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] shadow-inner">
                 <span className="text-slate-400 block text-xs tracking-wider mb-1">EXPOSURE RATIO</span>
                 <span className="text-cyan-300 font-bold font-hud text-base drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]">14.2%</span>
               </div>
-              <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] shadow-inner">
+              <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] shadow-inner">
                 <span className="text-slate-400 block text-xs tracking-wider mb-1">THREAT VECTOR</span>
                 <span className="text-rose-400 font-bold font-hud text-base drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]">MODERATE</span>
               </div>
-              <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] shadow-inner">
+              <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] shadow-inner">
                 <span className="text-slate-400 block text-xs tracking-wider mb-1">VULN VELOCITY</span>
                 <span className="text-emerald-400 font-bold font-hud text-base drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">-3.8% (STABLE)</span>
               </div>
-              <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] shadow-inner">
+              <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] shadow-inner">
                 <span className="text-slate-400 block text-xs tracking-wider mb-1">INCIDENT CONF</span>
                 <span className="text-white font-bold font-hud text-base drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">99.4% AI</span>
               </div>
@@ -463,7 +463,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
           </div>
 
           {/* COMPONENT 1: DAST TARGET CONNECTIVITY & COVERAGE */}
-          <div className="lg:col-span-12 w-full tech-border-card rounded-xl p-5 bg-[#060108] border border-cyan-500/30 shadow-[0_0_25px_rgba(6,182,212,0.15)] font-sans text-white">
+          <div className="lg:col-span-12 w-full tech-border-card rounded-xl p-5 bg-[#060108] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_25px_rgba(6,182,212,0.15)] font-main text-white">
             {/* Header Row */}
             <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 mb-4 gap-3 border-b border-[#360a25]">
               <div className="flex items-center space-x-3">
@@ -519,7 +519,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               {/* Left Box: DAST COVERAGE */}
               <div 
-                className="lg:col-span-3 rounded-xl p-5 bg-[#0b020e] border border-cyan-500/30 flex flex-col justify-center items-center text-center shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+                className="lg:col-span-3 rounded-xl p-5 bg-[#0b020e] border-[2px] border-[#360a25] hover:border-cyan-400/60 flex flex-col justify-center items-center text-center shadow-[0_0_15px_rgba(6,182,212,0.15)]"
               >
                 <span className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-2 font-mono">
                   DAST COVERAGE
@@ -536,7 +536,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
               <div className="lg:col-span-9 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3 font-mono">
                 {/* 1. REQUESTS (DOMAIN HITS) */}
                 <div 
-                  className="p-3.5 rounded-xl bg-[#0b020e] border border-[#360a25] flex flex-col justify-between hover:border-cyan-500/40 transition-colors shadow-inner" 
+                  className="p-3.5 rounded-xl bg-[#0b020e] border-[2px] border-[#360a25] flex flex-col justify-between hover:border-cyan-500/40 transition-colors shadow-inner" 
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">REQUESTS</span>
@@ -549,7 +549,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
 
                 {/* 2. SUCCESSFUL */}
                 <div 
-                  className="p-3.5 rounded-xl bg-[#0b020e] border border-emerald-500/30 flex flex-col justify-between hover:border-emerald-400/50 transition-colors shadow-inner"
+                  className="p-3.5 rounded-xl bg-[#0b020e] border-[2px] border-[#360a25] hover:border-emerald-400/60 flex flex-col justify-between hover:border-emerald-400/50 transition-colors shadow-inner"
                 >
                   <div className="flex items-center space-x-1.5 text-emerald-400">
                     <span className="material-symbols-outlined text-[16px]">check_circle</span>
@@ -577,7 +577,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
 
                 {/* 4. RATE LIMITED (429) */}
                 <div 
-                  className="p-3.5 rounded-xl bg-[#0b020e] border border-amber-500/30 flex flex-col justify-between hover:border-amber-400/50 transition-colors shadow-inner"
+                  className="p-3.5 rounded-xl bg-[#0b020e] border-[2px] border-[#360a25] hover:border-amber-400/60 flex flex-col justify-between hover:border-amber-400/50 transition-colors shadow-inner"
                 >
                   <div className="flex items-center space-x-1.5 text-amber-400">
                     <span className="material-symbols-outlined text-[16px]">warning</span>
@@ -590,7 +590,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
 
                 {/* 5. URLS DISCOVERED */}
                 <div 
-                  className="p-3.5 rounded-xl bg-[#0b020e] border border-[#360a25] flex flex-col justify-between hover:border-cyan-400/30 transition-colors shadow-inner"
+                  className="p-3.5 rounded-xl bg-[#0b020e] border-[2px] border-[#360a25] flex flex-col justify-between hover:border-cyan-400/30 transition-colors shadow-inner"
                 >
                   <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">URLS DISCOVERED</span>
                   <div className="text-2xl font-hud font-bold text-cyan-300 mt-2 drop-shadow-[0_0_6px_#38bdf8]">
@@ -600,7 +600,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
 
                 {/* 6. URLS SCANNED */}
                 <div 
-                  className="p-3.5 rounded-xl bg-[#0b020e] border border-[#360a25] flex flex-col justify-between hover:border-purple-400/30 transition-colors shadow-inner"
+                  className="p-3.5 rounded-xl bg-[#0b020e] border-[2px] border-[#360a25] flex flex-col justify-between hover:border-purple-400/30 transition-colors shadow-inner"
                 >
                   <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">URLS SCANNED</span>
                   <div className="text-2xl font-hud font-bold text-purple-400 mt-2 drop-shadow-[0_0_6px_#c084fc]">
@@ -614,7 +614,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
           </div>
 
           {/* VULNERABILITIES BY SEVERITY BAR */}
-          <div className="lg:col-span-12 w-full tech-border-card rounded-lg p-4 bg-[#060108] border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+          <div className="lg:col-span-12 w-full tech-border-card rounded-lg p-4 bg-[#060108] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-[#360a25] mb-3 gap-3">
               <div className="flex items-center space-x-2.5">
                 <div className="w-2.5 h-2.5 rounded-sm bg-cyan-400 shadow-[0_0_8px_#38bdf8]"></div>
@@ -623,7 +623,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 {/* Time Range Filter Pills */}
-                <div className="flex items-center space-x-1 p-0.5 rounded-lg bg-[#0b020e] border border-[#360a25] font-mono text-[10px]">
+                <div className="flex items-center space-x-1 p-0.5 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] font-mono text-[10px]">
                   {[
                     { id: '24h', label: 'LAST 24HR' },
                     { id: '3d', label: '3 DAYS' },
@@ -657,7 +657,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 font-mono">
-              <div className="p-3 rounded-lg bg-[#0b020e] border border-rose-500/30 shadow-[0_0_8px_rgba(244,63,94,0.15)]">
+              <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-rose-400/60 shadow-[0_0_8px_rgba(244,63,94,0.15)]">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] text-rose-300/80 tracking-wider font-bold uppercase">CRITICAL</span>
                   <span className="w-2 h-2 rounded-full bg-rose-400 shadow-[0_0_6px_#f43f5e]"></span>
@@ -673,7 +673,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#0b020e] border border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.15)]">
+              <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-amber-400/60 shadow-[0_0_8px_rgba(245,158,11,0.15)]">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] text-amber-300/80 tracking-wider font-bold uppercase">HIGH</span>
                   <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_#f59e0b]"></span>
@@ -689,7 +689,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#0b020e] border border-cyan-500/30 shadow-[0_0_8px_rgba(6,182,212,0.15)]">
+              <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_8px_rgba(6,182,212,0.15)]">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] text-cyan-300/80 tracking-wider font-bold uppercase">MEDIUM</span>
                   <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#38bdf8]"></span>
@@ -705,7 +705,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#0b020e] border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.15)]">
+              <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-emerald-400/60 shadow-[0_0_8px_rgba(16,185,129,0.15)]">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] text-emerald-400/80 tracking-wider font-bold uppercase">LOW</span>
                   <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]"></span>
@@ -730,14 +730,14 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
 
 
             {/* 3. TOP 10 SECURITY FINDINGS */}
-            <div className="tech-border-card rounded-xl p-4 bg-[#060108] border border-rose-500/30 shadow-[0_0_20px_rgba(244,63,94,0.15)]">
+            <div className="tech-border-card rounded-xl p-4 bg-[#060108] border-[2px] border-[#360a25] hover:border-rose-400/60 shadow-[0_0_20px_rgba(244,63,94,0.15)]">
               <div className="pb-2.5 border-b border-[#360a25] mb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2.5 min-w-0">
                     <span className="material-symbols-outlined text-[20px] text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]">gshield</span>
                     <span className="font-hud font-bold tracking-widest text-sm uppercase text-slate-200">TOP 10 SECURITY FINDINGS</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 text-[10px] font-mono text-rose-300">PRIORITY DISPATCH QUEUE</span>
+                  <span className="px-2 py-0.5 rounded bg-rose-500/15 border-[2px] border-[#360a25] hover:border-rose-400/60 text-[10px] font-mono text-rose-300">PRIORITY DISPATCH QUEUE</span>
                 </div>
                 <span className="block text-[10px] font-mono text-cyan-400/70 tracking-wider mt-0.5">SORTED BY EXPLOITABILITY</span>
               </div>
@@ -805,7 +805,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
 
       {/* Interactive DAST Telemetry & WAF Diagnostic Modal */}
       {dastModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md font-sans text-white animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md font-main text-white animate-fadeIn">
           <div className="w-full max-w-4xl rounded-2xl bg-[#060108] border border-cyan-500/40 p-6 shadow-[0_0_50px_rgba(6,182,212,0.3)] relative max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-[#360a25] mb-5">
@@ -822,14 +822,14 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
               </div>
               <button 
                 onClick={() => setDastModalOpen(false)}
-                className="w-8 h-8 rounded-lg bg-[#0b020e] border border-[#360a25] flex items-center justify-center text-slate-400 hover:text-white hover:border-cyan-400 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] flex items-center justify-center text-slate-400 hover:text-white hover:border-cyan-400 transition-colors cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             {/* Target Diagnostic Probe Input Form */}
-            <form onSubmit={handleRunDashboardDiagnostics} className="mb-5 p-4 rounded-xl bg-[#0b020e] border border-[#360a25]/80 flex flex-col md:flex-row items-center justify-between gap-3 font-mono text-xs shadow-inner">
+            <form onSubmit={handleRunDashboardDiagnostics} className="mb-5 p-4 rounded-xl bg-[#0b020e] border-[2px] border-[#360a25]/80 flex flex-col md:flex-row items-center justify-between gap-3 font-mono text-xs shadow-inner">
               <div className="flex items-center space-x-2 w-full md:w-auto flex-1">
                 <span className="material-symbols-outlined text-cyan-400 text-[20px]">radar</span>
                 <span className="text-slate-300 font-bold whitespace-nowrap">Target Probe:</span>
@@ -838,7 +838,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
                   value={diagUrl}
                   onChange={(e) => setDiagUrl(e.target.value)}
                   placeholder="https://your-target-app.com"
-                  className="flex-1 bg-[#060108] border border-[#360a25]/80 rounded-lg px-3.5 py-2 text-cyan-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400 text-xs"
+                  className="flex-1 bg-[#060108] border-[2px] border-[#360a25]/80 rounded-lg px-3.5 py-2 text-cyan-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400 text-xs"
                 />
               </div>
               <button 
@@ -893,17 +893,17 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
 
             {/* DAST Telemetry Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono mb-5">
-              <div className="p-3.5 rounded-xl bg-[#0b020e] border border-[#360a25] text-center shadow-inner">
+              <div className="p-3.5 rounded-xl bg-[#0b020e] border-[2px] border-[#360a25] text-center shadow-inner">
                 <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">DAST COVERAGE</span>
                 <span className="text-2xl font-hud font-black text-cyan-300">{metrics?.dast_telemetry?.coverage_percentage ?? 69.7}%</span>
                 <span className="text-[10px] text-slate-400 block mt-1">STATUS: {metrics?.dast_telemetry?.coverage_status || 'MODERATE'}</span>
               </div>
-              <div className="p-3.5 rounded-xl bg-[#0b020e] border border-[#360a25] text-center shadow-inner">
+              <div className="p-3.5 rounded-xl bg-[#0b020e] border-[2px] border-[#360a25] text-center shadow-inner">
                 <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">MONITORED TARGETS</span>
                 <span className="text-2xl font-hud font-bold text-white">{metrics?.dast_telemetry?.monitored_targets ?? 15}</span>
                 <span className="text-[10px] text-slate-400 block mt-1">Scope Endpoints</span>
               </div>
-              <div className="p-3.5 rounded-xl bg-[#0b020e] border border-[#360a25] text-center shadow-inner">
+              <div className="p-3.5 rounded-xl bg-[#0b020e] border-[2px] border-[#360a25] text-center shadow-inner">
                 <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">REQUESTS (HITS)</span>
                 <span className="text-2xl font-hud font-bold text-white">{metrics?.dast_telemetry?.total_requests ?? 5583}</span>
                 <span className="text-[10px] text-emerald-400 block mt-1">{metrics?.dast_telemetry?.successful_requests ?? 5495} Successful</span>
@@ -916,7 +916,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
             </div>
 
             {/* Sub-metrics summary table */}
-            <div className="p-4 rounded-xl bg-[#0b020e] border border-[#360a25] font-mono text-xs mb-5">
+            <div className="p-4 rounded-xl bg-[#0b020e] border-[2px] border-[#360a25] font-mono text-xs mb-5">
               <span className="font-bold text-cyan-300 block mb-2 uppercase tracking-wide">Endpoint Audit Summary:</span>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-slate-300">
                 <div className="flex justify-between border-b border-[#360a25] pb-1">
@@ -942,7 +942,7 @@ export const Dashboard = ({ onNewAssessment, onViewAssessment, onViewFindings })
             <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[#360a25]">
               <button 
                 onClick={() => setDastModalOpen(false)}
-                className="px-4 py-2 rounded-lg bg-[#0b020e] border border-[#360a25] hover:border-cyan-400 text-slate-300 font-mono text-xs font-bold cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-cyan-400 text-slate-300 font-mono text-xs font-bold cursor-pointer"
               >
                 Close
               </button>

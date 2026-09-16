@@ -64,7 +64,7 @@ export const FindingsExplorer = ({ initialSource = '' }) => {
   return (
     <div className="space-y-6 animate-fade-in pb-12">
       {/* MASTER CYBER HUD BARS */}
-      <div className="tech-border-card rounded-xl bg-[#060108] border border-cyan-500/30 shadow-[0_0_30px_rgba(6,182,212,0.15)] p-5 backdrop-blur-md">
+      <div className="tech-border-card rounded-xl bg-[#060108] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_30px_rgba(6,182,212,0.15)] p-5 backdrop-blur-md">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#360a25]">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center shadow-[0_0_12px_rgba(56,189,248,0.3)]">
@@ -86,7 +86,7 @@ export const FindingsExplorer = ({ initialSource = '' }) => {
           </div>
 
           {/* Timeframe Filter Selector Pills (Constant Across Console) */}
-          <div className="flex items-center space-x-1 bg-[#0b020e] border border-cyan-500/30 rounded-lg p-1">
+          <div className="flex items-center space-x-1 bg-[#0b020e] border-[2px] border-[#360a25] hover:border-cyan-400/60 rounded-lg p-1">
             {[
               { id: '24h', label: 'LAST 24HR' },
               { id: '3d', label: '3 DAYS' },
@@ -110,7 +110,7 @@ export const FindingsExplorer = ({ initialSource = '' }) => {
 
         {/* Metric Ticker */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 font-mono">
-          <div className="p-3 rounded-lg bg-[#0b020e] border border-rose-500/30 flex items-center justify-between">
+          <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-rose-400/60 flex items-center justify-between">
             <div>
               <div className="text-[10px] text-slate-400 uppercase tracking-wider">TRIAGE QUEUE</div>
               <div className="text-lg font-hud font-bold text-rose-400 mt-0.5">
@@ -120,7 +120,7 @@ export const FindingsExplorer = ({ initialSource = '' }) => {
             <span className="material-symbols-outlined text-2xl text-rose-400/80">warning</span>
           </div>
 
-          <div className="p-3 rounded-lg bg-[#0b020e] border border-cyan-500/30 flex items-center justify-between">
+          <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-cyan-400/60 flex items-center justify-between">
             <div>
               <div className="text-[10px] text-slate-400 uppercase tracking-wider">MONITORED ENGINES</div>
               <div className="text-lg font-hud font-bold text-cyan-300 mt-0.5">6 ACTIVE ADAPTERS</div>
@@ -128,7 +128,7 @@ export const FindingsExplorer = ({ initialSource = '' }) => {
             <span className="material-symbols-outlined text-2xl text-cyan-400/80">grid_view</span>
           </div>
 
-          <div className="p-3 rounded-lg bg-[#0b020e] border border-emerald-500/30 flex items-center justify-between">
+          <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-emerald-400/60 flex items-center justify-between">
             <div>
               <div className="text-[10px] text-slate-400 uppercase tracking-wider">AUTO RESOLUTION ENGINE</div>
               <div className="text-lg font-hud font-bold text-emerald-400 mt-0.5">AUTO-PURGE ON RESOLVE</div>
@@ -139,13 +139,13 @@ export const FindingsExplorer = ({ initialSource = '' }) => {
       </div>
 
       {/* SEARCH & HUD FILTERS TOOLBAR */}
-      <div className="tech-border-card rounded-xl bg-[#060108] border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.1)] p-4 backdrop-blur-md">
+      <div className="tech-border-card rounded-xl bg-[#060108] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_20px_rgba(6,182,212,0.1)] p-4 backdrop-blur-md">
         <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
           <div className="md:col-span-4 relative">
             <span className="material-symbols-outlined text-slate-500 absolute left-3 top-2.5 text-lg">travel_explore</span>
             <input
               type="text"
-              className="w-full bg-[#0b020e] border border-[#360a25] rounded-lg pl-9 pr-3 py-2 text-xs font-mono text-cyan-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+              className="w-full bg-[#0b020e] border-[2px] border-[#360a25] rounded-lg pl-9 pr-3 py-2 text-xs font-mono text-cyan-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400"
               placeholder="Search title, file, CVE, CWE, endpoint..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -154,7 +154,7 @@ export const FindingsExplorer = ({ initialSource = '' }) => {
 
           <div className="md:col-span-2">
             <select
-              className="w-full bg-[#0b020e] border border-[#360a25] rounded-lg px-3 py-2 text-xs font-mono text-cyan-200 focus:outline-none focus:border-cyan-400"
+              className="w-full bg-[#0b020e] border-[2px] border-[#360a25] rounded-lg px-3 py-2 text-xs font-mono text-cyan-200 focus:outline-none focus:border-cyan-400"
               value={severity}
               onChange={(e) => setSeverity(e.target.value)}
             >
@@ -168,7 +168,7 @@ export const FindingsExplorer = ({ initialSource = '' }) => {
 
           <div className="md:col-span-3">
             <select
-              className="w-full bg-[#0b020e] border border-[#360a25] rounded-lg px-3 py-2 text-xs font-mono text-cyan-200 focus:outline-none focus:border-cyan-400"
+              className="w-full bg-[#0b020e] border-[2px] border-[#360a25] rounded-lg px-3 py-2 text-xs font-mono text-cyan-200 focus:outline-none focus:border-cyan-400"
               value={source}
               onChange={(e) => setSource(e.target.value)}
             >
@@ -184,7 +184,7 @@ export const FindingsExplorer = ({ initialSource = '' }) => {
 
           <div className="md:col-span-2">
             <select
-              className="w-full bg-[#0b020e] border border-[#360a25] rounded-lg px-3 py-2 text-xs font-mono text-cyan-200 focus:outline-none focus:border-cyan-400"
+              className="w-full bg-[#0b020e] border-[2px] border-[#360a25] rounded-lg px-3 py-2 text-xs font-mono text-cyan-200 focus:outline-none focus:border-cyan-400"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -206,7 +206,7 @@ export const FindingsExplorer = ({ initialSource = '' }) => {
       </div>
 
       {/* HUD DATA TABLE */}
-      <div className="tech-border-card rounded-xl bg-[#060108] border border-cyan-500/30 shadow-[0_0_25px_rgba(6,182,212,0.15)] overflow-hidden">
+      <div className="tech-border-card rounded-xl bg-[#060108] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_25px_rgba(6,182,212,0.15)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -238,7 +238,7 @@ export const FindingsExplorer = ({ initialSource = '' }) => {
                       <SeverityBadge severity={f.severity} size="small" />
                     </td>
                     <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded bg-[#0b020e] border border-cyan-500/30 text-cyan-300 text-[10px]">
+                      <span className="px-2 py-0.5 rounded bg-[#0b020e] border-[2px] border-[#360a25] hover:border-cyan-400/60 text-cyan-300 text-[10px]">
                         {f.source}
                       </span>
                     </td>

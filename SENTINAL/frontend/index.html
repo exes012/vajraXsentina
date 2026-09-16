@@ -4,70 +4,127 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f2fe' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sentinel Security — Cyber Command Telemetry & Data Visualization</title>
+    <title>SENTINA — Cyber Threat Telemetry & Security Operations</title>
     
+    <!-- Google Fonts for Ultra-Premium Cyber HUD Typography (Matching VAJRA) -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
     <!-- Tailwind CSS CDN with forms & container queries -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <!-- Tailwind Configuration -->
+    <!-- Tailwind Configuration Matching VAJRA Design System -->
     <script>
       tailwind.config = {
         darkMode: 'class',
         theme: {
           extend: {
             colors: {
+              background: '#030004',
+              foreground: '#f8fafc',
+              card: '#060108',
+              'card-hover': '#0b020e',
+              'card-elevated': '#0e0212',
+              border: '#360a25',
+              'border-subtle': '#28081c',
+              primary: '#00f2fe',
+              'primary-hover': '#0284c7',
+              'primary-dark': '#0369a1',
+              secondary: '#a1a1aa',
+              muted: '#71717a',
+              accent: '#00f2fe',
+              'accent-cyan': '#00f2fe',
+              'accent-purple': '#c084fc',
+              'accent-emerald': '#00ff88',
+              'accent-amber': '#fbbf24',
+              danger: '#ff1744',
+              warning: '#f59e0b',
+              success: '#00ff88',
               command: {
-                950: '#040814',
-                900: '#070f24',
-                850: '#0a1532',
-                800: '#0f1d42',
-                700: '#16285a',
-                glow: '#00e5ff',
-                neonBlue: '#2563eb',
+                950: '#060108',
+                900: '#0b020e',
+                850: '#0e0212',
+                800: '#14031a',
+                700: '#1c0424',
+                glow: '#00f2fe',
+                neonBlue: '#0284c7',
                 brightBlue: '#38bdf8',
-                crimson: '#f43f5e',
-                emerald: '#10b981',
+                crimson: '#ff1744',
+                emerald: '#00ff88',
                 amber: '#f59e0b',
-                purple: '#8b5cf6'
+                purple: '#a855f7'
               }
             },
+            boxShadow: {
+              glow: '0 0 20px rgba(0, 242, 254, 0.5)',
+              'glow-cyan': '0 0 20px rgba(0, 242, 254, 0.6)',
+              'glow-red': '0 0 22px rgba(255, 23, 68, 0.7)',
+              'glow-purple': '0 0 20px rgba(192, 132, 252, 0.6)',
+              'glow-green': '0 0 20px rgba(0, 255, 136, 0.6)',
+              cyber: '0 8px 32px 0 rgba(0, 0, 0, 0.95), 0 0 14px rgba(0, 242, 254, 0.12)',
+            },
             fontFamily: {
-              mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-              sans: ['Inter', 'system-ui', 'sans-serif']
+              sans: ['Outfit', 'Plus Jakarta Sans', 'sans-serif'],
+              outfit: ['Outfit', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+              body: ['Plus Jakarta Sans', 'sans-serif'],
+              hud: ['Chakra Petch', 'Outfit', 'sans-serif']
             }
           }
         }
       }
     </script>
     
-    <!-- Google Fonts for High-Tech HUD Styling & Material Symbols -->
-    <link href="https://fonts.googleapis.com" rel="preconnect">
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
-    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    
     <style data-purpose="custom-hud-styles">
       body {
-        font-family: 'Inter', sans-serif;
-        background-color: #030712;
-        color: #cbd5e1;
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif !important;
+        background-color: #030004 !important;
+        color: #f8fafc;
         overflow-x: hidden;
+        background-image: 
+          radial-gradient(circle at 50% 0%, rgba(0, 242, 254, 0.08) 0%, transparent 60%),
+          radial-gradient(circle at 85% 15%, rgba(168, 85, 247, 0.06) 0%, transparent 60%),
+          radial-gradient(circle at 15% 35%, rgba(255, 23, 68, 0.05) 0%, transparent 60%),
+          linear-gradient(to right, rgba(0, 242, 254, 0.02) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(0, 242, 254, 0.02) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      }
+
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.6px;
+        color: #ffffff;
       }
 
       .font-hud {
-        font-family: 'Chakra Petch', sans-serif;
+        font-family: 'Chakra Petch', 'Outfit', sans-serif !important;
       }
 
-      .tech-border-card {
-        background: linear-gradient(180deg, rgba(15, 29, 66, 0.72) 0%, rgba(7, 15, 36, 0.88) 100%);
-        border: 1px solid rgba(56, 189, 248, 0.16);
-        box-shadow: 0 0 25px -5px rgba(2, 6, 23, 0.8), inset 0 0 15px 0 rgba(37, 99, 235, 0.05);
+      .font-mono {
+        font-family: 'JetBrains Mono', monospace !important;
+      }
+
+      /* 2.5px Bold Tactical Borders Matching VAJRA */
+      .tech-border-card, .cyber-card {
+        background: #060108 !important;
+        border: 2.5px solid #360a25 !important;
+        border-radius: 14px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.95), 0 0 14px rgba(0, 242, 254, 0.08);
         position: relative;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .tech-border-card:hover, .cyber-card:hover {
+        border-color: #00f2fe !important;
+        box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.95), 0 0 24px -2px rgba(0, 242, 254, 0.4) !important;
       }
 
       .tech-header-badge {
         clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 100%, 0 100%);
-        background: linear-gradient(90deg, rgba(37, 99, 235, 0.45) 0%, rgba(14, 165, 233, 0.2) 100%);
-        border-left: 3px solid #38bdf8;
+        background: linear-gradient(90deg, rgba(0, 242, 254, 0.35) 0%, rgba(2, 132, 199, 0.15) 100%);
+        border-left: 3px solid #00f2fe;
       }
 
       .header-tab-bracket {
@@ -77,42 +134,59 @@
       .hud-slashes::after {
         content: "///";
         letter-spacing: 2px;
-        color: rgba(56, 189, 248, 0.4);
-        font-family: monospace;
+        color: rgba(0, 242, 254, 0.5);
+        font-family: 'JetBrains Mono', monospace;
         font-size: 11px;
         margin-left: 8px;
       }
 
       .glow-sphere-container {
         position: relative;
-        filter: drop-shadow(0 0 35px rgba(56, 189, 248, 0.35));
+        filter: drop-shadow(0 0 35px rgba(0, 242, 254, 0.35));
       }
 
       /* Grid backdrop */
       .cyber-grid {
-        background-size: 40px 40px;
+        background-size: 32px 32px;
         background-image: 
-          linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+          linear-gradient(to right, rgba(0, 242, 254, 0.02) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(0, 242, 254, 0.02) 1px, transparent 1px);
       }
 
-      /* Custom scrollbar for sidebar */
-      .hud-scrollbar::-webkit-scrollbar {
-        width: 4px;
+      /* Custom scrollbar matching VAJRA */
+      ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
       }
-      .hud-scrollbar::-webkit-scrollbar-track {
-        background: rgba(7, 15, 36, 0.6);
+      ::-webkit-scrollbar-track {
+        background: #030004;
       }
-      .hud-scrollbar::-webkit-scrollbar-thumb {
-        background: rgba(56, 189, 248, 0.25);
-        border-radius: 2px;
+      ::-webkit-scrollbar-thumb {
+        background: #3b0a26;
+        border-radius: 3px;
       }
-      .hud-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: rgba(56, 189, 248, 0.5);
+      ::-webkit-scrollbar-thumb:hover {
+        background: #00f2fe;
+        box-shadow: 0 0 10px rgba(0, 242, 254, 0.9);
+      }
+
+      /* Input and form styling matching VAJRA */
+      input, select, textarea {
+        border-width: 2.5px !important;
+        border-color: #360a25 !important;
+        background-color: #040005 !important;
+        color: #ffffff !important;
+        font-family: 'Outfit', sans-serif !important;
+      }
+
+      input:focus, select:focus, textarea:focus {
+        border-color: #00f2fe !important;
+        box-shadow: 0 0 16px rgba(0, 242, 254, 0.5) !important;
+        outline: none !important;
       }
     </style>
   </head>
-  <body class="cyber-grid min-h-screen text-slate-200 antialiased selection:bg-cyan-500 selection:text-black">
+  <body class="bg-[#030004] text-slate-200 antialiased selection:bg-cyan-500 selection:text-black">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

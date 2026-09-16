@@ -85,7 +85,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
   };
 
   return (
-    <aside className="w-full flex-shrink-0 tech-border-card rounded-xl border-[1.5px] border-[#360a25] bg-[#060108] backdrop-blur-md shadow-[0_8px_32px_0_rgba(0,0,0,0.95),0_0_14px_rgba(0,242,254,0.06)] sticky top-20 z-30 lg:w-72 p-4" data-purpose="platform-modules-sidebar">
+    <aside className="w-full flex-shrink-0 tech-border-card rounded-xl border-[2.5px] border-[#360a25] bg-[#060108] backdrop-blur-md shadow-[0_8px_32px_0_rgba(0,0,0,0.95),0_0_14px_rgba(0,242,254,0.06)] sticky top-20 z-30 lg:w-72 p-4" data-purpose="platform-modules-sidebar">
       {/* Sidebar Header / Module Crest */}
       <div className="flex items-center justify-between pb-3 border-b border-[#360a25] mb-4">
         <div className="flex items-center space-x-2.5">
@@ -95,7 +95,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
             <span className="block text-[9px] font-mono text-cyan-400/70 tracking-wider">NAV // V3.4 SUBSYSTEMS</span>
           </div>
         </div>
-        <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-[9px] font-mono text-cyan-300">ONLINE</span>
+        <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 border-[2px] border-[#360a25] hover:border-cyan-400/60 text-[9px] font-mono text-cyan-300">ONLINE</span>
       </div>
 
       {/* Module Navigation List */}
@@ -121,7 +121,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
             <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'sast' ? 'text-cyan-300' : 'text-slate-400 group-hover:text-cyan-400'}`}>code_blocks</span>
             <span className={currentTab === 'sast' ? "font-semibold text-cyan-200 truncate" : "truncate"}>SAST (Static)</span>
           </div>
-          <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-[9px] font-bold text-cyan-300">{sastCount} ISSUES</span>
+          <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 border-[2px] border-[#360a25] hover:border-cyan-400/60 text-[9px] font-bold text-cyan-300">{sastCount} ISSUES</span>
         </a>
 
         {/* 9. DAST (Web) */}
@@ -135,7 +135,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
             <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'dast' ? 'text-amber-400' : 'text-slate-400 group-hover:text-amber-400'}`}>language</span>
             <span className={currentTab === 'dast' ? "font-semibold text-amber-200 truncate" : "truncate"}>DAST (Web)</span>
           </div>
-          <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-[9px] font-bold text-amber-300">{dastCount} ISSUES</span>
+          <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border-[2px] border-[#360a25] hover:border-amber-400/60 text-[9px] font-bold text-amber-300">{dastCount} ISSUES</span>
         </a>
 
         {/* 10. SCA (Deps) */}
@@ -149,7 +149,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
             <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'sca' ? 'text-purple-400' : 'text-slate-400 group-hover:text-purple-400'}`}>account_tree</span>
             <span className={currentTab === 'sca' ? "font-semibold text-purple-200 truncate" : "truncate"}>SCA (Deps)</span>
           </div>
-          <span className="px-1.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-[9px] font-bold text-purple-300">{scaCount} ISSUES</span>
+          <span className="px-1.5 py-0.5 rounded bg-purple-500/15 border-[2px] border-[#360a25] hover:border-purple-400/60 text-[9px] font-bold text-purple-300">{scaCount} ISSUES</span>
         </a>
 
         {/* 11. Secrets */}
@@ -163,7 +163,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
             <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'secrets' ? 'text-rose-400' : 'text-slate-400 group-hover:text-rose-400'}`}>vpn_key</span>
             <span className={currentTab === 'secrets' ? "font-semibold text-rose-200 truncate" : "truncate"}>Secrets</span>
           </div>
-          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 text-[9px] font-bold text-rose-300">{secretsCount} LEAKS</span>
+          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 border-[2px] border-[#360a25] hover:border-rose-400/60 text-[9px] font-bold text-rose-300">{secretsCount} LEAKS</span>
         </a>
 
         {/* 12. Setting */}
@@ -187,7 +187,7 @@ export const Sidebar = ({ currentTab, onTabChange }) => {
           <span>PIPELINE HEALTH</span>
           <span className="text-cyan-300 font-bold">99.8%</span>
         </div>
-        <div className="w-full bg-[#0e0212] h-1.5 rounded-full overflow-hidden border border-[#360a25]">
+        <div className="w-full bg-[#0e0212] h-1.5 rounded-full overflow-hidden border-[2px] border-[#360a25]">
           <div className="bg-gradient-to-r from-blue-500 to-cyan-400 h-full w-[94%] shadow-[0_0_8px_#38bdf8]"></div>
         </div>
         <div className="flex items-center justify-between text-[9px] font-mono text-cyan-400/70 mt-1.5">

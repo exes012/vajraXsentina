@@ -52,7 +52,7 @@ export const Capabilities = () => {
   return (
     <div className="space-y-6 animate-fade-in pb-12 font-mono">
       {/* MASTER CYBER HEADER */}
-      <div className="tech-border-card rounded-xl bg-[#060108] border border-cyan-500/30 shadow-[0_0_35px_rgba(6,182,212,0.15)] p-6 backdrop-blur-md">
+      <div className="tech-border-card rounded-xl bg-[#060108] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_35px_rgba(6,182,212,0.15)] p-6 backdrop-blur-md">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#360a25]">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center shadow-[0_0_15px_rgba(56,189,248,0.3)]">
@@ -220,7 +220,7 @@ export const Capabilities = () => {
 
       {/* TAB 2: AI MODEL & GUARDRAILS */}
       {activeTab === 'ai' && (
-        <div className="tech-border-card rounded-xl p-6 bg-[#060108] border border-purple-500/30 shadow-[0_0_25px_rgba(168,85,247,0.15)] space-y-6">
+        <div className="tech-border-card rounded-xl p-6 bg-[#060108] border-[2px] border-[#360a25] hover:border-purple-400/60 shadow-[0_0_25px_rgba(168,85,247,0.15)] space-y-6">
           <div className="flex items-center space-x-3 pb-4 border-b border-[#360a25]">
             <span className="material-symbols-outlined text-3xl text-purple-400">psychology</span>
             <div>
@@ -242,7 +242,7 @@ export const Capabilities = () => {
                 <select
                   value={aiModelSelect}
                   onChange={(e) => setAiModelSelect(e.target.value)}
-                  className="w-full bg-[#0b020e] border border-[#360a25] rounded-lg px-4 py-2.5 text-xs text-cyan-100 focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-[#0b020e] border-[2px] border-[#360a25] rounded-lg px-4 py-2.5 text-xs text-cyan-100 focus:outline-none focus:border-cyan-400"
                 >
                   <option value="gemini-2.5-flash">Gemini 2.5 Flash (Ultra Fast • Recommended)</option>
                   <option value="gemini-2.0-pro">Gemini 2.0 Pro (Deep Reasoning)</option>
@@ -259,7 +259,7 @@ export const Capabilities = () => {
                     type="password"
                     value={apiKeyInput}
                     onChange={(e) => setApiKeyInput(e.target.value)}
-                    className="w-full bg-[#0b020e] border border-[#360a25] rounded-lg px-4 py-2.5 text-xs text-cyan-100 focus:outline-none focus:border-cyan-400"
+                    className="w-full bg-[#0b020e] border-[2px] border-[#360a25] rounded-lg px-4 py-2.5 text-xs text-cyan-100 focus:outline-none focus:border-cyan-400"
                   />
                   <span className="absolute right-3 top-2.5 text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40">
                     KEY VALIDATED
@@ -268,7 +268,7 @@ export const Capabilities = () => {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-purple-950/30 border border-purple-500/30 space-y-3">
+            <div className="p-4 rounded-xl bg-purple-950/30 border-[2px] border-[#360a25] hover:border-purple-400/60 space-y-3">
               <h3 className="font-hud font-bold text-xs text-purple-300 tracking-wider uppercase">
                 ANTI-HALLUCINATION GUARDRAILS ACTIVE
               </h3>
@@ -293,7 +293,7 @@ export const Capabilities = () => {
 
       {/* TAB 3: EXECUTION & AUTO-PURGE POLICY */}
       {activeTab === 'policy' && (
-        <div className="tech-border-card rounded-xl p-6 bg-[#060108] border border-cyan-500/30 shadow-[0_0_25px_rgba(6,182,212,0.15)] space-y-6">
+        <div className="tech-border-card rounded-xl p-6 bg-[#060108] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_25px_rgba(6,182,212,0.15)] space-y-6">
           <div className="flex items-center space-x-3 pb-4 border-b border-[#360a25]">
             <span className="material-symbols-outlined text-3xl text-cyan-400">tune</span>
             <div>
@@ -329,7 +329,7 @@ export const Capabilities = () => {
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-[#0b020e] border border-cyan-500/30 flex items-center justify-between">
+              <div className="p-4 rounded-xl bg-[#0b020e] border-[2px] border-[#360a25] hover:border-cyan-400/60 flex items-center justify-between">
                 <div>
                   <h4 className="font-hud font-bold text-xs text-slate-200 uppercase">
                     AUTO-DELETE RESOLVED VULNERABILITIES
@@ -354,15 +354,15 @@ export const Capabilities = () => {
             </div>
 
             <div className="space-y-3 font-mono text-xs">
-              <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex justify-between">
+              <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] flex justify-between">
                 <span className="text-slate-400">TRIAGE EFFICIENCY GAIN</span>
                 <span className="text-emerald-400 font-bold">+14.2%</span>
               </div>
-              <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex justify-between">
+              <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] flex justify-between">
                 <span className="text-slate-400">DATABASE CACHE TTL</span>
                 <span className="text-cyan-300 font-bold">30 MINUTES</span>
               </div>
-              <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] flex justify-between">
+              <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] flex justify-between">
                 <span className="text-slate-400">HTTP ADAPTER TIMEOUT</span>
                 <span className="text-cyan-300 font-bold">60 SECONDS</span>
               </div>
@@ -373,7 +373,7 @@ export const Capabilities = () => {
 
       {/* TAB 4: SUPPORTED ECOSYSTEMS */}
       {activeTab === 'ecosystems' && (
-        <div className="tech-border-card rounded-xl p-6 bg-[#060108] border border-cyan-500/30 shadow-[0_0_25px_rgba(6,182,212,0.15)] space-y-6">
+        <div className="tech-border-card rounded-xl p-6 bg-[#060108] border-[2px] border-[#360a25] hover:border-cyan-400/60 shadow-[0_0_25px_rgba(6,182,212,0.15)] space-y-6">
           <div className="flex items-center space-x-3 pb-4 border-b border-[#360a25]">
             <span className="material-symbols-outlined text-3xl text-cyan-400">code_blocks</span>
             <div>
@@ -403,7 +403,7 @@ export const Capabilities = () => {
             ].map((ecosystem) => (
               <div
                 key={ecosystem}
-                className="p-3 rounded-lg bg-[#0b020e] border border-cyan-500/30 flex items-center space-x-2 text-xs font-bold text-cyan-300"
+                className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-cyan-400/60 flex items-center space-x-2 text-xs font-bold text-cyan-300"
               >
                 <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0" />
                 <span className="truncate">{ecosystem}</span>

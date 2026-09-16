@@ -12,12 +12,12 @@ export const Navbar = ({ onNewAssessmentClick }) => {
         <img 
           src="/sentinal_logo.png" 
           alt="SENTINAL Logo" 
-          className="w-10 h-10 rounded-lg border border-cyan-400/50 object-cover shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+          className="w-10 h-10 rounded-lg border-[2px] border-[#360a25] hover:border-cyan-400/60 object-cover shadow-[0_0_15px_rgba(6,182,212,0.4)]"
         />
         <div>
           <div className="flex items-center space-x-2">
             <span className="font-hud font-bold tracking-widest text-lg text-white">SENTINEL</span>
-            <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono border border-cyan-500/30">V3.4 CORE</span>
+            <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono border-[2px] border-[#360a25] hover:border-cyan-400/60">V3.4 CORE</span>
           </div>
           <p className="text-[11px] font-mono text-cyan-400/70 tracking-wider">SECURE TELEMETRY & POSTURE VISUALIZATION</p>
         </div>
@@ -42,7 +42,7 @@ export const Navbar = ({ onNewAssessmentClick }) => {
       <div className="flex items-center space-x-3">
         <button 
           onClick={onNewAssessmentClick}
-          className="relative px-3 py-1.5 rounded text-xs font-mono font-semibold tracking-wider uppercase bg-cyan-950/80 border border-cyan-400/50 hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-300 flex items-center space-x-1.5 transition-all shadow-[0_0_15px_rgba(6,182,212,0.25)] group"
+          className="relative px-3 py-1.5 rounded text-xs font-mono font-semibold tracking-wider uppercase bg-cyan-950/80 border-[2px] border-[#360a25] hover:border-cyan-400/60 hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-300 flex items-center space-x-1.5 transition-all shadow-[0_0_15px_rgba(6,182,212,0.25)] group"
         >
           <span className="material-symbols-outlined text-[15px] text-cyan-400 group-hover:rotate-90 transition-transform">add</span>
           <span>NEW SCAN</span>
@@ -50,7 +50,7 @@ export const Navbar = ({ onNewAssessmentClick }) => {
         </button>
 
         <button 
-          className="relative p-1.5 rounded bg-cyan-950/80 border border-cyan-400/50 hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-300 flex items-center justify-center transition-all shadow-[0_0_15px_rgba(6,182,212,0.25)] group" 
+          className="relative p-1.5 rounded bg-cyan-950/80 border-[2px] border-[#360a25] hover:border-cyan-400/60 hover:border-cyan-400 hover:bg-cyan-500/20 text-cyan-300 flex items-center justify-center transition-all shadow-[0_0_15px_rgba(6,182,212,0.25)] group" 
           title="System Notifications"
         >
           <svg className="w-5 h-5 text-cyan-400 group-hover:text-cyan-200 transition-colors drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -64,7 +64,7 @@ export const Navbar = ({ onNewAssessmentClick }) => {
         </button>
 
         <div className="flex items-center space-x-2 pl-2 border-l border-[#360a25] text-xs font-mono">
-          <div className="w-7 h-7 rounded-full bg-slate-800 border border-[#360a25] flex items-center justify-center text-cyan-400 font-bold">
+          <div className="w-7 h-7 rounded-full bg-slate-800 border-[2px] border-[#360a25] flex items-center justify-center text-cyan-400 font-bold">
             {user?.username?.charAt(0).toUpperCase() || 'A'}
           </div>
           <span className="text-slate-300 hidden lg:inline">{user?.username || 'admin.sentinel'}</span>

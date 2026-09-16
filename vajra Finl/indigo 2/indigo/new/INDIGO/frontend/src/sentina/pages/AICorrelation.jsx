@@ -120,7 +120,7 @@ result = await db.execute(stmt, {"uid": user_input})`,
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="tech-border-card rounded-xl p-5 bg-[#060108] border border-purple-500/30 shadow-[0_0_30px_rgba(139,92,246,0.2)]">
+      <div className="tech-border-card rounded-xl p-5 bg-[#060108] border-[2px] border-[#360a25] hover:border-purple-400/60 shadow-[0_0_30px_rgba(139,92,246,0.2)]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#360a25]">
           <div>
             <div className="flex items-center space-x-3">
@@ -152,12 +152,12 @@ result = await db.execute(stmt, {"uid": user_input})`,
               <div className="bg-gradient-to-r from-purple-500 to-cyan-400 h-full w-[99.4%] shadow-[0_0_6px_#c084fc]"></div>
             </div>
           </div>
-          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25]">
+          <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25]">
             <span className="text-slate-400 block text-[10px] uppercase">Correlated Threats</span>
             <span className="text-cyan-300 font-hud font-bold text-lg">4 VECTORS</span>
             <span className="text-[10px] text-cyan-400/70 block mt-0.5">FULL CORRELATION</span>
           </div>
-          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25]">
+          <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25]">
             <span className="text-slate-400 block text-[10px] uppercase">Auto-Patches Ready</span>
             <span className="text-emerald-400 font-hud font-bold text-lg">
               {4 - fixedRemedies.length} / 4 REMAINING
@@ -166,7 +166,7 @@ result = await db.execute(stmt, {"uid": user_input})`,
               {fixedRemedies.length} APPLIED
             </span>
           </div>
-          <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25]">
+          <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25]">
             <span className="text-slate-400 block text-[10px] uppercase">Alert Fatigue Reduction</span>
             <span className="text-cyan-300 font-hud font-bold text-lg">-84.2%</span>
             <span className="text-[10px] text-slate-400 block mt-0.5">ROOT CAUSE DEDUP</span>
@@ -224,7 +224,7 @@ result = await db.execute(stmt, {"uid": user_input})`,
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleCopyCode(rem.id, rem.codeSnippet)}
-                      className="px-3 py-1.5 rounded-lg bg-[#0b020e] border border-cyan-500/30 text-xs font-mono text-cyan-300 hover:bg-cyan-950 hover:border-cyan-400 transition-colors flex items-center space-x-1.5"
+                      className="px-3 py-1.5 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] hover:border-cyan-400/60 text-xs font-mono text-cyan-300 hover:bg-cyan-950 hover:border-cyan-400 transition-colors flex items-center space-x-1.5"
                     >
                       <span className="material-symbols-outlined text-[15px]">content_copy</span>
                       <span>{copiedId === rem.id ? 'COPIED!' : 'COPY FIX CODE'}</span>
@@ -260,7 +260,7 @@ result = await db.execute(stmt, {"uid": user_input})`,
                       <p className="text-slate-400 text-xs mt-1 leading-relaxed">{rem.description}</p>
                     </div>
 
-                    <div className="p-3 rounded-lg bg-[#0b020e] border border-[#360a25] space-y-1.5 text-[11px]">
+                    <div className="p-3 rounded-lg bg-[#0b020e] border-[2px] border-[#360a25] space-y-1.5 text-[11px]">
                       <div className="flex justify-between">
                         <span className="text-slate-400">VECTOR:</span>
                         <span className="text-cyan-300 font-bold">{rem.vector}</span>
@@ -271,7 +271,7 @@ result = await db.execute(stmt, {"uid": user_input})`,
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-lg bg-purple-950/40 border border-purple-500/30 text-purple-200">
+                    <div className="p-3 rounded-lg bg-purple-950/40 border-[2px] border-[#360a25] hover:border-purple-400/60 text-purple-200">
                       <span className="font-bold block text-[10px] text-purple-400 uppercase tracking-wider mb-1">
                         AI REMEDIATION PLAN:
                       </span>
@@ -281,7 +281,7 @@ result = await db.execute(stmt, {"uid": user_input})`,
 
                   {/* Right Code Box */}
                   <div className="lg:col-span-7">
-                    <div className="flex items-center justify-between px-3 py-2 bg-[#0b020e] border border-[#360a25] rounded-t-lg text-[10px] text-cyan-400 font-bold">
+                    <div className="flex items-center justify-between px-3 py-2 bg-[#0b020e] border-[2px] border-[#360a25] rounded-t-lg text-[10px] text-cyan-400 font-bold">
                       <div className="flex items-center space-x-2">
                         <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
                         <span>GENERATED FIX PATCH CODE</span>
