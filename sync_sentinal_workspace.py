@@ -8,7 +8,10 @@ dst_fe = root / 'vajra Finl' / 'indigo 2' / 'indigo' / 'new' / 'INDIGO' / 'front
 
 # 1. Sync Frontend
 print("Syncing Frontend...")
+dst_fe.mkdir(parents=True, exist_ok=True)
+
 for dirpath, dirnames, filenames in os.walk(src_fe):
+    if 'node_modules' in dirpath: continue
     rel = Path(dirpath).relative_to(src_fe)
     target_dir = dst_fe / rel
     target_dir.mkdir(parents=True, exist_ok=True)

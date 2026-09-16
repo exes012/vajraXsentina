@@ -1,36 +1,23 @@
-const RAW_API_URL = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_URL) ? process.env.NEXT_PUBLIC_API_URL : 'https://vajraxsentina-i7r5.onrender.com';
-const API_BASE = RAW_API_URL.replace(/\/+$/, '').replace(/\/api$/, '') + '/api';
-const BACKEND_FALLBACK = 'https://vajraxsentina-i7r5.onrender.com/api';
+const API_BASE = (typeof window !== 'undefined' && (window.location.hostname.includes('render.com') || window.location.hostname.includes('netlify.app') || window.location.hostname.includes('vercel.app')))
+  ? 'https://vajraxsentina-i7r5.onrender.com/api'
+  : (import.meta.env?.VITE_API_URL || '/api');
 
 export const apiClient = {
   getToken() {
-    if (typeof window === 'undefined') return '';
-    const sentinaToken = localStorage.getItem('sentinal_token');
-    if (sentinaToken) return sentinaToken;
-
-    try {
-      const authStorage = localStorage.getItem('auth-storage');
-      if (authStorage) {
-        const parsed = JSON.parse(authStorage);
-        if (parsed?.state?.token) return parsed.state.token;
-      }
-    } catch (e) {}
-
-    return '';
+    return localStorage.getItem('sentinal_token') || '';
   },
 
   setToken(token) {
-    if (typeof window === 'undefined') return;
     localStorage.setItem('sentinal_token', token);
   },
 
   removeToken() {
-    if (typeof window === 'undefined') return;
     localStorage.removeItem('sentinal_token');
   },
 
-  async request(endpoint, options = {}, isRetry = false) {
-    let token = this.getToken();
+  async request(endpoint, options = {}) {
+    const url = `${API_BASE}${endpoint}`;
+    const token = this.getToken();
 
     const headers = {
       'Content-Type': 'application/json',
@@ -39,87 +26,41 @@ export const apiClient = {
     };
 
     if (options.body instanceof FormData) {
-      delete headers['Content-Type'];
+      delete headers['Content-Type']; // Let browser set boundary
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000);
+    try {
+      const res = await fetch(url, {
+        ...options,
+        headers
+      });
 
-    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-    const urlsToTry = [
-      `${API_BASE}${endpoint}`,
-      `${BACKEND_FALLBACK}${endpoint}`,
-      `https://vajraxsentina-i7r5.onrender.com/api${endpoint}`,
-      `https://vajraxsentina-1.onrender.com/api${endpoint}`,
-      `https://vajraxsentina.onrender.com/api${endpoint}`,
-      ...(isLocalhost ? [
-        `http://127.0.0.1:8000/api${endpoint}`,
-        `http://localhost:8000/api${endpoint}`
-      ] : [])
-    ].filter((v, idx, arr) => arr.indexOf(v) === idx);
-
-    let lastError = null;
-
-    for (const url of urlsToTry) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-      try {
-        const res = await fetch(url, {
-          ...options,
-          headers,
-          signal: options.signal || controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        if (res.status === 401 && !isRetry && endpoint !== '/auth/login' && endpoint !== '/auth/register') {
-          console.warn('Authentication token expired or invalid, auto-refreshing admin session...');
-          try {
-            const authRes = await fetch(`${API_BASE}/auth/login`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: 'admin@sentinal.security', username: 'admin', password: 'admin123' })
-            });
-            if (authRes.ok) {
-              const authData = await authRes.json();
-              const newToken = authData.access_token || authData.token;
-              if (newToken) {
-                this.setToken(newToken);
-                return this.request(endpoint, options, true);
-              }
-            }
-          } catch (authErr) {
-            console.warn('Auto-login notice:', authErr);
-          }
-        }
-
-        if (res.status === 204) {
-          return null;
-        }
-
-        if (res.ok) {
-          return await res.json();
-        }
-
-        const data = await res.json().catch(() => ({ detail: `Request failed with status ${res.status}` }));
-        throw new Error(data.detail || `Request failed with status ${res.status}`);
-      } catch (err) {
-        clearTimeout(timeoutId);
-        lastError = err;
+      if (res.status === 401) {
+        // Unauthenticated
+        console.warn('Unauthorized request');
       }
-    }
 
-    console.warn(`API fallback exhausted on [${options.method || 'GET'} ${endpoint}]:`, lastError?.message || lastError);
-    throw lastError;
+      if (res.status === 204) {
+        return null;
+      }
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || `Request failed with status ${res.status}`);
+      }
+
+      return data;
+    } catch (err) {
+      console.error(`API Error on [${options.method || 'GET'} ${endpoint}]:`, err);
+      throw err;
+    }
   },
 
   // Auth
   login(username, password) {
-    const userStr = username || 'admin';
-    const emailStr = userStr.includes('@') ? userStr : `${userStr}@sentinal.security`;
     return this.request('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username: userStr, email: emailStr, password })
+      body: JSON.stringify({ username, password })
     });
   },
 
@@ -152,87 +93,12 @@ export const apiClient = {
     });
   },
 
-  // Assets (Target Web Applications, Repos, Domains)
-  getAssets(projectId = null) {
-    const query = projectId ? `?project_id=${projectId}` : '';
-    return this.request(`/assets${query}`);
-  },
-
-  getAsset(id) {
-    return this.request(`/assets/${id}`);
-  },
-
-  createAsset(asset) {
-    return this.request('/assets', {
-      method: 'POST',
-      body: JSON.stringify(asset)
-    });
-  },
-
-  verifyAsset(id, method = 'ANALYST_AUTHORIZATION', notes = '') {
-    return this.request(`/assets/${id}/verify`, {
-      method: 'POST',
-      body: JSON.stringify({ method, notes })
-    });
-  },
-
-  getAssetAssessments(assetId) {
-    return this.request(`/assets/${assetId}/assessments`);
-  },
-
-  compareAssetAssessments(assetId, asm1, asm2) {
-    return this.request(`/assets/${assetId}/compare?asm1=${asm1}&asm2=${asm2}`);
-  },
-
-  deleteAsset(id) {
-    return this.request(`/assets/${id}`, {
-      method: 'DELETE'
-    });
-  },
-
-  // Repositories & GitHub Integration
+  // Repositories
   validateGitHub(url, branch = 'main', token = '') {
     return this.request('/repositories/github/validate', {
       method: 'POST',
       body: JSON.stringify({ url, branch, token: token || null })
     });
-  },
-
-  fetchRepoTree(url, branch = 'main', token = '') {
-    return this.request('/repositories/github/tree', {
-      method: 'POST',
-      body: JSON.stringify({ url, branch, token: token || null })
-    });
-  },
-
-  scanGitHubRepo(url, branch = 'main', token = '', companyName = null, syncToModel = true) {
-    return this.request('/repositories/github/scan', {
-      method: 'POST',
-      body: JSON.stringify({
-        url,
-        branch,
-        token: token || null,
-        company_name: companyName,
-        sync_to_model: syncToModel
-      })
-    });
-  },
-
-  syncRepoToModel(repoUrl, scanSummary, findings, dependencies = [], companyName = null) {
-    return this.request('/repositories/github/sync-to-model', {
-      method: 'POST',
-      body: JSON.stringify({
-        repo_url: repoUrl,
-        scan_summary: scanSummary,
-        findings,
-        dependencies,
-        company_name: companyName
-      })
-    });
-  },
-
-  getScannedRepositories() {
-    return this.request('/repositories/list');
   },
 
   uploadSourceZip(file) {
@@ -244,72 +110,6 @@ export const apiClient = {
     });
   },
 
-  // AI Threat Intelligence & Model Ingestion
-  getAIModelFeed() {
-    return this.request('/ai/model-feed');
-  },
-
-  generateAIThreatModel(repoUrl, branch = 'main', token = '', companyName = null) {
-    return this.request('/ai/repo-threat-model', {
-      method: 'POST',
-      body: JSON.stringify({
-        repo_url: repoUrl,
-        branch,
-        token: token || null,
-        company_name: companyName
-      })
-    });
-  },
-
-  runUnifiedAIAnalysis(target, targetType = 'repo', token = '', customContext = null) {
-    return this.request('/ai/unified-analysis', {
-      method: 'POST',
-      body: JSON.stringify({
-        target,
-        target_type: targetType,
-        token: token || null,
-        custom_context: customContext
-      })
-    });
-  },
-
-  // Scans (Dedicated Real-time Live Scan API Contract)
-  startScan(payload) {
-    return this.request('/scans', {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
-  },
-
-  getScan(scanId) {
-    return this.request(`/scans/${scanId}`);
-  },
-
-  getScanStatus(scanId) {
-    return this.request(`/scans/${scanId}/status`);
-  },
-
-  getScanFindings(scanId, params = {}) {
-    const query = new URLSearchParams();
-    Object.entries(params).forEach(([key, val]) => {
-      if (val !== undefined && val !== null && val !== '') {
-        query.append(key, val);
-      }
-    });
-    const qs = query.toString() ? `?${query.toString()}` : '';
-    return this.request(`/scans/${scanId}/findings${qs}`);
-  },
-
-  getScanReport(scanId) {
-    return this.request(`/scans/${scanId}/report`);
-  },
-
-  cancelScan(scanId) {
-    return this.request(`/scans/${scanId}/cancel`, {
-      method: 'POST'
-    });
-  },
-
   // Assessments
   startAssessment(assessment) {
     return this.request('/assessments', {
@@ -318,12 +118,9 @@ export const apiClient = {
     });
   },
 
-  getAssessments(projectId = null, assetId = null) {
-    const query = new URLSearchParams();
-    if (projectId) query.append('project_id', projectId);
-    if (assetId) query.append('asset_id', assetId);
-    const qs = query.toString() ? `?${query.toString()}` : '';
-    return this.request(`/assessments${qs}`);
+  getAssessments(projectId = null) {
+    const query = projectId ? `?project_id=${projectId}` : '';
+    return this.request(`/assessments${query}`);
   },
 
   getAssessment(id) {
@@ -348,9 +145,8 @@ export const apiClient = {
 
   // Findings
   getFindings(params = {}) {
-    const defaultParams = { limit: 500, ...params };
     const query = new URLSearchParams();
-    Object.entries(defaultParams).forEach(([key, val]) => {
+    Object.entries(params).forEach(([key, val]) => {
       if (val !== undefined && val !== null && val !== '') {
         query.append(key, val);
       }
@@ -369,45 +165,43 @@ export const apiClient = {
     });
   },
 
-  // Reports
-  getReports(projectId = null) {
-    const qs = projectId ? `?project_id=${projectId}` : '';
-    return this.request(`/reports${qs}`);
+  deleteFinding(id) {
+    return this.request(`/findings/${id}`, {
+      method: 'DELETE'
+    });
   },
 
+  // Reports
   getReport(assessmentId) {
     return this.request(`/reports/${assessmentId}`);
-  },
-
-  generateReport(assessmentId = null) {
-    const endpoint = assessmentId ? `/reports/${assessmentId}/generate` : '/reports/generate';
-    return this.request(endpoint, {
-      method: 'POST'
-    });
   },
 
   getExportUrl(assessmentId, format = 'html') {
     return `${API_BASE}/reports/${assessmentId}/export?format=${format}`;
   },
 
-  async downloadReportFile(assessmentId, format = 'html') {
-    const token = this.getToken();
-    const url = `${API_BASE}/reports/${assessmentId}/export?format=${format}`;
-    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    
-    const res = await fetch(url, { headers });
-    if (!res.ok) {
-      throw new Error(`Failed to download ${format.toUpperCase()} report: ${res.statusText}`);
-    }
-    const blob = await res.blob();
-    const downloadUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = `Sentina_Audit_Report_${assessmentId}.${format}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(downloadUrl);
+  // Assets
+  getAssets(projectId = null) {
+    const query = projectId ? `?project_id=${projectId}` : '';
+    return this.request(`/assets${query}`);
+  },
+
+  verifyAsset(projectId, url) {
+    return this.request('/assets/verify', {
+      method: 'POST',
+      body: JSON.stringify({ project_id: projectId, url })
+    });
+  },
+
+  runTargetDiagnostics(url, customHeaders = null) {
+    return this.request('/assets/diagnostics', {
+      method: 'POST',
+      body: JSON.stringify({ url, custom_headers: customHeaders })
+    });
+  },
+
+  getAssetDetails(assetId) {
+    return this.request(`/assets/${assetId}`);
   },
 
   // Dashboard & Health

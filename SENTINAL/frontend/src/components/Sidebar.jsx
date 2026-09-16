@@ -1,433 +1,199 @@
-'use client'
 import React, { useState, useEffect } from 'react';
-import {
-  LayoutDashboard,
-  Target,
-  ShieldCheck,
-  Server,
-  AlertTriangle,
-  Code2,
-  Radio,
-  Boxes,
-  KeyRound,
-  Globe2,
-  Cpu,
-  FileText,
-  Settings,
-  ChevronDown
-} from 'lucide-react';
-import { dashboardService } from '../services/dashboardService';
-import { calculateModuleScores, getScorePosture } from '../utils/securityScore';
+import { apiClient } from '../api/client';
 
-export function Sidebar({ currentTab, onTabChange, isCollapsed }) {
-  const [moduleScores, setModuleScores] = useState(() => {
-    const initFindings = dashboardService.getInitialFindings();
-    const initCorr = dashboardService.correlatedRisks || [];
-    return calculateModuleScores(initFindings, initCorr);
-  });
-  const [totalFindingsCount, setTotalFindingsCount] = useState(() => {
-    return dashboardService.getInitialFindings().length;
-  });
+export const Sidebar = ({ currentTab, onTabChange }) => {
+  const [secretsCount, setSecretsCount] = useState(14);
+  const [dastCount, setDastCount] = useState(31);
+  const [sastCount, setSastCount] = useState(73);
+  const [scaCount, setScaCount] = useState(5);
+  const [openAlertsCount, setOpenAlertsCount] = useState(181);
+
+  const fetchSidebarMetrics = async () => {
+    try {
+      const data = await apiClient.getDashboard();
+      if (data) {
+        if (data.secrets_count !== undefined) setSecretsCount(data.secrets_count || 14);
+        if (data.dast_issues_count !== undefined) setDastCount(data.dast_issues_count || 31);
+        if (data.sast_issues_count !== undefined) setSastCount(data.sast_issues_count || 73);
+        if (data.vulnerable_dependencies_count !== undefined) setScaCount(data.vulnerable_dependencies_count || 5);
+        if (data.severity_distribution) {
+          const totalOpen = (data.severity_distribution.CRITICAL || 0) + 
+                            (data.severity_distribution.HIGH || 0) + 
+                            (data.severity_distribution.MEDIUM || 0) + 
+                            (data.severity_distribution.LOW || 0);
+          setOpenAlertsCount(totalOpen || 181);
+        }
+      }
+    } catch (e) {}
+  };
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadTelemetry() {
-      try {
-        const [findings, correlated] = await Promise.all([
-          dashboardService.getFindings({ all: true }).catch(() => []),
-          dashboardService.getCorrelatedRisks().catch(() => [])
-        ]);
-
-        if (isMounted) {
-          const findingsList = Array.isArray(findings) ? findings : [];
-          const corrList = Array.isArray(correlated) ? correlated : [];
-          const computed = calculateModuleScores(findingsList, corrList);
-          setModuleScores(computed);
-          setTotalFindingsCount(findingsList.length);
-        }
-      } catch (e) {
-        // Safe fallback
-      }
-    }
-
-    loadTelemetry();
-    const unsubscribe = dashboardService.subscribe(loadTelemetry);
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
+    fetchSidebarMetrics();
+    const handleRefresh = () => fetchSidebarMetrics();
+    window.addEventListener('sentinal_findings_updated', handleRefresh);
+    return () => window.removeEventListener('sentinal_findings_updated', handleRefresh);
   }, []);
 
-  const navSections = [
-    {
-      label: 'COMMAND',
-      items: [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'assessments', label: 'Assessments', icon: Target },
-        { id: 'assets', label: 'Assets', icon: Server },
-        { id: 'findings', label: 'Findings', icon: AlertTriangle, badge: totalFindingsCount > 0 ? totalFindingsCount : null }
-      ]
-    },
-    {
-      label: 'SCANNER ENGINES',
-      items: [
-        { id: 'sast', label: 'SAST (Static Code)', icon: Code2, color: '#00f2fe' },
-        { id: 'dast', label: 'DAST (Web App)', icon: Radio, color: '#f97316' },
-        { id: 'sca', label: 'SCA (Dependencies)', icon: Boxes, color: '#00ff88' },
-        { id: 'secrets', label: 'Secret Detection', icon: KeyRound, color: '#ff1744' }
-      ]
-    },
-    {
-      label: 'GOVERNANCE',
-      items: [
-        { id: 'reports', label: 'Reports & Audits', icon: FileText },
-        { id: 'settings', label: 'Settings', icon: Settings }
-      ]
-    }
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', statusLabel: 'LIVE', statusColor: 'cyan', isPulse: true },
+    { id: 'assessments', label: 'Assessment', icon: 'fact_check', subtitle: 'SYS.01' },
+    { id: 'findings', label: 'Finding Explorer', icon: 'travel_explore', badgeLabel: `${openAlertsCount} ALERTS`, badgeColor: 'rose' },
+    { id: 'reports', label: 'Security Reports', icon: 'assessment', subtitle: 'PDF/CSV' },
+    { id: 'capabilities', label: 'Engine Matrix', icon: 'grid_view', subtitle: 'SYNC' },
   ];
 
-  return (
-    <aside
-      style={{
-        width: isCollapsed ? '64px' : '236px',
-        backgroundColor: '#040005',
-        borderRight: '2.5px solid #360a25',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'sticky',
-        top: 0,
-        height: '100vh',
-        zIndex: 50,
-        userSelect: 'none',
-        boxShadow: '4px 0 24px rgba(0, 0, 0, 0.8)',
-        transition: 'width 0.2s ease'
-      }}
-    >
-      {/* Brand Header */}
-      <div
-        onClick={() => onTabChange('dashboard')}
-        style={{
-          height: '46px',
-          padding: isCollapsed ? '0' : '0 12px',
-          borderBottom: '2px solid #360a25',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: isCollapsed ? 'center' : 'flex-start',
-          gap: '10px',
-          cursor: 'pointer',
-          background: '#040005',
-          flexShrink: 0
-        }}
-      >
-        <div
-          style={{
-            width: '28px',
-            height: '28px',
-            borderRadius: '7px',
-            overflow: 'hidden',
-            border: '1.5px solid #ff1744',
-            boxShadow: '0 0 10px rgba(255, 23, 68, 0.55)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            background: '#040005'
-          }}
-        >
-          <img
-            src="/sentina-logo.png"
-            alt="Sentina Cyber Security"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover'
-            }}
-          />
-        </div>
+  const renderMenuItem = (item) => {
+    const isActive = currentTab === item.id;
+    
+    // Active classes vs Inactive classes
+    const containerClasses = isActive
+      ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-transparent border-l-4 border-l-cyan-400 border-y border-r border-cyan-400/30 text-white shadow-[inset_0_0_15px_rgba(6,182,212,0.15)] transition-all cursor-pointer"
+      : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer";
+      
+    const iconColor = isActive 
+      ? "text-cyan-300" 
+      : (item.iconColor === 'purple' ? 'text-purple-400 group-hover:text-purple-300' : 'text-slate-400 group-hover:text-cyan-400');
+      
+    const textClasses = isActive ? "font-semibold tracking-wide text-cyan-200 truncate" : "truncate";
 
-        {!isCollapsed && (
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: '13px', fontWeight: 900, letterSpacing: '1px', color: '#ffffff', lineHeight: 1.1 }}>
-              SENTINA
-            </div>
-            <div style={{ fontSize: '7.5px', fontWeight: 800, color: '#ff1744', marginTop: '1px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-              SECURE • ANALYZE • PREDICT
-            </div>
-          </div>
+    return (
+      <a key={item.id} onClick={() => onTabChange(item.id)} className={containerClasses}>
+        <div className="flex items-center space-x-2.5 min-w-0">
+          <span className={`material-symbols-outlined text-[17px] transition-colors ${iconColor}`}>{item.icon}</span>
+          <span className={textClasses}>{item.label}</span>
+        </div>
+        
+        {item.statusLabel && (
+          <span className="flex items-center space-x-1">
+            <span className={`w-1.5 h-1.5 rounded-full bg-${item.statusColor}-400 ${item.isPulse ? 'animate-pulse' : ''} shadow-[0_0_6px_#38bdf8]`}></span>
+            <span className={`text-[9px] text-${item.statusColor}-400/80 font-bold uppercase`}>{item.statusLabel}</span>
+          </span>
         )}
+        
+        {item.subtitle && !isActive && (
+          <span className="text-[10px] text-slate-500 font-mono group-hover:text-cyan-400">{item.subtitle}</span>
+        )}
+        
+        {item.badgeLabel && (
+          <span className={`px-1.5 py-0.5 rounded bg-${item.badgeColor}-500/15 border border-${item.badgeColor}-500/30 text-[9px] ${item.iconColor === 'purple' ? 'font-bold' : ''} text-${item.badgeColor}-300`}>
+            {item.badgeLabel}
+          </span>
+        )}
+      </a>
+    );
+  };
+
+  return (
+    <aside className="w-full flex-shrink-0 tech-border-card rounded-xl border border-cyan-500/25 bg-command-900/95 backdrop-blur-md shadow-[0_0_40px_rgba(2,6,23,0.85)] sticky top-20 z-30 lg:w-72 p-4" data-purpose="platform-modules-sidebar">
+      {/* Sidebar Header / Module Crest */}
+      <div className="flex items-center justify-between pb-3 border-b border-cyan-900/50 mb-4">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-2.5 h-2.5 bg-cyan-400 rounded-sm shadow-[0_0_8px_#38bdf8]"></div>
+          <div>
+            <span className="font-hud font-bold tracking-widest text-xs uppercase text-white drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]">PLATFORM MODULES</span>
+            <span className="block text-[9px] font-mono text-cyan-400/70 tracking-wider">NAV // V3.4 SUBSYSTEMS</span>
+          </div>
+        </div>
+        <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-[9px] font-mono text-cyan-300">ONLINE</span>
       </div>
 
-      {/* Navigation Groups */}
-      <nav
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '12px 10px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '14px'
-        }}
-      >
-        {navSections.map((section, sIdx) => (
-          <div key={sIdx} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-            {!isCollapsed && (
-              <div
-                style={{
-                  fontSize: '9px',
-                  fontWeight: 900,
-                  fontFamily: 'var(--font-mono)',
-                  color: '#71717a',
-                  letterSpacing: '1px',
-                  padding: '2px 8px 4px 8px',
-                  textTransform: 'uppercase'
-                }}
-              >
-                {section.label}
-              </div>
-            )}
+      {/* Module Navigation List */}
+      <nav className="space-y-1 font-mono text-xs max-h-[calc(100vh-210px)] overflow-y-auto hud-scrollbar pr-1">
+        {menuItems.map(renderMenuItem)}
 
-            {section.items.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentTab === item.id;
-              const iconAccent = item.color || (isActive ? '#ff1744' : '#71717a');
-              const engineMeta = moduleScores[item.id];
-              const hasScore = Boolean(engineMeta && typeof engineMeta.score === 'number');
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onTabChange(item.id)}
-                  title={isCollapsed ? `${item.label} ${hasScore ? `(Score: ${engineMeta.score}/100 - ${engineMeta.findings} findings)` : ''}` : undefined}
-                  style={{
-                    width: '100%',
-                    minHeight: '34px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: isCollapsed ? 'center' : 'space-between',
-                    gap: '8px',
-                    padding: isCollapsed ? '0' : '0 8px',
-                    borderRadius: '6px',
-                    background: isActive
-                      ? 'linear-gradient(90deg, rgba(255, 23, 68, 0.22) 0%, rgba(136, 8, 21, 0.08) 100%)'
-                      : 'transparent',
-                    border: isActive ? '1.5px solid #ff1744' : '1.5px solid transparent',
-                    boxShadow: isActive ? '0 0 16px rgba(255, 23, 68, 0.35)' : 'none',
-                    color: isActive ? '#ffffff' : '#a1a1aa',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    position: 'relative',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'rgba(255, 23, 68, 0.08)';
-                      e.currentTarget.style.color = '#f8fafc';
-                      e.currentTarget.style.borderColor = 'rgba(255, 23, 68, 0.3)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = '#a1a1aa';
-                      e.currentTarget.style.borderColor = 'transparent';
-                    }
-                  }}
-                >
-                  {/* Left Accent Indicator */}
-                  {isActive && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: '-2px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        width: '3.5px',
-                        height: '18px',
-                        borderRadius: '0 2px 2px 0',
-                        background: '#ff1744',
-                        boxShadow: '0 0 8px #ff1744'
-                      }}
-                    />
-                  )}
-
-                  {/* Icon & Label */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
-                    <div
-                      style={{
-                        width: '18px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}
-                    >
-                      <Icon
-                        size={15}
-                        color={isActive ? '#ff1744' : iconAccent}
-                        strokeWidth={isActive ? 2.5 : 2}
-                        style={{
-                          filter: isActive ? 'drop-shadow(0 0 6px #ff1744)' : 'none'
-                        }}
-                      />
-                    </div>
-
-                    {!isCollapsed && (
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: isActive ? 800 : 600,
-                          letterSpacing: '0.2px',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {item.label}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Right Findings Count Badge */}
-                  {!isCollapsed && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                      {hasScore ? (
-                        <span
-                          style={{
-                            fontSize: '9.5px',
-                            fontFamily: 'var(--font-mono)',
-                            fontWeight: 900,
-                            color: engineMeta.findings > 0
-                              ? (engineMeta.findings >= 50 ? '#ff1744' : engineMeta.findings >= 10 ? '#f97316' : '#fbbf24')
-                              : '#00ff88',
-                            background: engineMeta.findings > 0
-                              ? (engineMeta.findings >= 50 ? 'rgba(255, 23, 68, 0.15)' : engineMeta.findings >= 10 ? 'rgba(249, 115, 22, 0.15)' : 'rgba(251, 191, 36, 0.15)')
-                              : 'rgba(0, 255, 136, 0.12)',
-                            border: `1.2px solid ${engineMeta.findings > 0 ? (engineMeta.findings >= 50 ? '#ff1744' : engineMeta.findings >= 10 ? '#f97316' : '#fbbf24') : '#00ff88'}60`,
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                            minWidth: '22px',
-                            textAlign: 'center',
-                            boxShadow: `0 0 6px ${engineMeta.findings > 0 ? '#ff174430' : '#00ff8830'}`
-                          }}
-                          title={`${engineMeta.findings} vulnerabilities detected (Security Score: ${engineMeta.score}/100 - ${engineMeta.posture.label})`}
-                        >
-                          {engineMeta.findings}
-                        </span>
-                      ) : item.badge ? (
-                        <span
-                          style={{
-                            fontSize: '9px',
-                            fontFamily: 'var(--font-mono)',
-                            fontWeight: 800,
-                            color: '#ff1744',
-                            background: 'rgba(255, 23, 68, 0.15)',
-                            border: '1px solid rgba(255, 23, 68, 0.35)',
-                            padding: '1px 5px',
-                            borderRadius: '4px'
-                          }}
-                        >
-                          {item.badge}
-                        </span>
-                      ) : null}
-                    </div>
-                  )}
-
-                  {/* Collapsed Status Dot */}
-                  {isCollapsed && hasScore && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '4px',
-                        right: '4px',
-                        width: '6px',
-                        height: '6px',
-                        borderRadius: '50%',
-                        backgroundColor: engineMeta.posture.color,
-                        boxShadow: `0 0 6px ${engineMeta.posture.color}`
-                      }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      {/* Bottom User Profile Section */}
-      {!isCollapsed && (
-        <div
-          style={{
-            padding: '10px 12px',
-            borderTop: '2px solid #28081c',
-            background: '#040005',
-            flexShrink: 0
-          }}
-        >
-          <div
-            style={{
-              padding: '6px 10px',
-              borderRadius: '6px',
-              background: '#060108',
-              border: '1.5px solid #360a25',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              cursor: 'pointer'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ position: 'relative' }}>
-                <div
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #ff1744 0%, #99001a 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '9.5px',
-                    fontWeight: 900,
-                    color: '#ffffff',
-                    boxShadow: '0 0 8px rgba(255, 23, 68, 0.4)'
-                  }}
-                >
-                  SA
-                </div>
-                <span
-                  style={{
-                    position: 'absolute',
-                    bottom: '-1px',
-                    right: '-1px',
-                    width: '5px',
-                    height: '5px',
-                    borderRadius: '50%',
-                    background: '#00ff88',
-                    border: '1px solid #040005',
-                    boxShadow: '0 0 4px #00ff88'
-                  }}
-                />
-              </div>
-
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: 800, color: '#f8fafc', lineHeight: 1.1 }}>
-                  SecOps Admin
-                </div>
-                <div style={{ fontSize: '9px', color: '#ff2a4d', fontWeight: 700, marginTop: '1px' }}>
-                  ● SOC Live
-                </div>
-              </div>
-            </div>
-
-            <ChevronDown size={12} color="#71717a" />
+        {/* Category Divider */}
+        <div className="pt-2 pb-1 px-3">
+          <div className="flex items-center justify-between text-[9px] text-cyan-400/60 uppercase tracking-widest border-t border-cyan-900/40 pt-2">
+            <span>ANALYSIS ENGINES</span>
+            <span>AUTO-SCAN</span>
           </div>
         </div>
-      )}
+
+        {/* 8. SAST (Static) */}
+        <a 
+          onClick={() => onTabChange('sast')} 
+          className={currentTab === 'sast' 
+            ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-transparent border-l-4 border-l-cyan-400 border-y border-r border-cyan-400/30 text-white shadow-[inset_0_0_15px_rgba(6,182,212,0.15)] transition-all cursor-pointer" 
+            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
+        >
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'sast' ? 'text-cyan-300' : 'text-slate-400 group-hover:text-cyan-400'}`}>code_blocks</span>
+            <span className={currentTab === 'sast' ? "font-semibold text-cyan-200 truncate" : "truncate"}>SAST (Static)</span>
+          </div>
+          <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-[9px] font-bold text-cyan-300">{sastCount} ISSUES</span>
+        </a>
+
+        {/* 9. DAST (Web) */}
+        <a 
+          onClick={() => onTabChange('dast')} 
+          className={currentTab === 'dast' 
+            ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500/20 via-amber-500/15 to-transparent border-l-4 border-l-amber-400 border-y border-r border-amber-400/30 text-white shadow-[inset_0_0_15px_rgba(245,158,11,0.15)] transition-all cursor-pointer" 
+            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
+        >
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'dast' ? 'text-amber-400' : 'text-slate-400 group-hover:text-amber-400'}`}>language</span>
+            <span className={currentTab === 'dast' ? "font-semibold text-amber-200 truncate" : "truncate"}>DAST (Web)</span>
+          </div>
+          <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-[9px] font-bold text-amber-300">{dastCount} ISSUES</span>
+        </a>
+
+        {/* 10. SCA (Deps) */}
+        <a 
+          onClick={() => onTabChange('sca')} 
+          className={currentTab === 'sca' 
+            ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 via-purple-500/15 to-transparent border-l-4 border-l-purple-400 border-y border-r border-purple-400/30 text-white shadow-[inset_0_0_15px_rgba(168,85,247,0.15)] transition-all cursor-pointer" 
+            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
+        >
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'sca' ? 'text-purple-400' : 'text-slate-400 group-hover:text-purple-400'}`}>account_tree</span>
+            <span className={currentTab === 'sca' ? "font-semibold text-purple-200 truncate" : "truncate"}>SCA (Deps)</span>
+          </div>
+          <span className="px-1.5 py-0.5 rounded bg-purple-500/15 border border-purple-500/30 text-[9px] font-bold text-purple-300">{scaCount} ISSUES</span>
+        </a>
+
+        {/* 11. Secrets */}
+        <a 
+          onClick={() => onTabChange('secrets')} 
+          className={currentTab === 'secrets' 
+            ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-rose-500/20 via-rose-500/15 to-transparent border-l-4 border-l-rose-400 border-y border-r border-rose-400/30 text-white shadow-[inset_0_0_15px_rgba(244,63,94,0.15)] transition-all cursor-pointer" 
+            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
+        >
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'secrets' ? 'text-rose-400' : 'text-slate-400 group-hover:text-rose-400'}`}>vpn_key</span>
+            <span className={currentTab === 'secrets' ? "font-semibold text-rose-200 truncate" : "truncate"}>Secrets</span>
+          </div>
+          <span className="px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/30 text-[9px] font-bold text-rose-300">{secretsCount} LEAKS</span>
+        </a>
+
+        {/* 12. Setting */}
+        <a 
+          onClick={() => onTabChange('capabilities')} 
+          className={currentTab === 'capabilities' 
+            ? "group flex items-center justify-between px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-transparent border-l-4 border-l-cyan-400 border-y border-r border-cyan-400/30 text-white shadow-[inset_0_0_15px_rgba(6,182,212,0.15)] transition-all cursor-pointer" 
+            : "group flex items-center justify-between px-3 py-2 rounded-lg text-slate-300 hover:text-cyan-200 hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"}
+        >
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <span className={`material-symbols-outlined text-[17px] transition-colors ${currentTab === 'capabilities' ? 'text-cyan-300' : 'text-slate-400 group-hover:text-cyan-400'}`}>settings</span>
+            <span className={currentTab === 'capabilities' ? "font-semibold text-cyan-200 truncate" : "truncate"}>Setting</span>
+          </div>
+          <span className="text-[10px] text-slate-500 font-mono group-hover:text-cyan-400">CFG</span>
+        </a>
+      </nav>
+
+      {/* Sidebar Mini Telemetry Pod */}
+      <div className="mt-4 pt-3 border-t border-cyan-900/50 bg-command-950/60 rounded-lg p-2.5 border border-cyan-800/30">
+        <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mb-1">
+          <span>PIPELINE HEALTH</span>
+          <span className="text-cyan-300 font-bold">99.8%</span>
+        </div>
+        <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-cyan-900/60">
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-400 h-full w-[94%] shadow-[0_0_8px_#38bdf8]"></div>
+        </div>
+        <div className="flex items-center justify-between text-[9px] font-mono text-cyan-400/70 mt-1.5">
+          <span>HOST: sentinel-node-04</span>
+          <span className="text-emerald-400">ACTIVE</span>
+        </div>
+      </div>
     </aside>
   );
-}
-
-export default Sidebar;
+};

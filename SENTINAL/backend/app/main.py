@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.config import settings
-from app.core.database import Base, engine, SessionLocal, run_db_migrations
+from app.core.database import Base, engine, SessionLocal
 from app.core.logging import logger
 from app.models import User, Project
 from app.core.security import get_password_hash
@@ -11,20 +11,19 @@ from app.api import (
     auth_router,
     projects_router,
     repos_router,
-    assets_router,
     assessments_router,
-    scans_router,
     findings_router,
     reports_router,
     dashboard_router,
-    health_router
+    health_router,
+    assets_router
 )
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize database tables and migrations
-    run_db_migrations()
-    logger.info("Database tables and migrations initialized.")
+    # Initialize database tables
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables initialized.")
 
     # Seed default user and demo project if empty
     db = SessionLocal()
@@ -39,7 +38,18 @@ async def lifespan(app: FastAPI):
             )
             db.add(admin_user)
             db.commit()
-            logger.info("Seeded default admin user.")
+            db.refresh(admin_user)
+
+            demo_project = Project(
+                name="E-Commerce Core & API Gateway",
+                description="Production cloud platform repo & live API services.",
+                repository_url="https://github.com/OWASP/NodeGoat",
+                target_url="https://ginandjuice.shop",
+                user_id=admin_user.id
+            )
+            db.add(demo_project)
+            db.commit()
+            logger.info("Seeded default admin user and demo project.")
     except Exception as e:
         logger.error(f"Error seeding initial database data: {e}")
     finally:
@@ -71,12 +81,11 @@ app.include_router(health_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(projects_router, prefix=settings.API_V1_PREFIX)
 app.include_router(repos_router, prefix=settings.API_V1_PREFIX)
-app.include_router(assets_router, prefix=settings.API_V1_PREFIX)
 app.include_router(assessments_router, prefix=settings.API_V1_PREFIX)
-app.include_router(scans_router, prefix=settings.API_V1_PREFIX)
 app.include_router(findings_router, prefix=settings.API_V1_PREFIX)
 app.include_router(reports_router, prefix=settings.API_V1_PREFIX)
 app.include_router(dashboard_router, prefix=settings.API_V1_PREFIX)
+app.include_router(assets_router, prefix=settings.API_V1_PREFIX)
 
 @app.get("/")
 def root():

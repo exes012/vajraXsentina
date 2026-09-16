@@ -43,9 +43,8 @@ async def validate_github_repository(payload: GitHubValidateRequest):
         "Accept": "application/vnd.github.v3+json",
         "User-Agent": "Sentinal-Repo-Validator/1.0"
     }
-    clean_token = payload.token.strip() if (payload.token and str(payload.token).strip() and str(payload.token).strip().lower() not in ["null", "undefined", "none", ""]) else None
-    if clean_token:
-        headers["Authorization"] = f"token {clean_token}"
+    if payload.token:
+        headers["Authorization"] = f"token {payload.token}"
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -56,94 +55,37 @@ async def validate_github_repository(payload: GitHubValidateRequest):
                     valid=True,
                     owner=owner,
                     repo=repo,
-                    default_branch=data.get("default_branch", payload.branch or "main"),
+                    default_branch=data.get("default_branch", payload.branch),
                     is_private=data.get("private", False),
                     message="Repository validated and accessible."
                 )
-            elif resp.status_code == 401 and clean_token:
-                # If token was rejected by GitHub, try unauthenticated check in case it's a public repository
-                resp_unauth = await client.get(api_url, headers={"Accept": "application/vnd.github.v3+json", "User-Agent": "Sentinal-Repo-Validator/1.0"})
-                if resp_unauth.status_code == 200:
-                    data = resp_unauth.json()
-                    return GitHubValidateResponse(
-                        valid=True,
-                        owner=owner,
-                        repo=repo,
-                        default_branch=data.get("default_branch", payload.branch or "main"),
-                        is_private=False,
-                        message="Public repository accessible (provided token was omitted)."
-                    )
-                return GitHubValidateResponse(
-                    valid=True, # Allow scan to proceed
-                    owner=owner,
-                    repo=repo,
-                    default_branch=payload.branch or "main",
-                    is_private=True,
-                    message="GitHub authentication notice; proceeding with assessment."
-                )
             elif resp.status_code == 404:
                 return GitHubValidateResponse(
-                    valid=True, # Allow user to proceed with assessment
+                    valid=False,
                     owner=owner,
                     repo=repo,
                     default_branch="main",
-                    is_private=False,
-                    message="Repository target registered for assessment."
+                    is_private=True,
+                    message="Repository not found or private (provide a GitHub token for private repos)."
                 )
             else:
                 return GitHubValidateResponse(
-                    valid=True,
+                    valid=True,  # Allow user to proceed even if rate-limited by GitHub unauthenticated API
                     owner=owner,
                     repo=repo,
-                    default_branch=payload.branch or "main",
+                    default_branch=payload.branch,
                     is_private=False,
-                    message="Repository target registered."
+                    message="GitHub API rate-limited; proceeding with configured settings."
                 )
     except Exception as e:
         return GitHubValidateResponse(
             valid=True,
             owner=owner,
             repo=repo,
-            default_branch=payload.branch or "main",
+            default_branch=payload.branch,
             is_private=False,
-            message=f"Repository verified: {str(e)}"
+            message=f"Network check warning: {str(e)}"
         )
-
-@router.post("/github/tree")
-async def fetch_repository_tree(payload: GitHubValidateRequest):
-    clean_url = payload.url.rstrip("/")
-    if clean_url.endswith(".git"):
-        clean_url = clean_url[:-4]
-    
-    parts = clean_url.split("/")
-    if len(parts) < 2 or "github.com" not in clean_url:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid GitHub repository URL format.")
-
-    owner = parts[-2]
-    repo = parts[-1]
-    target_branch = payload.branch or "main"
-    api_url = f"https://api.github.com/repos/{owner}/{repo}/git/trees/{target_branch}?recursive=1"
-    
-    headers = {"Accept": "application/vnd.github.v3+json", "User-Agent": "Sentinal-Tree-Explorer/1.0"}
-    if payload.token:
-        headers["Authorization"] = f"token {payload.token}"
-
-    try:
-        async with httpx.AsyncClient(timeout=12.0) as client:
-            resp = await client.get(api_url, headers=headers)
-            if resp.status_code == 200:
-                tree_data = resp.json().get("tree", [])
-                manifests = [i.get("path") for i in tree_data if any(m in i.get("path", "") for m in ["package.json", "requirements.txt", "pom.xml", "go.mod", "Cargo.toml", "Dockerfile"])]
-                return {
-                    "valid": True,
-                    "owner": owner,
-                    "repo": repo,
-                    "total_files": len(tree_data),
-                    "manifest_files": manifests
-                }
-    except Exception as e:
-        pass
-    return {"valid": False, "owner": owner, "repo": repo, "manifest_files": []}
 
 @router.post("/upload")
 async def upload_source_archive(

@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
-def inspect_tls_certificate(hostname: str, port: int = 443, timeout: float = 3.0) -> Dict[str, Any]:
+def inspect_tls_certificate(hostname: str, port: int = 443, timeout: float = 8.0) -> Dict[str, Any]:
     """Connect via TLS socket and extract certificate chain, SANs, validity, and cipher details."""
     result = {
         "hostname": hostname,

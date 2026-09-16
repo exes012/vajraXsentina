@@ -32,7 +32,7 @@ SECURITY_HEADER_SPECS = [
     {
         "header": "X-Content-Type-Options",
         "title": "Missing X-Content-Type-Options Header",
-        "description": "Setting `X-Content-Type-Options: nosniff` prevents browsers from MIME-sniffing a response away from the declared content-type, mitigating drive-by downloads.",
+        "description": "Setting `X-Content-Type-Options: nosniff` prevents browsers from MIME-sniffing a response away from the declared content-type, mitigating drive-by downloads and script execution.",
         "severity": "LOW",
         "confidence": "HIGH",
         "category": "Security Misconfiguration",
@@ -81,7 +81,7 @@ SECURITY_HEADER_SPECS = [
 
 class SecurityHeadersAdapter(ScannerAdapter):
     def __init__(self):
-        super().__init__(name="HEADER_ANALYZER", source="WEB")
+        super().__init__(name="sentinal-headers", source="WEB")
 
     def validate(self, target: Any) -> bool:
         if isinstance(target, str):
@@ -92,21 +92,19 @@ class SecurityHeadersAdapter(ScannerAdapter):
 
     def prepare(self, target: Any) -> Dict[str, Any]:
         url = target if isinstance(target, str) else target.get("url", "")
-        headers = target.get("custom_headers") or {} if isinstance(target, dict) else {}
-        return {"target_url": url, "headers": headers}
+        return {"target_url": url}
 
     async def execute(self, target: Any, context: Dict[str, Any]) -> Any:
         target_url = context["target_url"]
-        headers = context["headers"]
         findings: List[RawFinding] = []
         is_https = target_url.startswith("https://")
 
         try:
-            async with httpx.AsyncClient(headers=headers, timeout=10.0, follow_redirects=True, verify=False) as client:
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, verify=False) as client:
                 resp = await client.get(target_url)
                 resp_headers_lower = {k.lower(): v for k, v in resp.headers.items()}
 
-                # 1. Check security headers
+                # Check security headers
                 for spec in SECURITY_HEADER_SPECS:
                     header_name = spec["header"].lower()
                     if spec.get("only_https") and not is_https:
@@ -114,7 +112,7 @@ class SecurityHeadersAdapter(ScannerAdapter):
 
                     if header_name not in resp_headers_lower:
                         findings.append(RawFinding(
-                            scanner="HEADER_ANALYZER",
+                            scanner="sentinal-headers",
                             source="WEB",
                             title=spec["title"],
                             description=spec["description"],
@@ -124,52 +122,20 @@ class SecurityHeadersAdapter(ScannerAdapter):
                             cwe=spec["cwe"],
                             owasp=spec["owasp"],
                             endpoint=urllib.parse.urlparse(target_url).path or "/",
-                            evidence=f"Header '{spec['header']}' was absent in response from {target_url}",
+                            evidence=f"Header '{spec['header']}' was absent in response to {target_url}",
                             remediation=spec["remediation"],
                             references=spec["references"],
                             raw_data={"missing_header": spec["header"]}
                         ))
 
-                # 2. Check Cookie security flags
-                set_cookies = resp.headers.get_list("set-cookie") if hasattr(resp.headers, "get_list") else [resp.headers.get("set-cookie", "")]
-                for c in set_cookies:
-                    if not c:
-                        continue
-                    c_lower = c.lower()
-                    c_name = c.split("=")[0].strip()
-                    missing = []
-                    if "httponly" not in c_lower:
-                        missing.append("HttpOnly")
-                    if "secure" not in c_lower and is_https:
-                        missing.append("Secure")
-                    if "samesite" not in c_lower:
-                        missing.append("SameSite")
-
-                    if missing:
-                        findings.append(RawFinding(
-                            scanner="HEADER_ANALYZER",
-                            source="WEB",
-                            title=f"Cookie '{c_name}' Missing Security Flags ({', '.join(missing)})",
-                            description=f"Cookie '{c_name}' was issued without the recommended security attributes: {', '.join(missing)}.",
-                            severity="LOW",
-                            confidence="HIGH",
-                            category="Session Management",
-                            cwe=["CWE-614", "CWE-1004"],
-                            owasp=["A07:2021-Identification and Authentication Failures"],
-                            endpoint=urllib.parse.urlparse(target_url).path or "/",
-                            evidence=f"Set-Cookie: {c}",
-                            remediation=f"Ensure your application adds {', '.join(missing)} to the cookie attributes.",
-                            references=["https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies"]
-                        ))
-
-                # 3. Check Server & X-Powered-By Info Disclosure
+                # Check Server & X-Powered-By Info Disclosure
                 if "server" in resp_headers_lower:
                     server_val = resp_headers_lower["server"]
                     findings.append(RawFinding(
-                        scanner="HEADER_ANALYZER",
+                        scanner="sentinal-headers",
                         source="WEB",
-                        title="Server Information Disclosure via 'Server' Header",
-                        description=f"The server discloses its software signature ('{server_val}'), assisting adversaries in tailoring exploits.",
+                        title=f"Server Information Disclosure via 'Server' Header",
+                        description=f"The server discloses its software signature ('{server_val}'), assisting adversaries in tailoring specific exploits.",
                         severity="INFO",
                         confidence="HIGH",
                         category="Information Disclosure",
@@ -184,18 +150,18 @@ class SecurityHeadersAdapter(ScannerAdapter):
                 if "x-powered-by" in resp_headers_lower:
                     powered_val = resp_headers_lower["x-powered-by"]
                     findings.append(RawFinding(
-                        scanner="HEADER_ANALYZER",
+                        scanner="sentinal-headers",
                         source="WEB",
-                        title="Application Stack Disclosure via 'X-Powered-By' Header",
-                        description=f"The HTTP response leaks application framework details ('{powered_val}').",
-                        severity="INFO",
+                        title=f"Technology Fingerprint Disclosure via 'X-Powered-By' Header",
+                        description=f"The server leaks backend framework details ('{powered_val}').",
+                        severity="LOW",
                         confidence="HIGH",
                         category="Information Disclosure",
                         cwe=["CWE-200"],
                         owasp=["A05:2021-Security Misconfiguration"],
                         endpoint=urllib.parse.urlparse(target_url).path or "/",
                         evidence=f"X-Powered-By: {powered_val}",
-                        remediation="Disable 'x-powered-by' in framework configuration.",
+                        remediation="Disable `X-Powered-By` header in application framework settings (e.g. `app.disable('x-powered-by')`).",
                         references=["https://cwe.mitre.org/data/definitions/200.html"]
                     ))
 

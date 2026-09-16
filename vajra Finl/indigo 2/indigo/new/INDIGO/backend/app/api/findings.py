@@ -18,17 +18,12 @@ def list_findings(
     scanner: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    limit: int = Query(500, ge=1, le=1000),
+    limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    user_role = str(getattr(current_user, 'role', 'admin')).lower()
-    is_admin = (user_role in ["admin", "soc analyst", "analyst", "user", "viewer", "engineer"] or current_user.username == "admin" or not current_user.id)
-    if is_admin or assessment_id or True:
-        query = db.query(Finding)
-    else:
-        query = db.query(Finding).join(Project).filter(Project.user_id == current_user.id)
+    query = db.query(Finding).join(Project).filter(Project.user_id == current_user.id)
 
     if assessment_id:
         query = query.filter(Finding.assessment_id == assessment_id)
@@ -37,19 +32,11 @@ def list_findings(
     if severity:
         query = query.filter(Finding.severity == severity.upper())
     if source:
-        src = source.upper().replace(' ', '_')
-        if src in ['NUCLEI', 'THREAT_INTEL', 'THREAT_INTELLIGENCE', 'INTEL', 'SSL', 'HEADERS']:
-            query = query.filter((Finding.source.in_(['WEB', 'INTEL', 'NUCLEI', 'SSL'])) | (Finding.scanner.in_(['sentinal-headers', 'nuclei', 'ssl-analyzer'])))
-        elif src in ['DAST', 'DYNAMIC', 'WEB']:
-            query = query.filter((Finding.source.in_(['DAST', 'WEB'])) | (Finding.scanner.in_(['owasp-zap', 'dast-fuzzer'])))
-        elif src in ['SECRETS', 'SECRET']:
-            query = query.filter((Finding.source.in_(['SECRETS', 'SECRET'])) | (Finding.scanner.in_(['gitleaks', 'secret-entropy'])))
-        elif src in ['SCA', 'DEPS', 'DEPENDENCIES']:
-            query = query.filter((Finding.source.in_(['SCA', 'DEPS'])) | (Finding.scanner.in_(['osv-scanner', 'dependency-check'])))
-        elif src in ['SAST', 'STATIC']:
-            query = query.filter((Finding.source.in_(['SAST', 'STATIC'])) | (Finding.scanner.in_(['sentinal-sast', 'semgrep'])))
+        s_upper = source.upper()
+        if s_upper == "DAST":
+            query = query.filter(Finding.source.in_(["DAST", "WEB"]))
         else:
-            query = query.filter(Finding.source == src)
+            query = query.filter(Finding.source == s_upper)
     if scanner:
         query = query.filter(Finding.scanner == scanner.lower())
     if status:
@@ -73,13 +60,7 @@ def get_finding(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    is_admin = (current_user.role == "admin" or current_user.username == "admin" or not current_user.id)
-    if is_admin:
-        finding = db.query(Finding).filter(Finding.id == finding_id).first()
-    else:
-        finding = db.query(Finding).join(Project).filter(Finding.id == finding_id, Project.user_id == current_user.id).first()
-        if not finding:
-            finding = db.query(Finding).filter(Finding.id == finding_id).first()
+    finding = db.query(Finding).join(Project).filter(Finding.id == finding_id, Project.user_id == current_user.id).first()
     if not finding:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Finding not found")
     return FindingResponse.model_validate(finding)
@@ -91,13 +72,7 @@ def update_finding_status(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    is_admin = (current_user.role == "admin" or current_user.username == "admin" or not current_user.id)
-    if is_admin:
-        finding = db.query(Finding).filter(Finding.id == finding_id).first()
-    else:
-        finding = db.query(Finding).join(Project).filter(Finding.id == finding_id, Project.user_id == current_user.id).first()
-        if not finding:
-            finding = db.query(Finding).filter(Finding.id == finding_id).first()
+    finding = db.query(Finding).join(Project).filter(Finding.id == finding_id, Project.user_id == current_user.id).first()
     if not finding:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Finding not found")
 
@@ -109,3 +84,18 @@ def update_finding_status(
     db.commit()
     db.refresh(finding)
     return FindingResponse.model_validate(finding)
+
+@router.delete("/{finding_id}")
+def delete_finding(
+    finding_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    finding = db.query(Finding).join(Project).filter(Finding.id == finding_id, Project.user_id == current_user.id).first()
+    if not finding:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Finding not found")
+
+    db.delete(finding)
+    db.commit()
+    return {"message": "Finding successfully deleted"}
+

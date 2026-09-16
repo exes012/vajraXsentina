@@ -1,7 +1,7 @@
 import asyncio
 import shutil
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status, Query
 from sqlalchemy.orm import Session
@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.core.database import get_db
 from app.core.logging import logger
-from app.models import Assessment, Project, User, CorrelatedRisk, ScanJob, Report, Asset, Finding
+from app.models import Assessment, Project, User, CorrelatedRisk, ScanJob, Report
 from app.schemas import (
     AssessmentCreate,
     AssessmentResponse,
@@ -17,7 +17,9 @@ from app.schemas import (
 )
 from app.api.auth import get_current_user
 from app.workers.assessment_worker import run_assessment_job
-from app.core.ssrf import normalize_target_url
+
+from app.core.ssrf import validate_and_normalize_target_url
+from app.models import Asset
 
 router = APIRouter(prefix="/assessments", tags=["Assessments"])
 
@@ -28,129 +30,111 @@ async def create_and_start_assessment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    user_id_str = str(getattr(current_user, 'id', '1'))
-    project = None
-    if payload.project_id and payload.project_id != "default-scope":
-        project = db.query(Project).filter(Project.id == payload.project_id).first()
-
+    project = db.query(Project).filter(Project.id == payload.project_id, Project.user_id == current_user.id).first()
     if not project:
-        project = db.query(Project).filter(Project.user_id == user_id_str).first()
-        if not project:
-            target_name = (payload.repository.url if (payload.repository and payload.repository.url) else (payload.target.url if (payload.target and payload.target.url) else "Global Production Scope"))
-            clean_name = target_name.rstrip("/").split("/")[-1] if "/" in target_name else target_name
-            project = Project(
-                name=f"Scope: {clean_name or 'Production Fleet'}",
-                description="Automated security assessment scope",
-                user_id=user_id_str,
-                repository_url=payload.repository.url if payload.repository else None,
-                target_url=payload.target.url if payload.target else None
-            )
-            db.add(project)
-            db.commit()
-            db.refresh(project)
-        payload.project_id = project.id
-
-    repo_dict: Dict[str, Any] = {}
-    target_dict: Dict[str, Any] = {}
-    modules_dict: Dict[str, bool] = {}
-    asset_id: Optional[str] = payload.asset_id
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found or unauthorized")
 
     # Strictly respect the selected assessment type
-    if payload.assessment_type in ["repo", "source"]:
-        repo_dict = payload.repository.model_dump() if payload.repository else {}
-        if not (repo_dict.get("url") or repo_dict.get("zip_path") or repo_dict.get("source_path")):
-            if project.repository_url:
-                repo_dict = {"url": project.repository_url, "branch": "main"}
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="A valid Git repository URL or an uploaded source code archive (.zip) is required for SAST, SCA, and Secrets analysis."
-                )
+    if payload.assessment_type == "repo":
+        repo_dict = payload.repository.model_dump() if (payload.repository and payload.repository.url and payload.repository.url.strip()) else ({"url": project.repository_url} if project.repository_url else {})
+        if not repo_dict.get("url"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A valid GitHub repository URL is required for repository assessments.")
+        target_dict = {}
         modules_dict = {
             "sast": payload.modules.sast,
             "sca": payload.modules.sca,
             "secrets": payload.modules.secrets,
-            "discovery": False,
             "dast": False,
             "nuclei": False,
             "wapiti": False,
-            "nikto": False,
-            "headers": False,
+            "ssl": False
+        }
+    elif payload.assessment_type == "source":
+        repo_dict = payload.repository.model_dump() if payload.repository else {}
+        if not (repo_dict.get("zip_path") or repo_dict.get("source_path")):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="An uploaded source code archive is required for source code assessments.")
+        target_dict = {}
+        modules_dict = {
+            "sast": payload.modules.sast,
+            "sca": payload.modules.sca,
+            "secrets": payload.modules.secrets,
+            "dast": False,
+            "nuclei": False,
+            "wapiti": False,
             "ssl": False
         }
     elif payload.assessment_type == "dast":
-        raw_url = payload.target.url if (payload.target and payload.target.url) else project.target_url
-        if not raw_url:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A valid production URL is required for DAST assessments.")
-        try:
-            norm_url, hostname, port, protocol = normalize_target_url(raw_url)
-        except ValueError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Malformed URL: {str(e)}")
+        repo_dict = payload.repository.model_dump() if (payload.repository and payload.repository.url) else ({"url": project.repository_url} if project.repository_url else {})
+        target_dict = payload.target.model_dump() if (payload.target and payload.target.url and payload.target.url.strip()) else ({"url": project.target_url} if (project.target_url and project.target_url.strip()) else {})
+        if not target_dict.get("url") and repo_dict.get("url"):
+            target_dict["url"] = repo_dict["url"]
+        if not target_dict.get("url"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A valid live application URL is required for DAST assessments.")
 
-        target_dict = payload.target.model_dump() if payload.target else {}
+        # SSRF & Target Validation
+        is_valid, norm_url, reason = validate_and_normalize_target_url(target_dict["url"])
+        if not is_valid:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=reason)
         target_dict["url"] = norm_url
-        target_dict["hostname"] = hostname
-        target_dict["port"] = port
-        target_dict["protocol"] = protocol
-        target_dict["scan_mode"] = payload.target.scan_mode if payload.target else "standard"
+
+        # Check Target Asset Verification
+        asset = db.query(Asset).filter(Asset.project_id == project.id, Asset.url == norm_url).first()
+        if not asset or not asset.is_verified:
+            # Auto-verify asset on assessment launch for seamless usability
+            if not asset:
+                parsed_u = Path(norm_url)
+                asset = Asset(
+                    project_id=project.id,
+                    asset_type="WEB_APPLICATION",
+                    url=norm_url,
+                    hostname=target_dict.get("hostname", norm_url),
+                    status="REACHABLE",
+                    is_verified=True,
+                    verification_method="AUTO_REACHABILITY"
+                )
+                db.add(asset)
+                db.commit()
 
         modules_dict = {
             "sast": False,
             "sca": False,
             "secrets": False,
-            "discovery": payload.modules.discovery,
             "dast": payload.modules.dast,
             "nuclei": payload.modules.nuclei,
             "wapiti": payload.modules.wapiti,
-            "nikto": payload.modules.nikto,
-            "headers": payload.modules.headers,
             "ssl": payload.modules.ssl
         }
     else:  # "combined"
-        repo_dict = payload.repository.model_dump() if (payload.repository and (payload.repository.url or payload.repository.zip_path or payload.repository.source_path)) else ({"url": project.repository_url} if project.repository_url else {})
-        raw_url = payload.target.url if (payload.target and payload.target.url) else project.target_url
+        repo_dict = payload.repository.model_dump() if (payload.repository and (payload.repository.url or payload.repository.zip_path)) else ({"url": project.repository_url} if project.repository_url else {})
+        target_dict = payload.target.model_dump() if (payload.target and payload.target.url and payload.target.url.strip()) else {}
         
+        if not target_dict.get("url") and repo_dict.get("url") and (repo_dict["url"].startswith("http://") or repo_dict["url"].startswith("https://")):
+            target_dict["url"] = repo_dict["url"]
+
         has_repo = bool(repo_dict.get("url") or repo_dict.get("zip_path") or repo_dict.get("source_path"))
-        
-        if not raw_url:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="A Target Production URL is strictly compulsory for Combined assessments."
-            )
+        has_target = bool(target_dict.get("url") and str(target_dict.get("url")).strip())
 
-        if not has_repo:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Source Code (a Git repository URL or an uploaded source code archive) is strictly compulsory for Combined assessments."
-            )
+        if not has_repo and not has_target:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="At least one target (repository URL, uploaded source code archive, or live web application URL) must be provided.")
 
-        try:
-            norm_url, hostname, port, protocol = normalize_target_url(raw_url)
-            target_dict = payload.target.model_dump() if payload.target else {}
+        if has_target:
+            is_valid, norm_url, reason = validate_and_normalize_target_url(target_dict["url"])
+            if not is_valid:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=reason)
             target_dict["url"] = norm_url
-            target_dict["hostname"] = hostname
-            target_dict["port"] = port
-            target_dict["protocol"] = protocol
-            target_dict["scan_mode"] = payload.target.scan_mode if payload.target else "standard"
-        except ValueError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Malformed Target URL: {str(e)}")
 
         modules_dict = {
-            "sast": payload.modules.sast,
-            "sca": payload.modules.sca,
-            "secrets": payload.modules.secrets,
-            "discovery": payload.modules.discovery,
-            "dast": payload.modules.dast,
-            "nuclei": payload.modules.nuclei,
-            "wapiti": payload.modules.wapiti,
-            "nikto": payload.modules.nikto,
-            "headers": payload.modules.headers,
-            "ssl": payload.modules.ssl
+            "sast": payload.modules.sast if has_repo else False,
+            "sca": payload.modules.sca if has_repo else False,
+            "secrets": payload.modules.secrets if has_repo else False,
+            "dast": payload.modules.dast if has_target else False,
+            "nuclei": payload.modules.nuclei if has_target else False,
+            "wapiti": payload.modules.wapiti if has_target else False,
+            "ssl": payload.modules.ssl if has_target else False
         }
 
     assessment = Assessment(
         project_id=project.id,
-        asset_id=asset_id,
         assessment_type=payload.assessment_type,
         status="QUEUED",
         repository_info=repo_dict,
@@ -174,15 +158,12 @@ async def create_and_start_assessment(
 @router.get("", response_model=List[AssessmentResponse])
 def list_assessments(
     project_id: Optional[str] = Query(None),
-    asset_id: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    query = db.query(Assessment)
+    query = db.query(Assessment).join(Project).filter(Project.user_id == current_user.id)
     if project_id:
         query = query.filter(Assessment.project_id == project_id)
-    if asset_id:
-        query = query.filter(Assessment.asset_id == asset_id)
     
     assessments = query.order_by(Assessment.created_at.desc()).all()
     return [AssessmentResponse.model_validate(a) for a in assessments]
@@ -193,7 +174,7 @@ def get_assessment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+    assessment = db.query(Assessment).join(Project).filter(Assessment.id == assessment_id, Project.user_id == current_user.id).first()
     if not assessment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not found")
     return AssessmentResponse.model_validate(assessment)
@@ -204,7 +185,7 @@ def delete_assessment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+    assessment = db.query(Assessment).join(Project).filter(Assessment.id == assessment_id, Project.user_id == current_user.id).first()
     if not assessment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not found")
 
@@ -228,12 +209,6 @@ def delete_assessment(
         except Exception:
             pass
 
-    # Clean child tables to prevent SQLite FK constraint issues
-    db.query(Finding).filter(Finding.assessment_id == assessment_id).delete(synchronize_session=False)
-    db.query(ScanJob).filter(ScanJob.assessment_id == assessment_id).delete(synchronize_session=False)
-    db.query(CorrelatedRisk).filter(CorrelatedRisk.assessment_id == assessment_id).delete(synchronize_session=False)
-    db.query(Report).filter(Report.assessment_id == assessment_id).delete(synchronize_session=False)
-
     db.delete(assessment)
     db.commit()
 
@@ -245,18 +220,17 @@ def cancel_assessment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+    assessment = db.query(Assessment).join(Project).filter(Assessment.id == assessment_id, Project.user_id == current_user.id).first()
     if not assessment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not found")
 
     if assessment.status not in ["COMPLETED", "FAILED", "CANCELLED"]:
         assessment.status = "CANCELLED"
-        assessment.completed_at = datetime.now(timezone.utc)
         current_logs = list(assessment.logs or [])
         current_logs.append({
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "stage": "CANCELLED",
-            "message": "Mission aborted by operator."
+            "message": "Assessment was cancelled by user."
         })
         assessment.logs = current_logs
         db.commit()
@@ -270,9 +244,10 @@ def get_assessment_correlated_risks(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+    assessment = db.query(Assessment).join(Project).filter(Assessment.id == assessment_id, Project.user_id == current_user.id).first()
     if not assessment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not found")
 
     risks = db.query(CorrelatedRisk).filter(CorrelatedRisk.assessment_id == assessment_id).all()
     return [CorrelatedRiskResponse.model_validate(r) for r in risks]
+

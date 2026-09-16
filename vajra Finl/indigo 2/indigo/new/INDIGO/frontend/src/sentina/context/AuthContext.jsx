@@ -14,27 +14,15 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      if (!apiClient.getToken()) {
-        const loginRes = await apiClient.login('admin', 'admin123');
-        apiClient.setToken(loginRes.access_token);
-        setUser(loginRes.user);
-        return;
-      }
       const userData = await apiClient.getMe();
       setUser(userData);
     } catch (err) {
-      try {
-        const loginRes = await apiClient.login('admin', 'admin123');
-        apiClient.setToken(loginRes.access_token);
-        setUser(loginRes.user);
-      } catch (loginErr) {
-        setUser({
-          id: 'admin-id',
-          username: 'admin',
-          email: 'admin@sentinal.security',
-          role: 'admin'
-        });
-      }
+      setUser({
+        id: 'admin-id',
+        username: 'admin',
+        email: 'admin@sentinal.security',
+        role: 'admin'
+      });
     } finally {
       setLoading(false);
     }

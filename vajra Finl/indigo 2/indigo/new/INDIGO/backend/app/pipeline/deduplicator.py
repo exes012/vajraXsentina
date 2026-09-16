@@ -10,7 +10,6 @@ SEVERITY_WEIGHT = {
 }
 
 CONFIDENCE_WEIGHT = {
-    "CONFIRMED": 4,
     "HIGH": 3,
     "MEDIUM": 2,
     "LOW": 1
@@ -27,10 +26,14 @@ def deduplicate_findings(findings: List[NormalizedFinding]) -> List[NormalizedFi
         else:
             existing = grouped[fp]
 
-            # Merge scanner names
+            # Merge scanner names and detected_by list
             for sc in finding.all_scanners:
                 if sc not in existing.all_scanners:
                     existing.all_scanners.append(sc)
+            for sc in finding.detected_by:
+                sc_upper = sc.upper()
+                if sc_upper not in existing.detected_by:
+                    existing.detected_by.append(sc_upper)
 
             # Keep highest severity
             if SEVERITY_WEIGHT.get(finding.severity, 0) > SEVERITY_WEIGHT.get(existing.severity, 0):

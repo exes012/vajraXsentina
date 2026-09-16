@@ -1,188 +1,206 @@
-import React, { useState } from 'react';
-import { Sidebar } from './components/Sidebar';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
-import { GlobalSearchModal } from './components/GlobalSearchModal';
-import { NewAssessmentModal } from './components/NewAssessmentModal';
-import { FindingDrawer } from './components/FindingDrawer';
-import { GlobalFailureNotification } from './components/GlobalFailureNotification';
-import { ScanFailureModal } from './components/ScanFailureModal';
-import { SamAICopilot } from './components/SamAICopilot';
-
-// Pages
+import { Sidebar } from './components/Sidebar';
+import { ScanProgressModal } from './components/ScanProgressModal';
 import { Dashboard } from './pages/Dashboard';
-import { Assessments } from './pages/Assessments';
-import { Assets } from './pages/Assets';
+import { NewAssessment } from './pages/NewAssessment';
+import { AssessmentDetails } from './pages/AssessmentDetails';
 import { FindingsExplorer } from './pages/FindingsExplorer';
-import { SASTView } from './pages/SASTView';
-import { DASTView } from './pages/DASTView';
-import { SCAView } from './pages/SCAView';
-import { SecretsView } from './pages/SecretsView';
-import { ThreatIntelView } from './pages/ThreatIntelView';
-import { AICorrelationView } from './pages/AICorrelationView';
+import { Projects } from './pages/Projects';
 import { Reports } from './pages/Reports';
-import { SettingsPage } from './pages/Settings';
-import { dashboardService } from './services/dashboardService';
+import { Capabilities } from './pages/Capabilities';
+import { AICorrelation } from './pages/AICorrelation';
+import { Assets } from './pages/Assets';
+import { Login } from './pages/Login';
+import { apiClient } from './api/client';
 
 export function App() {
+  const { user, loading } = useAuth();
   const [currentTab, setCurrentTab] = useState('dashboard');
-  const [selectedProjectId, setSelectedProjectId] = useState('prj-001');
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isNewAssessmentOpen, setIsNewAssessmentOpen] = useState(false);
-  const [activeFinding, setActiveFinding] = useState(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [failedAssessmentForModal, setFailedAssessmentForModal] = useState(null);
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState(null);
+  
+  // Live Active Assessment for Progress Modal
+  const [activeRunningAssessment, setActiveRunningAssessment] = useState(null);
 
-  const handleSelectFinding = async (findingId) => {
-    const f = await dashboardService.getFindingById(findingId);
-    if (f) setActiveFinding(f);
-  };
-
-  const handleStatusChange = async (id, newStatus) => {
-    await dashboardService.updateFindingStatus(id, newStatus);
-    if (activeFinding && activeFinding.id === id) {
-      setActiveFinding({ ...activeFinding, status: newStatus });
+  // Poll running assessment status if active in modal
+  useEffect(() => {
+    let timer = null;
+    if (activeRunningAssessment && activeRunningAssessment.status !== 'COMPLETED' && activeRunningAssessment.status !== 'FAILED' && activeRunningAssessment.status !== 'CANCELLED') {
+      timer = setInterval(async () => {
+        try {
+          const updated = await apiClient.getAssessment(activeRunningAssessment.id);
+          setActiveRunningAssessment(updated);
+        } catch (err) {
+          console.error('Error polling active assessment:', err);
+        }
+      }, 2000);
     }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [activeRunningAssessment?.id, activeRunningAssessment?.status]);
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#070a12' }}>
+        <div className="scanning-pulse" style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#00f2fe' }} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
+  const handleAssessmentStarted = (newAssessment) => {
+    setActiveRunningAssessment(newAssessment);
   };
 
-  const handleStartAssessment = async (config) => {
-    setIsNewAssessmentOpen(false);
-    setCurrentTab('assessments');
-    try {
-      const newAsm = await dashboardService.triggerNewScan(config);
-      if (newAsm) {
-        dashboardService.setActiveAssessmentId(newAsm.id);
+  const handleCancelActiveScan = async () => {
+    if (activeRunningAssessment) {
+      try {
+        const cancelled = await apiClient.cancelAssessment(activeRunningAssessment.id);
+        setActiveRunningAssessment(cancelled);
+      } catch (err) {
+        console.error('Cancel failed:', err);
       }
-    } catch (e) {
-      console.error('Failed to trigger scan from navigation:', e);
     }
+  };
+
+  const handleViewAssessmentDetails = (id) => {
+    setSelectedAssessmentId(id);
+    setActiveRunningAssessment(null);
+    setCurrentTab('assessment_detail');
   };
 
   const renderContent = () => {
+    if (currentTab === 'assessment_detail' && selectedAssessmentId) {
+      return (
+        <AssessmentDetails
+          assessmentId={selectedAssessmentId}
+          onBack={() => setCurrentTab('assessments')}
+          onViewAllFindings={() => setCurrentTab('findings')}
+        />
+      );
+    }
+
     switch (currentTab) {
       case 'dashboard':
         return (
           <Dashboard
-            onNewAssessment={() => setIsNewAssessmentOpen(true)}
-            onNavigateTab={(tab) => setCurrentTab(tab)}
-            onSelectFindingId={handleSelectFinding}
+            onNewAssessment={() => setCurrentTab('new_assessment')}
+            onViewAssessment={handleViewAssessmentDetails}
+            onViewFindings={() => setCurrentTab('findings')}
+          />
+        );
+      case 'new_assessment':
+        return (
+          <NewAssessment
+            onAssessmentStarted={handleAssessmentStarted}
           />
         );
       case 'assessments':
         return (
-          <Assessments
-            onSelectFinding={handleSelectFinding}
+          <Reports
+            onViewAssessment={handleViewAssessmentDetails}
+          />
+        );
+      case 'findings':
+        return <FindingsExplorer />;
+      case 'sast':
+        return <FindingsExplorer initialSource="SAST" />;
+      case 'dast':
+        return <FindingsExplorer initialSource="DAST" />;
+      case 'sca':
+        return <FindingsExplorer initialSource="SCA" />;
+      case 'secrets':
+        return <FindingsExplorer initialSource="SECRETS" />;
+      case 'reports':
+        return (
+          <Reports
+            onViewAssessment={handleViewAssessmentDetails}
+          />
+        );
+      case 'projects':
+        return (
+          <Projects
+            onSelectProject={(projId) => {
+              setCurrentTab('new_assessment');
+            }}
           />
         );
       case 'assets':
         return (
           <Assets
-            onSelectFinding={handleSelectFinding}
+            onNewAssessment={(mode, url) => {
+              setCurrentTab('new_assessment');
+            }}
           />
         );
-      case 'findings':
-        return <FindingsExplorer onSelectFinding={handleSelectFinding} />;
-      case 'sast':
-        return <SASTView onNavigateTab={(tab) => setCurrentTab(tab)} onNewAssessment={() => setIsNewAssessmentOpen(true)} />;
-      case 'dast':
-        return <DASTView onNavigateTab={(tab) => setCurrentTab(tab)} onNewAssessment={() => setIsNewAssessmentOpen(true)} />;
-      case 'sca':
-        return <SCAView onNavigateTab={(tab) => setCurrentTab(tab)} onNewAssessment={() => setIsNewAssessmentOpen(true)} />;
-      case 'secrets':
-        return <SecretsView onNavigateTab={(tab) => setCurrentTab(tab)} onNewAssessment={() => setIsNewAssessmentOpen(true)} />;
-      case 'threat_intel':
-        return <ThreatIntelView onNavigateTab={(tab) => setCurrentTab(tab)} onNewAssessment={() => setIsNewAssessmentOpen(true)} />;
-      case 'ai_correlation':
-        return <AICorrelationView onNavigateTab={(tab) => setCurrentTab(tab)} onNewAssessment={() => setIsNewAssessmentOpen(true)} />;
-      case 'reports':
-        return <Reports />;
-      case 'settings':
-        return <SettingsPage />;
+      case 'capabilities':
+        return <Capabilities />;
+      case 'ai-correlation':
+        return <AICorrelation />;
       default:
         return (
           <Dashboard
-            onNewAssessment={() => setIsNewAssessmentOpen(true)}
-            onNavigateTab={(tab) => setCurrentTab(tab)}
-            onSelectFindingId={handleSelectFinding}
+            onNewAssessment={() => setCurrentTab('new_assessment')}
+            onViewAssessment={handleViewAssessmentDetails}
+            onViewFindings={() => setCurrentTab('findings')}
           />
         );
     }
   };
 
   return (
-    <div className="app-container">
-      {/* 13-item Left Sidebar */}
-      <Sidebar
-        currentTab={currentTab}
-        onTabChange={(tab) => setCurrentTab(tab)}
-        isCollapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
-
-      {/* Main Content Viewport */}
-      <div className="main-content">
-        {/* Top Navigation */}
+    <div className="min-h-screen bg-command-950 text-slate-200 antialiased cyber-grid flex flex-col justify-between">
+      <div>
+        {/* Top Global Navigation */}
         <Navbar
-          onNewAssessmentClick={() => setIsNewAssessmentOpen(true)}
-          onOpenSearch={() => setIsSearchOpen(true)}
-          selectedProject={selectedProjectId}
-          onSelectProject={(id) => setSelectedProjectId(id)}
-          onViewFinding={handleSelectFinding}
+          onNewAssessmentClick={() => setCurrentTab('new_assessment')}
         />
 
-        {/* Dynamic Route View */}
-        {renderContent()}
+        {/* Unified Dashboard Container with Cyber-HUD Sidebar */}
+        <div className="max-w-[1720px] mx-auto px-4 sm:px-6 py-6">
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
+            <Sidebar
+              currentTab={currentTab === 'assessment_detail' ? 'assessments' : currentTab}
+              onTabChange={(tab) => {
+                setSelectedAssessmentId(null);
+                setCurrentTab(tab);
+              }}
+            />
+
+            <main className="flex-1 min-w-0 w-full space-y-6" data-purpose="telemetry-dashboard">
+              {renderContent()}
+            </main>
+          </div>
+        </div>
       </div>
 
-      {/* Global On-Screen Scan Failure Toast Notification */}
-      <GlobalFailureNotification
-        onInspectFailure={(asm) => setFailedAssessmentForModal(asm)}
-      />
+      {/* Footer Status */}
+      <footer className="border-t border-slate-800/80 bg-command-950 text-center text-xs font-mono text-slate-500 py-3" data-purpose="command-footer">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0">
+          <div>SENTINEL CYBERMETRIC CORE • SECURE SENSING NETWORK & CLOUD POSTURE</div>
+          <div className="flex items-center space-x-4">
+            <span>SECURITY LEVEL: AUTHORIZED</span>
+            <span>ENCRYPTION: AES-GCM-256</span>
+          </div>
+        </div>
+      </footer>
 
-      {/* Global Scan Failure Diagnostics & Remediation Modal */}
-      <ScanFailureModal
-        isOpen={Boolean(failedAssessmentForModal)}
-        assessment={failedAssessmentForModal}
-        onClose={() => setFailedAssessmentForModal(null)}
-        onRelaunch={() => {
-          setFailedAssessmentForModal(null);
-          setIsNewAssessmentOpen(true);
-        }}
-      />
-
-      {/* Global Command Palette / Search Modal */}
-      <GlobalSearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onSelectFinding={(id) => {
-          handleSelectFinding(id);
-          setIsSearchOpen(false);
-        }}
-        onSelectAsset={() => {
-          setCurrentTab('assets');
-          setIsSearchOpen(false);
-        }}
-      />
-
-      {/* New Assessment Launcher Modal */}
-      <NewAssessmentModal
-        isOpen={isNewAssessmentOpen}
-        onClose={() => setIsNewAssessmentOpen(false)}
-        onStartAssessment={handleStartAssessment}
-      />
-
-      {/* Slide-over Finding Drawer */}
-      <FindingDrawer
-        finding={activeFinding}
-        isOpen={Boolean(activeFinding)}
-        onClose={() => setActiveFinding(null)}
-        onStatusChange={handleStatusChange}
-      />
-
-      {/* SAM Autonomous AI Cyber Copilot */}
-      <SamAICopilot onNavigateTab={(tab) => setCurrentTab(tab)} />
+      {/* Real-time Scan Progress Modal */}
+      {activeRunningAssessment && (
+        <ScanProgressModal
+          assessment={activeRunningAssessment}
+          onClose={() => setActiveRunningAssessment(null)}
+          onCancel={handleCancelActiveScan}
+          onViewDetails={() => handleViewAssessmentDetails(activeRunningAssessment.id)}
+        />
+      )}
     </div>
   );
 }
 
 export default App;
-

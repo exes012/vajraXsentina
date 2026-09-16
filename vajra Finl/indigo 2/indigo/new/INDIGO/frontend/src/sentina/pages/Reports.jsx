@@ -1,408 +1,262 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import {
-  FileText,
-  Download,
-  Eye,
+import { 
+  FileText, 
+  Download, 
+  Eye, 
+  Layers, 
+  ShieldCheck, 
+  Clock, 
+  Trash2, 
+  RefreshCw,
+  GitBranch,
+  Globe,
+  AlertTriangle,
   CheckCircle2,
-  ExternalLink,
-  Code,
-  ShieldCheck,
-  ShieldAlert,
-  Plus,
-  Sparkles
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
-import { dashboardService } from '../services/dashboardService';
-import { SeverityBadge } from '../components/SeverityBadge';
-import { ReportViewerModal } from '../components/ReportViewerModal';
-import { getScorePosture } from '../utils/securityScore';
-
 import { apiClient } from '../api/client';
 
-export function Reports() {
-  const [reports, setReports] = useState([]);
-  const [selectedReport, setSelectedReport] = useState(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
-
-  const avgSecurityScore = reports.length > 0
-    ? Math.round(reports.reduce((acc, r) => acc + (r.riskScore || r.securityScore || 85), 0) / reports.length)
-    : 100;
-  const avgPosture = getScorePosture(avgSecurityScore);
-
-  const loadReports = async () => {
-    try {
-      const data = await dashboardService.getReports();
-      setReports(data || []);
-      if (data && data.length > 0 && !selectedReport) {
-        setSelectedReport(data[0]);
-      }
-    } catch (e) {
-      console.error("Failed to load reports:", e);
-    }
-  };
+export const Reports = ({ onViewAssessment }) => {
+  const [assessments, setAssessments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
-    loadReports();
+    loadAssessments();
   }, []);
 
-  const handleGenerateNewReport = async () => {
-    setIsGenerating(true);
-    setErrorMsg(null);
+  const loadAssessments = async () => {
+    setLoading(true);
     try {
-      // 1. Generate or regenerate report on backend
-      await dashboardService.generateReport();
-      // 2. Reload reports list
-      const updated = await dashboardService.getReports();
-      setReports(updated || []);
-      if (updated && updated.length > 0) {
-        setSelectedReport(updated[0]);
-      }
-    } catch (e) {
-      console.error('Error generating report:', e);
-      setErrorMsg(e.message || 'Failed to generate report on backend.');
+      const data = await apiClient.getAssessments();
+      setAssessments(data);
+    } catch (err) {
+      console.error('Failed to load assessments:', err);
     } finally {
-      setIsGenerating(false);
+      setLoading(false);
     }
   };
 
-  const handleExport = async (report, format) => {
+  const handleExport = (e, id, format) => {
+    e.stopPropagation();
+    const url = apiClient.getExportUrl(id, format);
+    window.open(url, '_blank');
+  };
+
+  const handleDelete = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm(`Are you sure you want to permanently delete Assessment #${id.slice(0, 8)}? All findings, telemetry, and report files will be removed.`)) {
+      return;
+    }
+    setDeletingId(id);
     try {
-      if (report.assessmentId) {
-        await apiClient.downloadReportFile(report.assessmentId, format);
-      } else {
-        const element = document.createElement('a');
-        const file = new Blob([JSON.stringify(report, null, 2)], {
-          type: format === 'json' ? 'application/json' : 'text/html'
-        });
-        element.href = URL.createObjectURL(file);
-        element.download = `Sentina_Report_${report.id || 'export'}.${format}`;
-        document.body.appendChild(element);
-        element.click();
-        document.body.removeChild(element);
-      }
+      await apiClient.deleteAssessment(id);
+      setAssessments(assessments.filter(a => a.id !== id));
     } catch (err) {
-      console.error(`Export failed for ${format}:`, err);
-      // Fallback
-      window.open(apiClient.getExportUrl(report.assessmentId, format), '_blank');
+      alert(`Failed to delete assessment: ${err.message}`);
+    } finally {
+      setDeletingId(null);
     }
   };
+
+  const filteredAssessments = assessments.filter((a) => {
+    if (filterStatus === 'ALL') return true;
+    if (filterStatus === 'COMPLETED') return a.status === 'COMPLETED';
+    if (filterStatus === 'RUNNING') return a.status !== 'COMPLETED' && a.status !== 'FAILED' && a.status !== 'CANCELLED';
+    if (filterStatus === 'FAILED') return a.status === 'FAILED' || a.status === 'CANCELLED';
+    return true;
+  });
 
   return (
-    <div className="page-container" style={{ maxWidth: '1600px' }}>
-      {/* Top Banner */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '20px',
-          flexWrap: 'wrap',
-          gap: '16px'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div
-            style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '8px',
-              background: 'rgba(255, 23, 68, 0.15)',
-              border: '2px solid #ff1744',
-              boxShadow: '0 0 14px rgba(255, 23, 68, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <FileText size={20} color="#ff1744" />
-          </div>
-          <div>
-            <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#f8fafc', letterSpacing: '0.8px' }}>
-              EXECUTIVE & TECHNICAL SECURITY REPORTS
-            </h1>
-            <p style={{ fontSize: '11.5px', color: '#a1a1aa', marginTop: '2px' }}>
-              Automated compliance audits, OWASP Top 10 attestations, and executive risk summaries.
-            </p>
-          </div>
+    <div className="page-container">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div>
+          <h1 className="title-gradient" style={{ fontSize: '26px', marginBottom: '6px' }}>
+            Security Assessments & Audit Reports
+          </h1>
+          <p style={{ color: '#94a3b8', fontSize: '14px' }}>
+            Manage and export multi-engine security audits, review telemetry, and clean up historical scan scopes.
+          </p>
         </div>
-
-        <button
-          onClick={handleGenerateNewReport}
-          disabled={isGenerating}
-          className="btn btn-primary"
-          style={{ fontSize: '12px', padding: '8px 16px', gap: '6px' }}
-        >
-          <Sparkles size={14} />
-          <span>{isGenerating ? 'Generating Audit Report...' : 'Generate New Report'}</span>
+        <button className="btn btn-secondary btn-sm" onClick={loadAssessments}>
+          <RefreshCw size={14} />
+          <span>Refresh List</span>
         </button>
       </div>
 
-      {/* KPI Stats Row */}
-      <div className="grid-4" style={{ marginBottom: '20px' }}>
-        <div className="cyber-card" style={{ padding: '14px 16px', background: '#060108', border: '2.5px solid #360a25' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, color: '#00f2fe', textTransform: 'uppercase' }}>TOTAL AUDIT REPORTS</div>
-          <div style={{ fontSize: '24px', fontWeight: 900, color: '#f8fafc', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
-            {reports.length}
-          </div>
-        </div>
-
-        <div className="cyber-card" style={{ padding: '14px 16px', background: '#060108', border: '2.5px solid #360a25' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, color: '#00ff88', textTransform: 'uppercase' }}>COMPLIANCE STATUS</div>
-          <div style={{ fontSize: '14px', fontWeight: 900, color: '#00ff88', marginTop: '10px' }}>
-            ● OWASP & SOC2 READY
-          </div>
-        </div>
-
-        <div className="cyber-card" style={{ padding: '14px 16px', background: '#060108', border: '2.5px solid #360a25' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '10px', fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase' }}>AVG SECURITY SCORE</span>
-            <span style={{ fontSize: '8.5px', fontFamily: 'var(--font-mono)', fontWeight: 800, color: avgPosture.color }}>
-              {reports.length === 0 ? 'OPTIMAL' : avgPosture.label}
-            </span>
-          </div>
-          <div style={{ fontSize: '24px', fontWeight: 900, color: avgPosture.color, fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
-            {avgSecurityScore}/100
-          </div>
-        </div>
-
-        <div className="cyber-card" style={{ padding: '14px 16px', background: '#060108', border: '2.5px solid #360a25' }}>
-          <div style={{ fontSize: '10px', fontWeight: 900, color: '#c084fc', textTransform: 'uppercase' }}>LEAD ATTESTATION</div>
-          <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#c084fc', marginTop: '10px' }}>
-            Sentina AI Engine
-          </div>
-        </div>
+      {/* Filter Tabs */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+        {[
+          { id: 'ALL', label: 'All Scans' },
+          { id: 'COMPLETED', label: 'Completed Reports' },
+          { id: 'RUNNING', label: 'In-Progress / Queued' },
+          { id: 'FAILED', label: 'Failed / Cancelled' }
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setFilterStatus(tab.id)}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: '700',
+              border: filterStatus === tab.id ? '1px solid #00f2fe' : '1px solid #1e293b',
+              background: filterStatus === tab.id ? 'rgba(0, 242, 254, 0.12)' : '#090d16',
+              color: filterStatus === tab.id ? '#00f2fe' : '#94a3b8',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* Reports Table Card */}
-      <div
-        className="cyber-card"
-        style={{
-          padding: '16px 18px',
-          background: '#060108',
-          border: '3px solid #360a25',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.95)'
-        }}
-      >
-        <div style={{ fontSize: '12px', fontWeight: 900, color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '14px' }}>
-          GENERATED AUDIT ARCHIVE
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '48px', color: '#94a3b8' }}>
+            <div className="scanning-pulse" style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#00f2fe', margin: '0 auto 12px' }} />
+            <span>Loading assessments archive...</span>
+          </div>
+        ) : filteredAssessments.length > 0 ? (
+          filteredAssessments.map((a) => {
+            const isCompleted = a.status === 'COMPLETED';
+            const isRunning = a.status !== 'COMPLETED' && a.status !== 'FAILED' && a.status !== 'CANCELLED';
+            const isFailed = a.status === 'FAILED' || a.status === 'CANCELLED';
 
-        <div className="data-table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Assessment Name</th>
-                <th>Project Scope</th>
-                <th>Audit Date</th>
-                <th>Security Score</th>
-                <th>Vulnerabilities Breakdown</th>
-                <th>Status</th>
-                <th style={{ textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reports.length === 0 ? (
-                <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '36px', color: '#71717a' }}>
-                    No security reports generated yet. Click "Generate New Report" above to produce an audit report.
-                  </td>
-                </tr>
-              ) : (
-                reports.map((rep) => (
-                  <tr
-                    key={rep.id}
-                    className="interactive-row"
-                    onClick={() => setSelectedReport(rep)}
-                  >
-                    {/* Name */}
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div
-                          style={{
-                            width: '30px',
-                            height: '30px',
-                            borderRadius: '6px',
-                            background: 'rgba(255, 23, 68, 0.15)',
-                            border: '1.2px solid #ff1744',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#ff1744'
-                          }}
-                        >
-                          <FileText size={15} />
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 800, color: '#f8fafc', fontSize: '12.5px' }}>
-                            {rep.assessmentName}
-                          </div>
-                          <div style={{ fontSize: '10px', color: '#71717a', fontFamily: 'var(--font-mono)' }}>
-                            ID: {rep.assessmentId} • {rep.leadAuditor}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Project */}
-                    <td style={{ color: '#00f2fe', fontWeight: 700, fontSize: '12px' }}>
-                      {rep.project}
-                    </td>
-
-                    {/* Date */}
-                    <td style={{ color: '#71717a', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
-                      {rep.date}
-                    </td>
-
-                    {/* Score */}
-                    <td>
-                      <span
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: 900,
-                          fontFamily: 'var(--font-mono)',
-                          color: rep.riskScore >= 80 ? '#00ff88' : '#fbbf24'
-                        }}
-                      >
-                        {rep.riskScore}/100
+            return (
+              <div
+                key={a.id}
+                className="cyber-card"
+                onClick={() => onViewAssessment(a.id)}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '18px 20px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#00f2fe'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1e293b'}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '10px',
+                    background: isCompleted ? 'rgba(16, 185, 129, 0.15)' : (isFailed ? 'rgba(255, 51, 102, 0.15)' : 'rgba(0, 242, 254, 0.15)'),
+                    color: isCompleted ? '#10b981' : (isFailed ? '#ff3366' : '#00f2fe'),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    {isCompleted ? <CheckCircle2 size={22} /> : (isFailed ? <AlertCircle size={22} /> : <Loader2 size={22} className="scanning-pulse" />)}
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#f8fafc' }}>
+                        Security Assessment #{a.id.slice(0, 8)}
+                      </h3>
+                      <span style={{
+                        fontSize: '11px',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        background: '#1e293b',
+                        color: '#38bdf8',
+                        fontWeight: '600'
+                      }}>
+                        {a.assessment_type?.toUpperCase()}
                       </span>
-                    </td>
-
-                    {/* Counts */}
-                    <td>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <span
-                          style={{
-                            fontSize: '9.5px',
-                            fontFamily: 'var(--font-mono)',
-                            padding: '2px 5px',
-                            borderRadius: '3px',
-                            background: 'rgba(255, 23, 68, 0.18)',
-                            color: '#ff2a4d',
-                            border: '1px solid #ff1744',
-                            fontWeight: 800
-                          }}
-                        >
-                          {rep.counts?.critical || 0} Crit
-                        </span>
-                        <span
-                          style={{
-                            fontSize: '9.5px',
-                            fontFamily: 'var(--font-mono)',
-                            padding: '2px 5px',
-                            borderRadius: '3px',
-                            background: 'rgba(249, 115, 22, 0.18)',
-                            color: '#f97316',
-                            border: '1px solid #f97316',
-                            fontWeight: 800
-                          }}
-                        >
-                          {rep.counts?.high || 0} High
-                        </span>
-                        <span
-                          style={{
-                            fontSize: '9.5px',
-                            fontFamily: 'var(--font-mono)',
-                            padding: '2px 5px',
-                            borderRadius: '3px',
-                            background: 'rgba(251, 191, 36, 0.18)',
-                            color: '#fbbf24',
-                            border: '1px solid #fbbf24',
-                            fontWeight: 800
-                          }}
-                        >
-                          {rep.counts?.medium || 0} Med
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td>
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '10px',
-                          fontWeight: 800,
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          background: 'rgba(0, 255, 136, 0.15)',
-                          color: '#00ff88',
-                          border: '1.2px solid #00ff88'
-                        }}
-                      >
-                        <CheckCircle2 size={10} /> {rep.status}
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        background: isCompleted ? 'rgba(16, 185, 129, 0.15)' : (isFailed ? 'rgba(255, 51, 102, 0.15)' : 'rgba(0, 242, 254, 0.15)'),
+                        color: isCompleted ? '#10b981' : (isFailed ? '#ff3366' : '#00f2fe')
+                      }}>
+                        {a.status}
                       </span>
-                    </td>
+                    </div>
 
-                    {/* Actions */}
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedReport(rep);
-                          }}
-                          className="btn btn-primary btn-xs"
-                          style={{ height: '24px', padding: '0 8px', fontSize: '10.5px' }}
-                        >
-                          <Eye size={11} /> View
-                        </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                      <span>{new Date(a.created_at).toLocaleString()}</span>
+                      <span>•</span>
+                      <span>{a.total_findings} findings recorded</span>
+                      {a.repository_info?.url && (
+                        <>
+                          <span>•</span>
+                          <span style={{ color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>{a.repository_info.url}</span>
+                        </>
+                      )}
+                      {a.target_info?.url && (
+                        <>
+                          <span>•</span>
+                          <span style={{ color: '#00f2fe', fontFamily: 'var(--font-mono)' }}>{a.target_info.url}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleExport(rep, 'pdf');
-                          }}
-                          className="btn btn-secondary btn-xs"
-                          style={{ height: '24px', padding: '0 8px', fontSize: '10.5px' }}
-                          title="Download PDF Report"
-                        >
-                          <FileText size={11} /> PDF
-                        </button>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleExport(rep, 'html');
-                          }}
-                          className="btn btn-secondary btn-xs"
-                          style={{ height: '24px', padding: '0 8px', fontSize: '10.5px' }}
-                          title="Download HTML Report"
-                        >
-                          <Download size={11} /> HTML
-                        </button>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleExport(rep, 'json');
-                          }}
-                          className="btn btn-secondary btn-xs"
-                          style={{ height: '24px', padding: '0 8px', fontSize: '10.5px' }}
-                          title="Download JSON Report"
-                        >
-                          <Code size={11} /> JSON
-                        </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  {isCompleted && (
+                    <div style={{ textAlign: 'right', marginRight: '8px' }}>
+                      <div style={{ fontSize: '18px', fontWeight: '800', color: '#00f2fe', fontFamily: 'var(--font-mono)' }}>
+                        {a.overall_risk_score} / 100
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                      <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Risk Score</div>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    {isCompleted && (
+                      <>
+                        <button className="btn btn-secondary btn-sm" onClick={(e) => handleExport(e, a.id, 'json')}>
+                          <Download size={13} />
+                          <span>JSON</span>
+                        </button>
+                        <button className="btn btn-secondary btn-sm" onClick={(e) => handleExport(e, a.id, 'pdf')}>
+                          <Download size={13} />
+                          <span>PDF</span>
+                        </button>
+                        <button className="btn btn-primary btn-sm" onClick={(e) => handleExport(e, a.id, 'html')}>
+                          <Eye size={13} />
+                          <span>HTML</span>
+                        </button>
+                      </>
+                    )}
+
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={(e) => handleDelete(e, a.id)}
+                      disabled={deletingId === a.id}
+                      title="Delete assessment"
+                      style={{
+                        padding: '6px 10px',
+                        background: 'rgba(255, 51, 102, 0.1)',
+                        border: '1px solid rgba(255, 51, 102, 0.3)',
+                        color: '#ff3366'
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="cyber-card" style={{ textAlign: 'center', padding: '48px', color: '#64748b' }}>
+            No assessments found matching the current filter.
+          </div>
+        )}
       </div>
-
-      {/* Modal */}
-      <ReportViewerModal
-        report={selectedReport}
-        isOpen={Boolean(selectedReport)}
-        onClose={() => setSelectedReport(null)}
-      />
     </div>
   );
-}
-
-export default Reports;
+};

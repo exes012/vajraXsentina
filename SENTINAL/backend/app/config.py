@@ -4,20 +4,16 @@ from typing import List, Optional
 from pydantic_settings import BaseSettings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-BASE_DIR = Path(__file__).resolve().parent.parent
-RAW_DB = os.getenv("SENTINA_DATABASE_URL") or os.getenv("DATABASE_URL") or "sqlite:///./sentinal.db"
-if RAW_DB.startswith("postgres://"):
-    RAW_DB = RAW_DB.replace("postgres://", "postgresql://", 1)
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Sentinal Security Assessment Platform"
     VERSION: str = "1.0.0"
     API_V1_PREFIX: str = "/api"
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
-    DEBUG: bool = os.getenv("DEBUG", "false").lower() in ("true", "1", "t")
+    ENVIRONMENT: str = "development"
+    DEBUG: bool = True
 
     # Database
-    DATABASE_URL: str = RAW_DB
+    DATABASE_URL: str = "sqlite:///./sentinal.db"
 
     # Security & Auth
     SECRET_KEY: str = "sentinal-dev-secret-key-32-chars-long-change-in-prod-!"
@@ -25,16 +21,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
 
     # CORS
-    CORS_ORIGINS: List[str] = [
-        "https://vajraxsentina-1.onrender.com",
-        "https://vajraxsentina-i7r5.onrender.com",
-        "https://vajraxsentina.onrender.com",
-        "https://vajraaa.netlify.app",
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000"
-    ]
+    CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:3000", "*"]
 
     # AI Settings
     AI_PROVIDER: str = "expert"  # Options: 'expert' (built-in offline engine), 'openai', 'anthropic', 'gemini', 'ollama'
@@ -53,7 +40,7 @@ class Settings(BaseSettings):
     # GitHub Integration
     GITHUB_DEFAULT_BRANCH: str = "main"
 
-    model_config = {"env_prefix": "SENTINA_", "extra": "ignore"}
+    model_config = {"env_file": ".env", "extra": "ignore"}
 
 settings = Settings()
 
