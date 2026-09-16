@@ -1799,7 +1799,7 @@ Entropy: 5.12 (High)`,
       assessment_type: assessmentType,
       started_at: new Date().toISOString(),
       completed_at: null,
-      status: 'QUEUED',
+      status: 'INITIALIZING',
       progress: 5,
       overallScore: 100,
       securityScore: 100,
@@ -1808,8 +1808,8 @@ Entropy: 5.12 (High)`,
       dastCoverageScore: isSourceOnly ? 0 : 0,
       coverageStatus: isSourceOnly ? 'NOT_APPLICABLE' : 'IN_PROGRESS',
       logs: [
-        { timestamp: new Date().toISOString(), stage: 'QUEUED', message: `Scan request queued for target: ${targetStr}` },
-        { timestamp: new Date().toISOString(), stage: 'INITIALIZING', message: `Initializing scanner engines and environment...` }
+        { timestamp: new Date().toISOString(), stage: 'INITIALIZING', message: `Initializing live assessment for target: ${targetStr}` },
+        { timestamp: new Date().toISOString(), stage: 'TARGET VALIDATION', message: `Configuring security analyzers and scanning pipelines...` }
       ],
       modules: {
         discovery: config.scanners?.discovery ?? !isSourceOnly,
@@ -1824,7 +1824,7 @@ Entropy: 5.12 (High)`,
       }
     });
 
-    // Reflect immediately in the active UI
+    // Reflect immediately in the active UI (Zero lag!)
     this.assessments = [optimistic, ...this.assessments.filter(a => a.id !== tempId)];
     this.activeAssessmentId = tempId;
     this.activeScanId = tempId;
@@ -1833,39 +1833,40 @@ Entropy: 5.12 (High)`,
     }
     this.notify();
 
-    try {
-      // Call dedicated /api/scans endpoint (with fallback to /api/assessments)
-      const serverScan = await (apiClient.startScan(payload).catch(() => apiClient.startAssessment(payload)));
-      if (serverScan && serverScan.id) {
-        const formatted = this._formatAssessment(serverScan);
+    // Launch background task and stream progress
+    (async () => {
+      try {
+        const serverScan = await (apiClient.startScan(payload).catch(() => apiClient.startAssessment(payload)));
+        if (serverScan && serverScan.id) {
+          const formatted = this._formatAssessment(serverScan);
 
-        // Replace temporary placeholder with real server scan
-        const tempIdx = this.assessments.findIndex(a => a.id === tempId);
-        if (tempIdx !== -1) {
-          this.assessments[tempIdx] = formatted;
-        } else {
-          this.assessments = [formatted, ...this.assessments.filter(a => a.id !== formatted.id)];
+          // Replace temporary placeholder with real server scan
+          const tempIdx = this.assessments.findIndex(a => a.id === tempId);
+          if (tempIdx !== -1) {
+            this.assessments[tempIdx] = formatted;
+          } else {
+            this.assessments = [formatted, ...this.assessments.filter(a => a.id !== formatted.id)];
+          }
+          this.activeAssessmentId = formatted.id;
+          this.activeScanId = formatted.id;
+          if (typeof window !== 'undefined' && window.sessionStorage) {
+            window.sessionStorage.setItem('sentina_active_scan_id', formatted.id);
+          }
+          this.pollAssessmentProgress(formatted.id);
+          this.notify();
         }
-        this.activeAssessmentId = formatted.id;
-        this.activeScanId = formatted.id;
-        if (typeof window !== 'undefined' && window.sessionStorage) {
-          window.sessionStorage.setItem('sentina_active_scan_id', formatted.id);
-        }
-        this.pollAssessmentProgress(formatted.id);
+      } catch (err) {
+        console.warn('Backend scan initiation notice:', err);
+        optimistic.status = 'FAILED';
+        optimistic.logs.push({
+          timestamp: new Date().toISOString(),
+          stage: 'FAILED',
+          message: `Connection to Sentina backend service failed: ${err.message || err}`
+        });
         this.notify();
-        return formatted;
       }
-    } catch (err) {
-      console.warn('Backend scan initiation notice:', err);
-      // Mark optimistic as FAILED if network unreachable
-      optimistic.status = 'FAILED';
-      optimistic.logs.push({
-        timestamp: new Date().toISOString(),
-        stage: 'FAILED',
-        message: `Connection to Sentina backend service failed: ${err.message || err}`
-      });
-      this.notify();
-    }
+    })();
+
     return optimistic;
   }
 
@@ -1873,17 +1874,13 @@ Entropy: 5.12 (High)`,
     const targetId = scanId || this.activeScanId || this.activeAssessmentId;
     if (!targetId) return;
 
+    // Immediately kill active polling timer
     if (this.activePollingInterval) {
       clearInterval(this.activePollingInterval);
       this.activePollingInterval = null;
     }
 
-    try {
-      await (apiClient.cancelScan(targetId).catch(() => apiClient.cancelAssessment(targetId)));
-    } catch (e) {
-      console.warn('Cancel scan notice:', e);
-    }
-
+    // Immediately transition state in memory to CANCELLED
     const current = this.assessments.find(a => String(a.id) === String(targetId));
     if (current) {
       current.status = 'CANCELLED';
@@ -1891,8 +1888,19 @@ Entropy: 5.12 (High)`,
       current.logs.push({
         time: new Date().toLocaleTimeString(),
         stage: 'CANCELLED',
-        text: 'Assessment scan was cancelled by analyst.'
+        text: 'Mission aborted by security operator.'
       });
+    }
+    this.notify();
+
+    // Call server to abort execution workers
+    try {
+      await Promise.allSettled([
+        apiClient.cancelScan(targetId),
+        apiClient.cancelAssessment(targetId)
+      ]);
+    } catch (e) {
+      console.warn('Cancel scan notice:', e);
     }
     this.notify();
   }
@@ -1964,7 +1972,7 @@ Entropy: 5.12 (High)`,
           }
           this.notify();
 
-          if (statusData.status === 'COMPLETED' || statusData.status === 'FAILED' || statusData.status === 'CANCELLED' || pollCount > 300) {
+          if (statusData.status === 'COMPLETED' || statusData.status === 'FAILED' || statusData.status === 'CANCELLED' || pollCount > 500) {
             clearInterval(this.activePollingInterval);
             this.activePollingInterval = null;
 
@@ -1990,19 +1998,19 @@ Entropy: 5.12 (High)`,
             }
             this.notify();
 
-            if (asm.status === 'COMPLETED' || asm.status === 'FAILED' || asm.status === 'CANCELLED' || pollCount > 300) {
+            if (asm.status === 'COMPLETED' || asm.status === 'FAILED' || asm.status === 'CANCELLED' || pollCount > 500) {
               clearInterval(this.activePollingInterval);
               this.activePollingInterval = null;
             }
           }
         }
       } catch (e) {
-        if (pollCount > 300) {
+        if (pollCount > 500) {
           clearInterval(this.activePollingInterval);
           this.activePollingInterval = null;
         }
       }
-    }, 1500);
+    }, 700);
   }
 }
 

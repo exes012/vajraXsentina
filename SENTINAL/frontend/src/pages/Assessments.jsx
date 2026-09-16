@@ -182,16 +182,15 @@ export function Assessments({ onSelectFinding }) {
 
   const handleStartNewScan = async (config) => {
     setShowNewModal(false);
-    // 1. Instantly reset findings for the hit target URL / repo
+    setViewMode('active');
     setScanFindings([]);
-    // 2. Scroll to top so user sees the active cockpit, banner and live terminal stream
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     try {
       const newAsm = await dashboardService.triggerNewScan(config);
       if (newAsm) {
         dashboardService.setActiveAssessmentId(newAsm.id);
-        setSelectedAssessment(newAsm);
+        setSelectedAssessment({ ...newAsm });
         setAssessments([...dashboardService.assessments]);
       }
     } catch (err) {
@@ -445,6 +444,12 @@ export function Assessments({ onSelectFinding }) {
           findings={scanFindings}
           onCancel={async (id) => {
             await dashboardService.cancelActiveScan(id);
+            const found = dashboardService.assessments.find(a => String(a.id) === String(id));
+            if (found) {
+              setSelectedAssessment({ ...found, status: 'CANCELLED' });
+            } else if (selectedAssessment) {
+              setSelectedAssessment(prev => prev ? { ...prev, status: 'CANCELLED' } : null);
+            }
           }}
           onStartNewScan={() => setShowNewModal(true)}
           onSelectFinding={handleOpenFinding}

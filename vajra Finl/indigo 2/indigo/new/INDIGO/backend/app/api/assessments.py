@@ -251,11 +251,12 @@ def cancel_assessment(
 
     if assessment.status not in ["COMPLETED", "FAILED", "CANCELLED"]:
         assessment.status = "CANCELLED"
+        assessment.completed_at = datetime.now(timezone.utc)
         current_logs = list(assessment.logs or [])
         current_logs.append({
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "stage": "CANCELLED",
-            "message": "Assessment was cancelled by user."
+            "message": "Mission aborted by operator."
         })
         assessment.logs = current_logs
         db.commit()

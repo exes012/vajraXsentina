@@ -36,13 +36,14 @@ class ScannerOrchestrator:
                 error_message=f"Scanner adapter '{adapter_key}' not found."
             )
         try:
-            return await asyncio.wait_for(adapter.run(target), timeout=60.0)
+            # Fast watchdog timeout (12s) to prevent hanging scanners
+            return await asyncio.wait_for(adapter.run(target), timeout=12.0)
         except asyncio.TimeoutError:
             return ScannerResult(
                 scanner_name=adapter.name,
                 source=adapter.source,
                 status="FAILED",
-                error_message=f"Scanner {adapter.name} timed out after 60s watchdog limit.",
+                error_message=f"Scanner {adapter.name} timed out after 12s watchdog limit.",
                 metadata={"telemetry": dict(getattr(adapter, "telemetry", {}))}
             )
         except Exception as e:
@@ -58,52 +59,72 @@ class ScannerOrchestrator:
         modules_config: Dict[str, bool],
         repo_or_code_target: Any = None,
         live_target: Any = None,
-        progress_callback = None
+        progress_callback = None,
+        is_cancelled_func = None
     ) -> List[ScannerResult]:
-        """Run all configured assessment modules with graceful fault tolerance and ordered execution."""
-        scanner_targets = []
-
-        # 1. Code / Repo Scanners
-        if repo_or_code_target:
-            if modules_config.get("sast", True):
-                scanner_targets.append(("sast", repo_or_code_target))
-            if modules_config.get("sca", True):
-                scanner_targets.append(("sca", repo_or_code_target))
-            if modules_config.get("secrets", True):
-                scanner_targets.append(("secrets", repo_or_code_target))
-
-        # 2. Live Web / DAST Scanners
-        if live_target:
-            if modules_config.get("discovery", True):
-                scanner_targets.append(("discovery", live_target))
-            if modules_config.get("dast", True):
-                scanner_targets.append(("dast", live_target))
-            if modules_config.get("nuclei", True):
-                scanner_targets.append(("nuclei", live_target))
-            if modules_config.get("wapiti", True):
-                scanner_targets.append(("wapiti", live_target))
-            if modules_config.get("nikto", True):
-                scanner_targets.append(("nikto", live_target))
-            if modules_config.get("headers", True):
-                scanner_targets.append(("headers", live_target))
-            if modules_config.get("ssl", True):
-                scanner_targets.append(("ssl", live_target))
-
+        """Run all configured assessment modules with parallel concurrency and rapid fault tolerance."""
         results: List[ScannerResult] = []
 
-        for key, target in scanner_targets:
+        # Check early cancellation
+        if is_cancelled_func and is_cancelled_func():
+            return results
+
+        async def _run_single_module(key: str, target: Any) -> ScannerResult:
+            if is_cancelled_func and is_cancelled_func():
+                return ScannerResult(scanner_name=key.upper(), source="SYSTEM", status="SKIPPED", error_message="Cancelled by user.")
             if progress_callback:
                 try:
                     await progress_callback(key, "RUNNING")
                 except Exception:
                     pass
             res = await self.execute_scanner(key, target)
-            results.append(res)
             if progress_callback:
                 try:
                     await progress_callback(key, res.status, res.error_message)
                 except Exception:
                     pass
+            return res
+
+        # 1. Code / Repo Scanners (SAST, SCA, SECRETS) - Run in PARALLEL
+        code_tasks = []
+        if repo_or_code_target:
+            if modules_config.get("sast", True):
+                code_tasks.append(_run_single_module("sast", repo_or_code_target))
+            if modules_config.get("sca", True):
+                code_tasks.append(_run_single_module("sca", repo_or_code_target))
+            if modules_config.get("secrets", True):
+                code_tasks.append(_run_single_module("secrets", repo_or_code_target))
+
+        # 2. Live Web / DAST Scanners
+        web_tasks = []
+        if live_target:
+            # If discovery is requested, run discovery first quickly
+            if modules_config.get("discovery", True):
+                disc_res = await _run_single_module("discovery", live_target)
+                results.append(disc_res)
+
+            if is_cancelled_func and is_cancelled_func():
+                return results
+
+            # Run headers, ssl, nuclei, dast, wapiti, nikto concurrently
+            for key in ["headers", "ssl", "nuclei", "dast", "wapiti", "nikto"]:
+                if modules_config.get(key, True):
+                    web_tasks.append(_run_single_module(key, live_target))
+
+        # Gather remaining parallel tasks (Code scanners + Web scanners)
+        all_parallel_tasks = code_tasks + web_tasks
+        if all_parallel_tasks:
+            parallel_results = await asyncio.gather(*all_parallel_tasks, return_exceptions=True)
+            for item in parallel_results:
+                if isinstance(item, ScannerResult):
+                    results.append(item)
+                elif isinstance(item, Exception):
+                    results.append(ScannerResult(
+                        scanner_name="PARALLEL_TASK",
+                        source="SYSTEM",
+                        status="FAILED",
+                        error_message=str(item)
+                    ))
 
         return results
 
