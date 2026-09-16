@@ -49,6 +49,9 @@ export const apiClient = {
     const urlsToTry = [
       `${API_BASE}${endpoint}`,
       `${BACKEND_FALLBACK}${endpoint}`,
+      `https://vajraxsentina-i7r5.onrender.com/api${endpoint}`,
+      `https://vajraxsentina-1.onrender.com/api${endpoint}`,
+      `https://vajraxsentina.onrender.com/api${endpoint}`,
       ...(isLocalhost ? [
         `http://127.0.0.1:8000/api${endpoint}`,
         `http://localhost:8000/api${endpoint}`
