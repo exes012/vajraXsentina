@@ -30,9 +30,21 @@ async def create_and_start_assessment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    project = db.query(Project).filter(Project.id == payload.project_id, Project.user_id == current_user.id).first()
+    project = None
+    if payload.project_id and payload.project_id != "default-workspace-scope":
+        project = db.query(Project).filter(Project.id == payload.project_id, Project.user_id == current_user.id).first()
+    
     if not project:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found or unauthorized")
+        project = db.query(Project).filter(Project.user_id == current_user.id).first()
+        if not project:
+            project = Project(
+                name="Default Workspace",
+                description="Auto-generated default assessment workspace",
+                user_id=current_user.id
+            )
+            db.add(project)
+            db.commit()
+            db.refresh(project)
 
     # Strictly respect the selected assessment type
     if payload.assessment_type == "repo":
