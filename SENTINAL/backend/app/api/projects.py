@@ -15,6 +15,16 @@ def list_projects(
     current_user: User = Depends(get_current_user)
 ):
     projects = db.query(Project).filter(Project.user_id == current_user.id).order_by(Project.created_at.desc()).all()
+    if not projects:
+        default_proj = Project(
+            name="Default Workspace",
+            description="Security assessment workspace scope",
+            user_id=current_user.id
+        )
+        db.add(default_proj)
+        db.commit()
+        db.refresh(default_proj)
+        projects = [default_proj]
     return [ProjectResponse.model_validate(p) for p in projects]
 
 @router.post("", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
