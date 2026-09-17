@@ -88,10 +88,22 @@ def run_db_migrations():
                 "ALTER TABLE projects ADD COLUMN IF NOT EXISTS target_url VARCHAR(512);",
 
                 # Assets table
-                "ALTER TABLE assets ADD COLUMN IF NOT EXISTS tech_stack JSON DEFAULT '[]';",
-                "ALTER TABLE assets ADD COLUMN IF NOT EXISTS headers JSON DEFAULT '{}';",
+                "ALTER TABLE assets ADD COLUMN IF NOT EXISTS asset_type VARCHAR(32) DEFAULT 'WEB_APPLICATION';",
+                "ALTER TABLE assets ADD COLUMN IF NOT EXISTS hostname VARCHAR(256) DEFAULT '';",
+                "ALTER TABLE assets ADD COLUMN IF NOT EXISTS protocol VARCHAR(16) DEFAULT 'https';",
+                "ALTER TABLE assets ADD COLUMN IF NOT EXISTS port INTEGER DEFAULT 443;",
+                "ALTER TABLE assets ADD COLUMN IF NOT EXISTS status VARCHAR(32) DEFAULT 'REACHABLE';",
                 "ALTER TABLE assets ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT TRUE;",
                 "ALTER TABLE assets ADD COLUMN IF NOT EXISTS verification_method VARCHAR(64) DEFAULT 'AUTO_REACHABILITY';",
+                "ALTER TABLE assets ADD COLUMN IF NOT EXISTS tech_stack JSON DEFAULT '[]';",
+                "ALTER TABLE assets ADD COLUMN IF NOT EXISTS headers JSON DEFAULT '{}';",
+                "ALTER TABLE assets ADD COLUMN IF NOT EXISTS last_scanned_at TIMESTAMP WITHOUT TIME ZONE;",
+
+                # Scan Jobs table
+                "ALTER TABLE scan_jobs ADD COLUMN IF NOT EXISTS duration_ms INTEGER DEFAULT 0;",
+                "ALTER TABLE scan_jobs ADD COLUMN IF NOT EXISTS raw_results_count INTEGER DEFAULT 0;",
+                "ALTER TABLE scan_jobs ADD COLUMN IF NOT EXISTS error_message TEXT;",
+                "ALTER TABLE scan_jobs ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP WITHOUT TIME ZONE;",
 
                 # Sentina Reports table creation
                 """CREATE TABLE IF NOT EXISTS sentina_reports (

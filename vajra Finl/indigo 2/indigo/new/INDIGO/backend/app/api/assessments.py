@@ -90,22 +90,31 @@ async def create_and_start_assessment(
         target_dict["url"] = norm_url
 
         # Check Target Asset Verification
-        asset = db.query(Asset).filter(Asset.project_id == project.id, Asset.url == norm_url).first()
-        if not asset or not asset.is_verified:
-            # Auto-verify asset on assessment launch for seamless usability
-            if not asset:
-                parsed_u = Path(norm_url)
-                asset = Asset(
-                    project_id=project.id,
-                    asset_type="WEB_APPLICATION",
-                    url=norm_url,
-                    hostname=target_dict.get("hostname", norm_url),
-                    status="REACHABLE",
-                    is_verified=True,
-                    verification_method="AUTO_REACHABILITY"
-                )
-                db.add(asset)
-                db.commit()
+        try:
+            asset = db.query(Asset).filter(Asset.project_id == project.id, Asset.url == norm_url).first()
+            if not asset or not asset.is_verified:
+                if not asset:
+                    import urllib.parse
+                    parsed_u = urllib.parse.urlparse(norm_url)
+                    host = parsed_u.hostname or norm_url
+                    proto = parsed_u.scheme or "https"
+                    port_val = parsed_u.port or (443 if proto == "https" else 80)
+                    asset = Asset(
+                        project_id=project.id,
+                        asset_type="WEB_APPLICATION",
+                        url=norm_url,
+                        hostname=host,
+                        protocol=proto,
+                        port=port_val,
+                        status="REACHABLE",
+                        is_verified=True,
+                        verification_method="AUTO_REACHABILITY"
+                    )
+                    db.add(asset)
+                    db.commit()
+        except Exception as a_err:
+            db.rollback()
+            logger.warning(f"Asset auto-registration notice: {a_err}")
 
         modules_dict = {
             "sast": False,
