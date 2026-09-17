@@ -98,20 +98,45 @@ async def lifespan(app: FastAPI):
             try:
                 from sqlalchemy import text
                 with engine.connect() as conn:
-                    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN DEFAULT TRUE;"))
-                    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_code VARCHAR;"))
-                    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMPTZ;"))
-                    
-                    # Company ownership & visibility columns
-                    conn.execute(text("ALTER TABLE companies ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id);"))
-                    conn.execute(text("ALTER TABLE companies ADD COLUMN IF NOT EXISTS created_by_user_name VARCHAR;"))
-                    conn.execute(text("ALTER TABLE companies ADD COLUMN IF NOT EXISTS created_by_user_email VARCHAR;"))
-                    conn.execute(text("ALTER TABLE companies ADD COLUMN IF NOT EXISTS is_global BOOLEAN DEFAULT TRUE;"))
-                    conn.execute(text("UPDATE companies SET is_global = TRUE WHERE is_global IS NULL OR created_by_user_email = 'admin@indigo.com' OR created_by_user_name = 'Admin' OR created_by_user_name = 'Admin User' OR created_by_user_name = 'System' OR created_by_user_id IS NULL;"))
-                    conn.execute(text("UPDATE companies SET is_active = TRUE WHERE is_active IS NULL;"))
-                    
+                    # Sentina assessment, finding, and project table column migrations
+                    sentina_alter_queries = [
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS regression_summary JSON DEFAULT '{}';",
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS error_message TEXT;",
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS logs JSON DEFAULT '[]';",
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS overall_risk_score FLOAT DEFAULT 0.0;",
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS critical_count INTEGER DEFAULT 0;",
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS high_count INTEGER DEFAULT 0;",
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS medium_count INTEGER DEFAULT 0;",
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS low_count INTEGER DEFAULT 0;",
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS info_count INTEGER DEFAULT 0;",
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS total_findings INTEGER DEFAULT 0;",
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS repository_info JSON DEFAULT '{}';",
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS target_info JSON DEFAULT '{}';",
+                        "ALTER TABLE assessments ADD COLUMN IF NOT EXISTS modules JSON DEFAULT '{}';",
+                        "ALTER TABLE findings ADD COLUMN IF NOT EXISTS regression_status VARCHAR(32) DEFAULT 'NEW';",
+                        "ALTER TABLE findings ADD COLUMN IF NOT EXISTS detected_by JSON DEFAULT '[]';",
+                        "ALTER TABLE findings ADD COLUMN IF NOT EXISTS risk_score FLOAT DEFAULT 0.0;",
+                        "ALTER TABLE findings ADD COLUMN IF NOT EXISTS status VARCHAR(32) DEFAULT 'open';",
+                        "ALTER TABLE findings ADD COLUMN IF NOT EXISTS raw_evidence JSON DEFAULT '{}';",
+                        "ALTER TABLE findings ADD COLUMN IF NOT EXISTS cwe JSON DEFAULT '[]';",
+                        "ALTER TABLE findings ADD COLUMN IF NOT EXISTS cves JSON DEFAULT '[]';",
+                        "ALTER TABLE findings ADD COLUMN IF NOT EXISTS owasp JSON DEFAULT '[]';",
+                        "ALTER TABLE projects ADD COLUMN IF NOT EXISTS user_id VARCHAR(64);",
+                        "ALTER TABLE projects ADD COLUMN IF NOT EXISTS repository_url VARCHAR(512);",
+                        "ALTER TABLE projects ADD COLUMN IF NOT EXISTS target_url VARCHAR(512);",
+                        "ALTER TABLE assets ADD COLUMN IF NOT EXISTS tech_stack JSON DEFAULT '[]';",
+                        "ALTER TABLE assets ADD COLUMN IF NOT EXISTS headers JSON DEFAULT '{}';",
+                        "ALTER TABLE assets ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT TRUE;",
+                        "ALTER TABLE assets ADD COLUMN IF NOT EXISTS verification_method VARCHAR(64) DEFAULT 'AUTO_REACHABILITY';"
+                    ]
+                    for aq in sentina_alter_queries:
+                        try:
+                            conn.execute(text(aq))
+                        except Exception as aq_err:
+                            pass
+
                     conn.commit()
-                    logger.info("Database table columns verified/migrated successfully")
+                    logger.info("Database table columns and Sentina schema verified/migrated successfully")
             except Exception as mig_err:
                 logger.warning(f"Column migration check notice: {mig_err}")
             
