@@ -1,5 +1,5 @@
 'use client';
-const getApiBase = () => {
+const getPrimaryApiBase = () => {
   if (typeof window !== 'undefined') {
     if (window.location.hostname.includes('render.com') || window.location.hostname.includes('netlify.app') || window.location.hostname.includes('vercel.app')) {
       return 'https://vajraxsentina-i7r5.onrender.com/api';
@@ -8,7 +8,12 @@ const getApiBase = () => {
   return import.meta.env?.VITE_API_URL || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '')}/api` : '/api');
 };
 
-const API_BASE = getApiBase();
+const CLOUD_FALLBACK_URLS = [
+  'https://vajraxsentina-i7r5.onrender.com/api',
+  'https://vajraxsentina.onrender.com/api'
+];
+
+let activeApiBase = getPrimaryApiBase();
 
 export const apiClient = {
   getToken() {
@@ -28,7 +33,7 @@ export const apiClient = {
   },
 
   async request(endpoint, options = {}, retries = 2) {
-    const url = `${API_BASE}${endpoint}`;
+    const url = `${activeApiBase}${endpoint}`;
     const token = this.getToken();
 
     const headers = {
@@ -77,7 +82,12 @@ export const apiClient = {
       return data;
     } catch (err) {
       if (retries > 0 && (err.name === 'TypeError' || err.message?.includes('fetch') || err.message?.includes('NetworkError'))) {
-        console.warn(`Retrying request to ${endpoint} (${retries} attempts left)...`);
+        // Failover to alternate cloud endpoint if available
+        const nextIdx = (CLOUD_FALLBACK_URLS.indexOf(activeApiBase) + 1) % CLOUD_FALLBACK_URLS.length;
+        if (CLOUD_FALLBACK_URLS[nextIdx]) {
+          activeApiBase = CLOUD_FALLBACK_URLS[nextIdx];
+        }
+        console.warn(`Retrying request to ${endpoint} via ${activeApiBase} (${retries} attempts left)...`);
         await new Promise(r => setTimeout(r, 1500));
         return this.request(endpoint, options, retries - 1);
       }

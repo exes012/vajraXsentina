@@ -8,13 +8,13 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "sentina_users"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     username = Column(String(64), unique=True, index=True, nullable=False)
     email = Column(String(128), unique=True, index=True, nullable=False)
     hashed_password = Column(String(256), nullable=False)
-    role = Column(String(32), default="analyst")
+    role = Column(String(32), default="admin")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -28,7 +28,7 @@ class Project(Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     name = Column(String(128), nullable=False)
     description = Column(Text, nullable=True)
-    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    user_id = Column(String(64), ForeignKey("sentina_users.id"), nullable=True)
     repository_url = Column(String(512), nullable=True)
     target_url = Column(String(512), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -200,7 +200,7 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    user_id = Column(String(64), ForeignKey("sentina_users.id"), nullable=True)
     action = Column(String(64), nullable=False)
     resource_type = Column(String(64), nullable=False)
     resource_id = Column(String(64), nullable=True)
