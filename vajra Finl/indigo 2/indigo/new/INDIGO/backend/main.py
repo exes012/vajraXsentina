@@ -124,6 +124,8 @@ async def lifespan(app: FastAPI):
                         "ALTER TABLE projects ADD COLUMN IF NOT EXISTS user_id VARCHAR(64);",
                         "ALTER TABLE projects ADD COLUMN IF NOT EXISTS repository_url VARCHAR(512);",
                         "ALTER TABLE projects ADD COLUMN IF NOT EXISTS target_url VARCHAR(512);",
+                        "ALTER TABLE assets ADD COLUMN IF NOT EXISTS name VARCHAR(128) DEFAULT 'Target Asset';",
+                        "ALTER TABLE assets ALTER COLUMN name DROP NOT NULL;",
                         "ALTER TABLE assets ADD COLUMN IF NOT EXISTS asset_type VARCHAR(32) DEFAULT 'WEB_APPLICATION';",
                         "ALTER TABLE assets ADD COLUMN IF NOT EXISTS hostname VARCHAR(256) DEFAULT '';",
                         "ALTER TABLE assets ADD COLUMN IF NOT EXISTS protocol VARCHAR(16) DEFAULT 'https';",

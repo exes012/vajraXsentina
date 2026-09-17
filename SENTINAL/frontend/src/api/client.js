@@ -16,7 +16,21 @@ let activeApiBase = getPrimaryApiBase();
 
 export const apiClient = {
   getToken() {
-    return (typeof window !== 'undefined' && localStorage.getItem('sentinal_token')) || '';
+    if (typeof window === 'undefined') return '';
+    const sentinalTok = localStorage.getItem('sentinal_token');
+    if (sentinalTok) return sentinalTok;
+    const directTok = localStorage.getItem('token');
+    if (directTok) return directTok;
+    try {
+      const authStorage = localStorage.getItem('auth-storage');
+      if (authStorage) {
+        const parsed = JSON.parse(authStorage);
+        if (parsed?.state?.token) return parsed.state.token;
+      }
+    } catch {
+      // ignore
+    }
+    return '';
   },
 
   setToken(token) {
@@ -75,7 +89,19 @@ export const apiClient = {
       }
 
       if (!res.ok) {
-        throw new Error(data.detail || data.message || `Request failed with status ${res.status}`);
+        let errMsg = `Request failed with status ${res.status}`;
+        if (data && data.detail) {
+          if (typeof data.detail === 'string') {
+            errMsg = data.detail;
+          } else if (Array.isArray(data.detail)) {
+            errMsg = data.detail.map(d => `${d.loc ? d.loc.slice(-1)[0] + ': ' : ''}${d.msg}`).join(', ');
+          } else {
+            errMsg = JSON.stringify(data.detail);
+          }
+        } else if (data && data.message) {
+          errMsg = data.message;
+        }
+        throw new Error(errMsg);
       }
 
       return data;
@@ -87,7 +113,7 @@ export const apiClient = {
           activeApiBase = CLOUD_FALLBACK_URLS[nextIdx];
         }
         console.warn(`Retrying request to ${endpoint} via ${activeApiBase} (${retries} attempts left)...`);
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise(r => setTimeout(r, 1000));
         return this.request(endpoint, options, retries - 1);
       }
       console.error(`API Error on [${options.method || 'GET'} ${endpoint}]:`, err);
@@ -216,7 +242,7 @@ export const apiClient = {
   },
 
   getExportUrl(assessmentId, format = 'html') {
-    return `${API_BASE}/reports/${assessmentId}/export?format=${format}`;
+    return `${activeApiBase}/reports/${assessmentId}/export?format=${format}`;
   },
 
   // Assets

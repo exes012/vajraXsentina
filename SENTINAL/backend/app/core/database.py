@@ -88,6 +88,8 @@ def run_db_migrations():
                 "ALTER TABLE projects ADD COLUMN IF NOT EXISTS target_url VARCHAR(512);",
 
                 # Assets table
+                "ALTER TABLE assets ADD COLUMN IF NOT EXISTS name VARCHAR(128) DEFAULT 'Target Asset';",
+                "ALTER TABLE assets ALTER COLUMN name DROP NOT NULL;",
                 "ALTER TABLE assets ADD COLUMN IF NOT EXISTS asset_type VARCHAR(32) DEFAULT 'WEB_APPLICATION';",
                 "ALTER TABLE assets ADD COLUMN IF NOT EXISTS hostname VARCHAR(256) DEFAULT '';",
                 "ALTER TABLE assets ADD COLUMN IF NOT EXISTS protocol VARCHAR(16) DEFAULT 'https';",

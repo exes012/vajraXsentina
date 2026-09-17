@@ -101,6 +101,7 @@ async def create_and_start_assessment(
                     port_val = parsed_u.port or (443 if proto == "https" else 80)
                     asset = Asset(
                         project_id=project.id,
+                        name=host or "Target Asset",
                         asset_type="WEB_APPLICATION",
                         url=norm_url,
                         hostname=host,

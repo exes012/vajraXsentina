@@ -82,6 +82,7 @@ async def verify_target_asset(
     if not asset:
         asset = Asset(
             project_id=project.id,
+            name=hostname or "Target Asset",
             asset_type="WEB_APPLICATION",
             url=normalized_url,
             hostname=hostname,

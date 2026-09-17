@@ -44,6 +44,7 @@ class Asset(Base):
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     project_id = Column(String(36), ForeignKey("projects.id"), nullable=False, index=True)
+    name = Column(String(128), default="Target Asset", nullable=True)
     asset_type = Column(String(32), default="WEB_APPLICATION")  # WEB_APPLICATION, API, SERVICE
     url = Column(String(512), nullable=False)
     hostname = Column(String(256), nullable=False)

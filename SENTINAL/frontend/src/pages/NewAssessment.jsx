@@ -238,7 +238,8 @@ export const NewAssessment = ({ onAssessmentStarted }) => {
           target: null
         };
       } else if (mode === 'dast') {
-        if (!targetUrl.trim()) {
+        const rawTarget = targetUrl ? targetUrl.trim() : '';
+        if (!rawTarget || rawTarget === 'https://' || rawTarget === 'http://') {
           throw new Error('Please enter a valid live application URL (e.g. https://example.com).');
         }
         payload = {
@@ -248,13 +249,15 @@ export const NewAssessment = ({ onAssessmentStarted }) => {
             sast: false,
             sca: false,
             secrets: false,
-            dast: modules.dast,
-            nuclei: modules.nuclei,
-            ssl: modules.ssl
+            dast: Boolean(modules.dast),
+            nuclei: Boolean(modules.nuclei),
+            wapiti: Boolean(modules.wapiti),
+            nikto: Boolean(modules.nikto),
+            ssl: Boolean(modules.ssl)
           },
           repository: null,
           target: {
-            url: targetUrl.trim(),
+            url: rawTarget,
             scan_mode: scanPolicy,
             auth_header: authHeader.trim() || null
           }
@@ -262,7 +265,8 @@ export const NewAssessment = ({ onAssessmentStarted }) => {
       } else {
         // Combined mode
         const hasRepo = Boolean(repoUrl.trim());
-        const hasTarget = Boolean(targetUrl.trim());
+        const rawTarget = targetUrl ? targetUrl.trim() : '';
+        const hasTarget = Boolean(rawTarget && rawTarget !== 'https://' && rawTarget !== 'http://');
 
         if (!hasRepo && !hasTarget) {
           throw new Error('Please provide at least a GitHub repository URL or a Live Target URL.');
@@ -272,12 +276,14 @@ export const NewAssessment = ({ onAssessmentStarted }) => {
           project_id: activeProjId,
           assessment_type: 'combined',
           modules: {
-            sast: hasRepo ? modules.sast : false,
-            sca: hasRepo ? modules.sca : false,
-            secrets: hasRepo ? modules.secrets : false,
-            dast: hasTarget ? modules.dast : false,
-            nuclei: hasTarget ? modules.nuclei : false,
-            ssl: hasTarget ? modules.ssl : false
+            sast: hasRepo ? Boolean(modules.sast) : false,
+            sca: hasRepo ? Boolean(modules.sca) : false,
+            secrets: hasRepo ? Boolean(modules.secrets) : false,
+            dast: hasTarget ? Boolean(modules.dast) : false,
+            nuclei: hasTarget ? Boolean(modules.nuclei) : false,
+            wapiti: hasTarget ? Boolean(modules.wapiti) : false,
+            nikto: hasTarget ? Boolean(modules.nikto) : false,
+            ssl: hasTarget ? Boolean(modules.ssl) : false
           },
           repository: hasRepo ? {
             url: repoUrl.trim(),
@@ -285,7 +291,7 @@ export const NewAssessment = ({ onAssessmentStarted }) => {
             token: githubToken.trim() || null
           } : null,
           target: hasTarget ? {
-            url: targetUrl.trim(),
+            url: rawTarget,
             scan_mode: scanPolicy,
             auth_header: authHeader.trim() || null
           } : null
