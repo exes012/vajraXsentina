@@ -183,15 +183,10 @@ def list_assessments(
     current_user: User = Depends(get_current_user)
 ):
     query = db.query(Assessment)
-    if project_id:
+    if project_id and project_id != "default-workspace-scope":
         query = query.filter(Assessment.project_id == project_id)
-    elif current_user:
-        user_projs = db.query(Project).filter((Project.user_id == current_user.id) | (Project.user_id == None) | (Project.user_id == "admin")).all()
-        user_proj_ids = [p.id for p in user_projs]
-        if user_proj_ids:
-            query = query.filter(Assessment.project_id.in_(user_proj_ids))
     
-    assessments = query.order_by(Assessment.created_at.desc()).all()
+    assessments = query.order_by(Assessment.created_at.desc()).limit(50).all()
     return [AssessmentResponse.model_validate(a) for a in assessments]
 
 @router.get("/{assessment_id}", response_model=AssessmentResponse)
