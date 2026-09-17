@@ -245,9 +245,9 @@ async def run_assessment_job(assessment_id: str):
 
         # 9. Report Generation
         update_assessment_log(db, assessment_id, "GENERATING_REPORT", "Generating PDF, HTML, and JSON reports...", "GENERATING_REPORT")
-        json_path = report_generator.generate_json_report(assessment_meta, deduped, correlated, ai_res)
-        html_path = report_generator.generate_html_report(assessment_meta, deduped, correlated, ai_res)
-        pdf_path = report_generator.generate_pdf_report(assessment_meta, deduped, correlated, ai_res)
+        json_path = await asyncio.to_thread(report_generator.generate_json_report, assessment_meta, deduped, correlated, ai_res)
+        html_path = await asyncio.to_thread(report_generator.generate_html_report, assessment_meta, deduped, correlated, ai_res)
+        pdf_path = await asyncio.to_thread(report_generator.generate_pdf_report, assessment_meta, deduped, correlated, ai_res)
 
         # 10. Persist Findings, Correlated Risks, and Reports to DB
         prev_f_map = {}
