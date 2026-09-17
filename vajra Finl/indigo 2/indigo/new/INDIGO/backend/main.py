@@ -251,6 +251,23 @@ if SENTINA_AVAILABLE:
     app.include_router(sentina_dashboard_router, prefix="/api", tags=["Sentina Dashboard"])
     app.include_router(sentina_health_router, prefix="/api", tags=["Sentina Health"])
 
+import traceback
+from fastapi.responses import JSONResponse
+from fastapi import Request
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    tb = traceback.format_exc()
+    logger.error(f"Global unhandled exception on [{request.method} {request.url.path}]: {exc}\n{tb}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": f"{type(exc).__name__}: {str(exc)}",
+            "type": type(exc).__name__,
+            "path": request.url.path
+        }
+    )
+
 @app.get("/health")
 @app.get("/api/health")
 async def health_check():

@@ -145,27 +145,36 @@ async def create_and_start_assessment(
             "ssl": payload.modules.ssl if has_target else False
         }
 
-    assessment = Assessment(
-        project_id=project.id,
-        assessment_type=payload.assessment_type,
-        status="QUEUED",
-        repository_info=repo_dict,
-        target_info=target_dict,
-        modules=modules_dict,
-        logs=[{
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "stage": "QUEUED",
-            "message": f"{payload.assessment_type.upper()} assessment request queued successfully."
-        }]
-    )
-    db.add(assessment)
-    db.commit()
-    db.refresh(assessment)
+    import traceback
+    try:
+        assessment = Assessment(
+            project_id=project.id,
+            assessment_type=payload.assessment_type,
+            status="QUEUED",
+            repository_info=repo_dict or {},
+            target_info=target_dict or {},
+            modules=modules_dict or {},
+            logs=[{
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "stage": "QUEUED",
+                "message": f"{payload.assessment_type.upper()} assessment request queued successfully."
+            }]
+        )
+        db.add(assessment)
+        db.commit()
+        db.refresh(assessment)
 
-    # Spawn asynchronous background assessment worker
-    background_tasks.add_task(run_assessment_job, assessment.id)
+        # Spawn asynchronous background assessment worker
+        background_tasks.add_task(run_assessment_job, assessment.id)
 
-    return AssessmentResponse.model_validate(assessment)
+        return AssessmentResponse.model_validate(assessment)
+    except Exception as e:
+        logger.error(f"Error creating assessment: {e}\n{traceback.format_exc()}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database or worker error creating assessment: {str(e)}"
+        )
 
 @router.get("", response_model=List[AssessmentResponse])
 def list_assessments(
