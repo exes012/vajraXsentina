@@ -16,8 +16,8 @@ class UserResponse(BaseModel):
     id: str
     username: str
     email: str
-    role: str
-    is_active: bool
+    role: str = "admin"
+    is_active: bool = True
     created_at: datetime
 
     class Config:
@@ -49,7 +49,7 @@ class ProjectResponse(BaseModel):
     id: str
     name: str
     description: Optional[str] = None
-    user_id: str
+    user_id: Optional[str] = None
     repository_url: Optional[str] = None
     target_url: Optional[str] = None
     created_at: datetime
@@ -92,11 +92,11 @@ class ScanJobResponse(BaseModel):
     id: str
     module_name: str
     status: str
-    duration_ms: int
-    error_message: Optional[str]
-    raw_results_count: int
+    duration_ms: int = 0
+    error_message: Optional[str] = None
+    raw_results_count: int = 0
     created_at: datetime
-    completed_at: Optional[datetime]
+    completed_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -106,20 +106,20 @@ class AssessmentResponse(BaseModel):
     project_id: str
     assessment_type: str
     status: str
-    repository_info: Dict[str, Any]
-    target_info: Dict[str, Any]
-    modules: Dict[str, bool]
-    overall_risk_score: float
-    critical_count: int
-    high_count: int
-    medium_count: int
-    low_count: int
-    info_count: int
-    total_findings: int
-    error_message: Optional[str]
-    logs: List[Dict[str, Any]]
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
+    repository_info: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    target_info: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    modules: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    overall_risk_score: float = 0.0
+    critical_count: int = 0
+    high_count: int = 0
+    medium_count: int = 0
+    low_count: int = 0
+    info_count: int = 0
+    total_findings: int = 0
+    error_message: Optional[str] = None
+    logs: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
     created_at: datetime
     scan_jobs: Optional[List[ScanJobResponse]] = None
 
@@ -136,11 +136,11 @@ class FindingResponse(BaseModel):
     title: str
     description: str
     severity: str
-    confidence: str
-    category: str
-    cwe: List[str]
-    cves: List[str]
-    owasp: List[str]
+    confidence: str = "MEDIUM"
+    category: Optional[str] = "General Security"
+    cwe: Optional[List[str]] = Field(default_factory=list)
+    cves: Optional[List[str]] = Field(default_factory=list)
+    owasp: Optional[List[str]] = Field(default_factory=list)
     file: Optional[str] = None
     line: Optional[int] = None
     code_snippet: Optional[str] = None
@@ -148,10 +148,10 @@ class FindingResponse(BaseModel):
     parameter: Optional[str] = None
     evidence: Optional[str] = None
     remediation: Optional[str] = None
-    references: List[str]
+    references: Optional[List[str]] = Field(default_factory=list)
     fingerprint: Optional[str] = None
-    risk_score: float
-    status: str
+    risk_score: float = 0.0
+    status: str = "open"
     created_at: datetime
 
     class Config:
@@ -168,13 +168,13 @@ class CorrelatedRiskResponse(BaseModel):
     description: str
     risk_level: str
     confidence: str
-    sast_finding_ids: List[str]
-    dast_finding_ids: List[str]
-    sca_finding_ids: List[str]
-    secret_finding_ids: List[str]
-    explanation: str
-    attack_scenario: str
-    remediation: str
+    sast_finding_ids: Optional[List[str]] = Field(default_factory=list)
+    dast_finding_ids: Optional[List[str]] = Field(default_factory=list)
+    sca_finding_ids: Optional[List[str]] = Field(default_factory=list)
+    secret_finding_ids: Optional[List[str]] = Field(default_factory=list)
+    explanation: Optional[str] = ""
+    attack_scenario: Optional[str] = ""
+    remediation: Optional[str] = ""
     created_at: datetime
 
     class Config:
@@ -185,14 +185,14 @@ class ReportResponse(BaseModel):
     id: str
     assessment_id: str
     project_id: str
-    executive_summary: Optional[str]
-    technical_summary: Optional[str]
-    ai_analysis: Dict[str, Any]
-    methodology: Optional[str]
-    distribution: Dict[str, Any]
-    file_path_html: Optional[str]
-    file_path_pdf: Optional[str]
-    file_path_json: Optional[str]
+    executive_summary: Optional[str] = None
+    technical_summary: Optional[str] = None
+    ai_analysis: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    methodology: Optional[str] = None
+    distribution: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    file_path_html: Optional[str] = None
+    file_path_pdf: Optional[str] = None
+    file_path_json: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -200,23 +200,23 @@ class ReportResponse(BaseModel):
 
 # --- Dashboard Schemas ---
 class DashboardMetrics(BaseModel):
-    total_projects: int
-    total_assessments: int
+    total_projects: int = 0
+    total_assessments: int = 0
     total_scans: int = 0
-    overall_risk_score: float
-    severity_distribution: Dict[str, int]
-    findings_by_source: Dict[str, int]
-    findings_by_scanner: Dict[str, int]
-    vulnerable_dependencies_count: int
-    secrets_count: int
-    dast_issues_count: int
-    sast_issues_count: int
-    ssl_issues_count: int
-    top_vulnerabilities: List[Dict[str, Any]]
-    most_affected_files: List[Dict[str, Any]]
-    most_affected_endpoints: List[Dict[str, Any]]
-    recent_assessments: List[AssessmentResponse]
-    recent_findings: List[FindingResponse]
+    overall_risk_score: float = 0.0
+    severity_distribution: Dict[str, int] = Field(default_factory=dict)
+    findings_by_source: Dict[str, int] = Field(default_factory=dict)
+    findings_by_scanner: Dict[str, int] = Field(default_factory=dict)
+    vulnerable_dependencies_count: int = 0
+    secrets_count: int = 0
+    dast_issues_count: int = 0
+    sast_issues_count: int = 0
+    ssl_issues_count: int = 0
+    top_vulnerabilities: List[Dict[str, Any]] = Field(default_factory=list)
+    most_affected_files: List[Dict[str, Any]] = Field(default_factory=list)
+    most_affected_endpoints: List[Dict[str, Any]] = Field(default_factory=list)
+    recent_assessments: List[AssessmentResponse] = Field(default_factory=list)
+    recent_findings: List[FindingResponse] = Field(default_factory=list)
     
     # New Telemetry Fields
     active_rate: float = 0.0
@@ -229,4 +229,4 @@ class DashboardMetrics(BaseModel):
     vuln_velocity: float = 0.0
     incident_confidence: float = 0.0
     ai_risk_correlation_confidence: float = 0.0
-    dast_telemetry: Dict[str, Any] = {}
+    dast_telemetry: Dict[str, Any] = Field(default_factory=dict)

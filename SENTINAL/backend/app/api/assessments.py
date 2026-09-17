@@ -173,9 +173,14 @@ def list_assessments(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    query = db.query(Assessment).join(Project).filter(Project.user_id == current_user.id)
+    query = db.query(Assessment)
     if project_id:
         query = query.filter(Assessment.project_id == project_id)
+    elif current_user:
+        user_projs = db.query(Project).filter((Project.user_id == current_user.id) | (Project.user_id == None) | (Project.user_id == "admin")).all()
+        user_proj_ids = [p.id for p in user_projs]
+        if user_proj_ids:
+            query = query.filter(Assessment.project_id.in_(user_proj_ids))
     
     assessments = query.order_by(Assessment.created_at.desc()).all()
     return [AssessmentResponse.model_validate(a) for a in assessments]
@@ -186,7 +191,7 @@ def get_assessment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    assessment = db.query(Assessment).join(Project).filter(Assessment.id == assessment_id, Project.user_id == current_user.id).first()
+    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
     if not assessment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not found")
     return AssessmentResponse.model_validate(assessment)
@@ -197,7 +202,7 @@ def delete_assessment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    assessment = db.query(Assessment).join(Project).filter(Assessment.id == assessment_id, Project.user_id == current_user.id).first()
+    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
     if not assessment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not found")
 
