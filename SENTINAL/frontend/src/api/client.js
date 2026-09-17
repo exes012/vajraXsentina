@@ -1,21 +1,32 @@
-const API_BASE = (typeof window !== 'undefined' && (window.location.hostname.includes('render.com') || window.location.hostname.includes('netlify.app') || window.location.hostname.includes('vercel.app')))
-  ? 'https://vajraxsentina-i7r5.onrender.com/api'
-  : (import.meta.env?.VITE_API_URL || '/api');
+const getApiBase = () => {
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname.includes('render.com') || window.location.hostname.includes('netlify.app') || window.location.hostname.includes('vercel.app')) {
+      return 'https://vajraxsentina-i7r5.onrender.com/api';
+    }
+  }
+  return import.meta.env?.VITE_API_URL || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '')}/api` : '/api');
+};
+
+const API_BASE = getApiBase();
 
 export const apiClient = {
   getToken() {
-    return localStorage.getItem('sentinal_token') || '';
+    return (typeof window !== 'undefined' && localStorage.getItem('sentinal_token')) || '';
   },
 
   setToken(token) {
-    localStorage.setItem('sentinal_token', token);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sentinal_token', token);
+    }
   },
 
   removeToken() {
-    localStorage.removeItem('sentinal_token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('sentinal_token');
+    }
   },
 
-  async request(endpoint, options = {}) {
+  async request(endpoint, options = {}, retries = 2) {
     const url = `${API_BASE}${endpoint}`;
     const token = this.getToken();
 
@@ -36,21 +47,39 @@ export const apiClient = {
       });
 
       if (res.status === 401) {
-        // Unauthenticated
-        console.warn('Unauthorized request');
+        // Clear invalid/expired token so subsequent requests don't fail
+        this.removeToken();
+        console.warn('Unauthorized request - cleared stale token');
       }
 
       if (res.status === 204) {
         return null;
       }
 
-      const data = await res.json();
+      const contentType = res.headers.get('content-type') || '';
+      let data;
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { detail: text || `HTTP ${res.status}` };
+        }
+      }
+
       if (!res.ok) {
-        throw new Error(data.detail || `Request failed with status ${res.status}`);
+        throw new Error(data.detail || data.message || `Request failed with status ${res.status}`);
       }
 
       return data;
     } catch (err) {
+      if (retries > 0 && (err.name === 'TypeError' || err.message?.includes('fetch') || err.message?.includes('NetworkError'))) {
+        console.warn(`Retrying request to ${endpoint} (${retries} attempts left)...`);
+        await new Promise(r => setTimeout(r, 1500));
+        return this.request(endpoint, options, retries - 1);
+      }
       console.error(`API Error on [${options.method || 'GET'} ${endpoint}]:`, err);
       throw err;
     }
