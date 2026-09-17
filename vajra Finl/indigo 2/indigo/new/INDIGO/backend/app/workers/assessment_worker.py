@@ -245,111 +245,135 @@ async def run_assessment_job(assessment_id: str):
 
         # 9. Report Generation
         update_assessment_log(db, assessment_id, "GENERATING_REPORT", "Generating PDF, HTML, and JSON reports...", "GENERATING_REPORT")
-        json_path = await asyncio.to_thread(report_generator.generate_json_report, assessment_meta, deduped, correlated, ai_res)
-        html_path = await asyncio.to_thread(report_generator.generate_html_report, assessment_meta, deduped, correlated, ai_res)
-        pdf_path = await asyncio.to_thread(report_generator.generate_pdf_report, assessment_meta, deduped, correlated, ai_res)
+        json_path = None
+        html_path = None
+        pdf_path = None
+        try:
+            json_path = await asyncio.to_thread(report_generator.generate_json_report, assessment_meta, deduped, correlated, ai_res)
+        except Exception as j_err:
+            logger.warning(f"JSON report generation notice: {j_err}")
+        try:
+            html_path = await asyncio.to_thread(report_generator.generate_html_report, assessment_meta, deduped, correlated, ai_res)
+        except Exception as h_err:
+            logger.warning(f"HTML report generation notice: {h_err}")
+        try:
+            pdf_path = await asyncio.to_thread(report_generator.generate_pdf_report, assessment_meta, deduped, correlated, ai_res)
+        except Exception as p_err:
+            logger.warning(f"PDF report generation notice: {p_err}")
 
         # 10. Persist Findings, Correlated Risks, and Reports to DB
-        prev_f_map = {}
-        if regression_summary.get("previous_assessment_id"):
-            from app.models import Finding as FModel
-            p_finds = db.query(FModel).filter(FModel.assessment_id == regression_summary["previous_assessment_id"]).all()
-            prev_f_map = {pf.fingerprint: pf for pf in p_finds}
+        try:
+            prev_f_map = {}
+            if regression_summary.get("previous_assessment_id"):
+                from app.models import Finding as FModel
+                p_finds = db.query(FModel).filter(FModel.assessment_id == regression_summary["previous_assessment_id"]).all()
+                prev_f_map = {pf.fingerprint: pf for pf in p_finds}
 
-        for f in deduped:
-            reg_status = "PERSISTENT" if f.fingerprint in prev_f_map else "NEW"
-            finding_row = Finding(
+            for f in deduped:
+                reg_status = "PERSISTENT" if f.fingerprint in prev_f_map else "NEW"
+                finding_row = Finding(
+                    assessment_id=assessment_id,
+                    project_id=assessment.project_id,
+                    source=f.source,
+                    scanner=f.scanner,
+                    detected_by=f.detected_by or [f.scanner.upper()],
+                    regression_status=reg_status,
+                    title=f.title,
+                    description=f.description,
+                    severity=f.severity,
+                    confidence=f.confidence,
+                    category=f.category,
+                    cwe=f.cwe,
+                    cves=f.cves,
+                    owasp=f.owasp,
+                    file=f.file,
+                    line=f.line,
+                    code_snippet=f.code_snippet,
+                    endpoint=f.endpoint,
+                    parameter=f.parameter,
+                    evidence=f.evidence,
+                    remediation=f.remediation,
+                    references=f.references,
+                    fingerprint=f.fingerprint,
+                    risk_score=f.risk_score,
+                    raw_evidence=f.raw_evidence
+                )
+                db.add(finding_row)
+
+            for cr in correlated:
+                corr_row = CorrelatedRisk(
+                    assessment_id=assessment_id,
+                    title=cr.title,
+                    description=cr.description,
+                    risk_level=cr.risk_level,
+                    confidence=cr.confidence,
+                    sast_finding_ids=cr.sast_finding_ids,
+                    dast_finding_ids=cr.dast_finding_ids,
+                    sca_finding_ids=cr.sca_finding_ids,
+                    secret_finding_ids=cr.secret_finding_ids,
+                    explanation=cr.explanation,
+                    attack_scenario=cr.attack_scenario,
+                    remediation=cr.remediation
+                )
+                db.add(corr_row)
+
+            if assessment.assessment_type == "repo" or (not live_target and repo_or_code_target):
+                report_methodology = "Source Code Static Analysis (SAST), Software Composition Analysis (SCA), and Secret Detection"
+            elif assessment.assessment_type == "source":
+                report_methodology = "Static Application Security Testing (SAST), Dependency Analysis (SCA), and Hardcoded Secrets Audit"
+            elif assessment.assessment_type == "dast" or (live_target and not repo_or_code_target):
+                report_methodology = "Dynamic Application Security Testing (DAST), Active Web Probing, and SSL/TLS Configuration Audit"
+            else:
+                report_methodology = "Unified SAST + SCA + Secrets + DAST + Web + TLS multi-engine correlation"
+
+            report_row = Report(
                 assessment_id=assessment_id,
                 project_id=assessment.project_id,
-                source=f.source,
-                scanner=f.scanner,
-                detected_by=f.detected_by or [f.scanner.upper()],
-                regression_status=reg_status,
-                title=f.title,
-                description=f.description,
-                severity=f.severity,
-                confidence=f.confidence,
-                category=f.category,
-                cwe=f.cwe,
-                cves=f.cves,
-                owasp=f.owasp,
-                file=f.file,
-                line=f.line,
-                code_snippet=f.code_snippet,
-                endpoint=f.endpoint,
-                parameter=f.parameter,
-                evidence=f.evidence,
-                remediation=f.remediation,
-                references=f.references,
-                fingerprint=f.fingerprint,
-                risk_score=f.risk_score,
-                raw_evidence=f.raw_evidence
+                executive_summary=ai_res.executive_summary,
+                technical_summary=ai_res.technical_summary,
+                ai_analysis=ai_res.model_dump(),
+                methodology=report_methodology,
+                distribution={"critical": assessment_meta["critical_count"], "high": assessment_meta["high_count"], "medium": assessment_meta["medium_count"], "low": assessment_meta["low_count"], "info": assessment_meta["info_count"]},
+                file_path_html=str(html_path) if html_path else None,
+                file_path_pdf=str(pdf_path) if pdf_path else None,
+                file_path_json=str(json_path) if json_path else None
             )
-            db.add(finding_row)
-
-        for cr in correlated:
-            corr_row = CorrelatedRisk(
-                assessment_id=assessment_id,
-                title=cr.title,
-                description=cr.description,
-                risk_level=cr.risk_level,
-                confidence=cr.confidence,
-                sast_finding_ids=cr.sast_finding_ids,
-                dast_finding_ids=cr.dast_finding_ids,
-                sca_finding_ids=cr.sca_finding_ids,
-                secret_finding_ids=cr.secret_finding_ids,
-                explanation=cr.explanation,
-                attack_scenario=cr.attack_scenario,
-                remediation=cr.remediation
-            )
-            db.add(corr_row)
-
-        if assessment.assessment_type == "repo" or (not live_target and repo_or_code_target):
-            report_methodology = "Source Code Static Analysis (SAST), Software Composition Analysis (SCA), and Secret Detection"
-        elif assessment.assessment_type == "source":
-            report_methodology = "Static Application Security Testing (SAST), Dependency Analysis (SCA), and Hardcoded Secrets Audit"
-        elif assessment.assessment_type == "dast" or (live_target and not repo_or_code_target):
-            report_methodology = "Dynamic Application Security Testing (DAST), Active Web Probing, and SSL/TLS Configuration Audit"
-        else:
-            report_methodology = "Unified SAST + SCA + Secrets + DAST + Web + TLS multi-engine correlation"
-
-        report_row = Report(
-            assessment_id=assessment_id,
-            project_id=assessment.project_id,
-            executive_summary=ai_res.executive_summary,
-            technical_summary=ai_res.technical_summary,
-            ai_analysis=ai_res.model_dump(),
-            methodology=report_methodology,
-            distribution={"critical": assessment_meta["critical_count"], "high": assessment_meta["high_count"], "medium": assessment_meta["medium_count"], "low": assessment_meta["low_count"], "info": assessment_meta["info_count"]},
-            file_path_html=str(html_path),
-            file_path_pdf=str(pdf_path),
-            file_path_json=str(json_path)
-        )
-        db.add(report_row)
+            db.add(report_row)
+            db.commit()
+        except Exception as persist_err:
+            logger.error(f"Error persisting findings/reports to DB: {persist_err}", exc_info=True)
+            db.rollback()
 
         # Update Assessment Final Summary
-        assessment.overall_risk_score = overall_risk
-        assessment.critical_count = assessment_meta["critical_count"]
-        assessment.high_count = assessment_meta["high_count"]
-        assessment.medium_count = assessment_meta["medium_count"]
-        assessment.low_count = assessment_meta["low_count"]
-        assessment.info_count = assessment_meta["info_count"]
-        assessment.total_findings = len(deduped)
-        assessment.completed_at = datetime.now(timezone.utc)
-        assessment.status = "COMPLETED"
-        db.commit()
+        assessment_final = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+        if assessment_final:
+            assessment_final.overall_risk_score = overall_risk
+            assessment_final.critical_count = assessment_meta["critical_count"]
+            assessment_final.high_count = assessment_meta["high_count"]
+            assessment_final.medium_count = assessment_meta["medium_count"]
+            assessment_final.low_count = assessment_meta["low_count"]
+            assessment_final.info_count = assessment_meta["info_count"]
+            assessment_final.total_findings = len(deduped)
+            assessment_final.completed_at = datetime.now(timezone.utc)
+            assessment_final.status = "COMPLETED"
+            db.commit()
 
         update_assessment_log(db, assessment_id, "COMPLETED", f"Assessment completed successfully with Risk Score {overall_risk}/100.", "COMPLETED")
         logger.info(f"Assessment {assessment_id} completed successfully.")
 
     except Exception as e:
         logger.error(f"Assessment job {assessment_id} failed: {str(e)}", exc_info=True)
-        if assessment:
-            assessment.status = "FAILED"
-            assessment.error_message = str(e)
-            assessment.completed_at = datetime.now(timezone.utc)
-            db.commit()
-            update_assessment_log(db, assessment_id, "FAILED", f"Assessment failed: {str(e)}", "FAILED")
+        try:
+            db.rollback()
+            update_assessment_log(db, assessment_id, "FAILED", f"Assessment encountered an issue: {str(e)}", "FAILED")
+            assessment_fail = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+            if assessment_fail:
+                assessment_fail.status = "FAILED"
+                assessment_fail.error_message = str(e)
+                assessment_fail.completed_at = datetime.now(timezone.utc)
+                db.commit()
+        except Exception as roll_err:
+            logger.error(f"Failed to record assessment failure state: {roll_err}")
     finally:
         # Cleanup temporary workspace
         if workspace_path and workspace_path.exists():

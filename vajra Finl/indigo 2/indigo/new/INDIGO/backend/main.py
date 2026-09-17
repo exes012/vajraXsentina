@@ -127,7 +127,21 @@ async def lifespan(app: FastAPI):
                         "ALTER TABLE assets ADD COLUMN IF NOT EXISTS tech_stack JSON DEFAULT '[]';",
                         "ALTER TABLE assets ADD COLUMN IF NOT EXISTS headers JSON DEFAULT '{}';",
                         "ALTER TABLE assets ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT TRUE;",
-                        "ALTER TABLE assets ADD COLUMN IF NOT EXISTS verification_method VARCHAR(64) DEFAULT 'AUTO_REACHABILITY';"
+                        "ALTER TABLE assets ADD COLUMN IF NOT EXISTS verification_method VARCHAR(64) DEFAULT 'AUTO_REACHABILITY';",
+                        """CREATE TABLE IF NOT EXISTS sentina_reports (
+                            id VARCHAR(36) PRIMARY KEY,
+                            assessment_id VARCHAR(36) NOT NULL UNIQUE REFERENCES assessments(id) ON DELETE CASCADE,
+                            project_id VARCHAR(36) NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                            executive_summary TEXT,
+                            technical_summary TEXT,
+                            ai_analysis JSON DEFAULT '{}',
+                            methodology TEXT,
+                            distribution JSON DEFAULT '{}',
+                            file_path_html VARCHAR(512),
+                            file_path_pdf VARCHAR(512),
+                            file_path_json VARCHAR(512),
+                            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+                        );"""
                     ]
                     for aq in sentina_alter_queries:
                         try:

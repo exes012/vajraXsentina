@@ -176,7 +176,7 @@ class CorrelatedRisk(Base):
 
 
 class Report(Base):
-    __tablename__ = "reports"
+    __tablename__ = "sentina_reports"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     assessment_id = Column(String(36), ForeignKey("assessments.id"), nullable=False, unique=True)

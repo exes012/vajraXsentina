@@ -12,7 +12,8 @@ const ALL_STAGES = [
   { key: 'NORMALIZING', label: 'Normalize', type: 'common' },
   { key: 'CORRELATING', label: 'Correlate', type: 'common' },
   { key: 'AI_ANALYSIS', label: 'AI Risk', type: 'common' },
-  { key: 'COMPLETED', label: 'Report', type: 'common' }
+  { key: 'GENERATING_REPORT', label: 'Report', type: 'common' },
+  { key: 'COMPLETED', label: 'Done', type: 'common' }
 ];
 
 export const ScanProgressModal = ({ assessment, onClose, onCancel, onViewDetails }) => {
@@ -41,10 +42,18 @@ export const ScanProgressModal = ({ assessment, onClose, onCancel, onViewDetails
   });
 
   const getStageIndex = (status) => {
+    if (status === 'COMPLETED') return activeStages.length - 1;
+    if (status === 'GENERATING_REPORT') {
+      const gIdx = activeStages.findIndex(s => s.key === 'GENERATING_REPORT');
+      return gIdx !== -1 ? gIdx : activeStages.length - 2;
+    }
+    if (status === 'REGRESSION_ANALYSIS') {
+      const cIdx = activeStages.findIndex(s => s.key === 'CORRELATING');
+      return cIdx !== -1 ? cIdx : 0;
+    }
+    if (status === 'DISCOVERING') return 1;
     const idx = activeStages.findIndex(s => s.key === status);
     if (idx !== -1) return idx;
-    if (status === 'DISCOVERING') return 1;
-    if (status === 'GENERATING_REPORT') return activeStages.length - 2;
     return isCompleted ? activeStages.length - 1 : 0;
   };
 
